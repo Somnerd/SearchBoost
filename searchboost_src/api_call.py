@@ -1,20 +1,8 @@
 import asyncio
 import openai
+import chat_class
 
-class ChatDetails:
-    def __init__(self, model, prompt):
-        self.model = model
-        self.prompt = prompt
-        self.role = "user"
-        self.extra_body = {
-            "thinking_budget": 4096,
-            "web_search": True
-        }
-
-
-
-async def api_call(ChatDetails, API_KEY):
-
+async def api_call(chatdetails, API_KEY):
     try:
         client = openai.OpenAI(
             api_key = API_KEY,  # or os.getenv("POE_API_KEY")
@@ -22,9 +10,9 @@ async def api_call(ChatDetails, API_KEY):
         )
 
         chat = client.chat.completions.create(
-            model = ChatDetails.model,
-            messages = [{"role": ChatDetails.role, "content": ChatDetails.prompt}],
-            extra_body = ChatDetails.extra_body
+            model = chatdetails.model,
+            messages = [{"role": chatdetails.role, "content": chatdetails.prompt}],
+            extra_body = chatdetails.extra_body
         )
 
         print(chat.choices[0].message.content)

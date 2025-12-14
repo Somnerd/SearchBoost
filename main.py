@@ -2,6 +2,9 @@ import asyncio
 from searchboost_src.cli import parse_arguments
 from searchboost_src.web_scraper import scrape_results
 from searchboost_src.summarizer import optimize_query, summarize_results
+from searchboost_src.api_call import api_call as poe_api_call
+from searchboost_src.chat_class import Chat_Details
+
 
 async def main():
     try :
