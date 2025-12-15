@@ -15,10 +15,9 @@ async def api_call(chatdetails, API_KEY):
             extra_body = chatdetails.extra_body
         )
 
+        if response.choices and response.choices[0].message.content:
         print(chat.choices[0].message.content)
-        else:
-            print("Error: No 'text' field found in response.")
-            return "Error: No response text from LLM."
+        return chat.choices[0].message.content
     except Exception as e:
         print(f"Error querying Poe API: {e}")
         return "Error: Unable to connect to the LLM."
