@@ -2,34 +2,45 @@ import asyncio
 import openai
 from openai import AsyncOpenAI
 
-
 class ChatDetails:
-    def __init__(self, model: str, prompt: str,role:str ="user"):
+    def __init__(self, model: str, prompt: str, role: str = "user"):
         self.model = model
         self.prompt = prompt
         self.role = role
+        # Thinking budget and web search are Poe-specific extra_body params
         self.extra_body = {
             "thinking_budget": 4096,
             "web_search": True
         }
 
-    async def api_call(self, API_KEY:str):
+    async def api_call(self, API_KEY: str = "ollama"):
+        # Check if we should use the local Ollama instance
+        if self.model.lower() == "local" or "llama" in self.model.lower():
+            base_url = "http://localhost:11434/v1"
+            api_key = "ollama"  # Ollama doesn't need a real key, but the client requires a string
+            model_name = "llama3.2" if self.model.lower() == "local" else self.model
+            extra_params = {} # Local models don't support Poe's 'extra_body'
+        else:
+            # Default to Poe Cloud API
+            base_url = "https://api.poe.com/v1"
+            api_key = API_KEY
+
         try:
-            client = openai.OpenAI(
-                api_key = API_KEY,  # or os.getenv("POE_API_KEY")
-                base_url = "https://api.poe.com/v1",
+            client = AsyncOpenAI(
+                api_key=api_key,
+                base_url=base_url,
             )
 
             chat = await client.chat.completions.create(
-                model = self.model,
-                messages = [{"role": self.role, "content": self.prompt}],
-                extra_body = self.extra_body
+                model=self.model,
+                messages=[{"role": self.role, "content": self.prompt}],
+                **extra_params
             )
 
             if chat.choices and chat.choices[0].message.content:
-                print(chat.choices[0].message.content)
-                return chat.choices[0].message.content
+                content = chat.choices[0].message.content
+                return content
 
         except Exception as e:
-            print(f"Error querying Poe API: {e}")
+            print(f"Error querying {base_url}: {e}")
             return "Error: Unable to connect to the LLM."

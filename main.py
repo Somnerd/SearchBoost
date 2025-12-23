@@ -7,6 +7,10 @@ from searchboost_src.chat_class import Chat_Details
 
 
 async def main():
+    try:
+
+
+async def derpecated_main():
     try :
         args = parse_arguments()
 
@@ -36,6 +40,7 @@ async def main():
         print(summary)
     except Exception as e:
         print("ERROR : ",e)
+
 if __name__ == "__main__":
 
   asyncio.run(main())
