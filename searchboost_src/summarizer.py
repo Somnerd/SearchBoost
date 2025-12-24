@@ -9,8 +9,3 @@ async def summarize_results(model, results):
             f"Title: {result['title']}\nSnippet: {result['snippet']}" for result in results
             ) + "\nSummarize the key findings."
         return await query_ollama(model, prompt)
-
-
-
-
-
