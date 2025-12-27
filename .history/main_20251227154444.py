@@ -12,6 +12,7 @@ async def main():
 
     chat_details = ChatDetails()
     await chat_details.args_to_class(args)
+    logger.info(f"{chat_details.query}")
     
     logger.info("Optimizing query...")
     optimized_query = await optimizer_query(chat_details)

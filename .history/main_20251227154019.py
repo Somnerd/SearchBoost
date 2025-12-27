@@ -1,17 +1,19 @@
 import asyncio
 
 from searchboost_src.argparser import *
-from searchboost_src.chat_class import *
-from searchboost_src.ai_handler import *
-from searchboost_src.web_scraper import *
-from searchboost_src.logger import *
+import searchboost_src.chat_class
+import searchboost_src.ai_handler
+import searchboost_src.web_scraper
+import searchboost_src.logger
 
 async def main():
     args = await final_arguments()
     logger = await searchboost_src.logger.setup_logger() 
 
     chat_details = ChatDetails()
-    await chat_details.args_to_class(args)
+    chat_details.prompt=args.query
+    chat_details.model=args.model  
+    chat_details.engine=args.engine
     
     logger.info("Optimizing query...")
     optimized_query = await optimizer_query(chat_details)

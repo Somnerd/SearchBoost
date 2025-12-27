@@ -1,12 +1,11 @@
 import asyncio
 import searchboost_src.logger
 
+logger = await searchboost_src.logger.setup_logger() 
 
 
 async def test_query(query: str):
-    logger = await searchboost_src.logger.setup_logger() 
-
-    try:
+  try:
         #TODO : Implement searxng function to fetch real search results 
         logger.info("Simulating search results fetch...")
         results = ["Result 1 content", "Result 2 content", "Result 3 content"]

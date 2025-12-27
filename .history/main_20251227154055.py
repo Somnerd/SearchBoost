@@ -11,7 +11,9 @@ async def main():
     logger = await searchboost_src.logger.setup_logger() 
 
     chat_details = ChatDetails()
-    await chat_details.args_to_class(args)
+    chat_details.prompt=args.query
+    chat_details.model=args.model  
+    chat_details.engine=args.engine
     
     logger.info("Optimizing query...")
     optimized_query = await optimizer_query(chat_details)

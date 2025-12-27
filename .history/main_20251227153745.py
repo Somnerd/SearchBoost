@@ -1,25 +1,28 @@
 import asyncio
 
-from searchboost_src.argparser import *
-from searchboost_src.chat_class import *
-from searchboost_src.ai_handler import *
-from searchboost_src.web_scraper import *
-from searchboost_src.logger import *
+from searchboost_src.argparser import final_arguments
+from searchboost_src.chat_class import ChatDetails
+from searchboost_src.ai_handler import optimizer_query
+from searchboost_src.web_scraper import test_searxng
+import searchboost_src.logger 
 
 async def main():
     args = await final_arguments()
     logger = await searchboost_src.logger.setup_logger() 
 
     chat_details = ChatDetails()
-    await chat_details.args_to_class(args)
+    chat_details.prompt=args.query
+    chat_details.model=args.model  
+    chat_details.engine=args.engine
     
     logger.info("Optimizing query...")
     optimized_query = await optimizer_query(chat_details)
     logger.info(f"Optimized Query: {optimized_query}")
     logger.info("Fetching search results...")
-    
-    await test_query(optimized_query)
 
+    await test_query(optimized_query)  
+    
+    # Step 3: Summarize results
     logger.info("Summarizing search results...")
     summary = await test_searxng(optimized_query, chat_details.engine)
     logger.info("Summary:")
