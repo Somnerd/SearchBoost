@@ -1,0 +1,2 @@
+from searchboost_src.chat_class import ChatDetails
+from searchboost_src.chat_class import ollama_client

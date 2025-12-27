@@ -1,0 +1,107 @@
+2025-12-27 15:01:24,773 - INFO - engine: google.com
+2025-12-27 15:01:24,773 - INFO - query: None
+2025-12-27 15:01:24,773 - INFO - model: llama3.2
+2025-12-27 15:01:24,773 - WARNING - No query provided via command line. Prompting for input.
+2025-12-27 15:01:36,563 - INFO - engine: google.com
+2025-12-27 15:01:36,563 - INFO - query: None
+2025-12-27 15:01:36,563 - INFO - model: llama3.2
+2025-12-27 15:01:36,563 - WARNING - No query provided via command line. Prompting for input.
+2025-12-27 15:01:58,990 - INFO - engine: google.com
+2025-12-27 15:01:58,990 - INFO - query: None
+2025-12-27 15:01:58,990 - INFO - model: llama3.2
+2025-12-27 15:01:58,990 - WARNING - No query provided via command line. Prompting for input.
+2025-12-27 15:05:22,718 - INFO - engine: google.com
+2025-12-27 15:05:22,718 - INFO - query: None
+2025-12-27 15:05:22,718 - INFO - model: llama3.2
+2025-12-27 15:05:22,718 - WARNING - No query provided via command line. Prompting for input.
+INFO - engine: google.com - 2025-12-27 15:07:50,381
+INFO - query: None - 2025-12-27 15:07:50,382
+INFO - model: llama3.2 - 2025-12-27 15:07:50,382
+WARNING - No query provided via command line. Prompting for input. - 2025-12-27 15:07:50,382
+INFO - engine: google.com 
+INFO - query: None 
+INFO - model: llama3.2 
+WARNING - No query provided via command line. Prompting for input. 
+INFO - engine: google.com 
+INFO - query: None 
+INFO - model: llama3.2 
+WARNING - No query provided via command line. Prompting for input. 
+INFO - engine: google.com 
+INFO - query: how to redeem 
+INFO - model: llama3.2 
+INFO - Optimizing query... 
+INFO - Optimized Query: TEST OPTIMIZED QUERY 
+INFO - 
+Fetching search results... 
+INFO - Simulating search results fetch... 
+INFO - Fetched 3 results. 
+INFO - 
+Summarizing search results... 
+INFO - 
+Summary: 
+INFO - {'TEST RESUTLS FROM SEARXNG'} 
+2025-12-27 15:19:14,752 - INFO - engine: google.com 
+2025-12-27 15:19:14,752 - INFO - query: how to redeem 
+2025-12-27 15:19:14,752 - INFO - model: llama3.2 
+2025-12-27 15:19:14,753 - INFO - Optimizing query... 
+2025-12-27 15:19:16,754 - INFO - Optimized Query: TEST OPTIMIZED QUERY 
+2025-12-27 15:19:16,755 - INFO - 
+Fetching search results... 
+2025-12-27 15:19:16,755 - INFO - Simulating search results fetch... 
+2025-12-27 15:19:16,755 - INFO - Fetched 3 results. 
+2025-12-27 15:19:16,755 - INFO - 
+Summarizing search results... 
+2025-12-27 15:19:16,755 - INFO - 
+Summary: 
+2025-12-27 15:19:16,755 - INFO - {'TEST RESUTLS FROM SEARXNG'} 
+2025-12-27 15:19:57,853 - INFO - engine: google.com 
+2025-12-27 15:19:57,853 - INFO - query: how to redeem 
+2025-12-27 15:19:57,853 - INFO - model: llama3.2 
+2025-12-27 15:19:57,853 - INFO - Optimizing query... 
+2025-12-27 15:19:57,853 - INFO - Simulating query optimization... 
+2025-12-27 15:19:57,853 - INFO - Original Query: how to redeem 
+2025-12-27 15:19:58,854 - INFO - Passing through optimizer... 
+2025-12-27 15:19:59,856 - INFO - Query optimized. 
+2025-12-27 15:19:59,856 - INFO - Optimized Query: TEST OPTIMIZED QUERY 
+2025-12-27 15:19:59,856 - INFO - 
+Fetching search results... 
+2025-12-27 15:19:59,856 - INFO - Simulating search results fetch... 
+2025-12-27 15:19:59,856 - INFO - Fetched 3 results. 
+2025-12-27 15:19:59,856 - INFO - 
+Summarizing search results... 
+2025-12-27 15:19:59,856 - INFO - 
+Summary: 
+2025-12-27 15:19:59,856 - INFO - {'TEST RESUTLS FROM SEARXNG'} 
+2025-12-27 15:21:46,020 - INFO - engine: google.com 
+2025-12-27 15:21:46,020 - INFO - query: how to redeem 
+2025-12-27 15:21:46,021 - INFO - model: llama3.2 
+2025-12-27 15:21:46,021 - INFO - Optimizing query... 
+2025-12-27 15:21:46,021 - INFO - Simulating query optimization... 
+2025-12-27 15:21:46,021 - INFO - Original Query: how to redeem 
+2025-12-27 15:21:47,022 - INFO - Passing through optimizer... 
+2025-12-27 15:21:48,023 - INFO - Query optimized. 
+2025-12-27 15:21:48,023 - INFO - Optimized Query: TEST OPTIMIZED QUERY 
+2025-12-27 15:21:48,023 - INFO - 
+Fetching search results... 
+2025-12-27 15:21:48,023 - INFO - Simulating search results fetch... 
+2025-12-27 15:21:48,024 - INFO - Fetched 3 results. 
+2025-12-27 15:21:48,024 - INFO - 
+Summarizing search results... 
+2025-12-27 15:21:48,024 - INFO - 
+Summary: 
+2025-12-27 15:21:48,024 - INFO - {'TEST RESUTLS FROM SEARXNG'} 
+2025-12-27 15:22:41,971 - INFO - engine: google.com 
+2025-12-27 15:22:41,972 - INFO - query: how to redeem 
+2025-12-27 15:22:41,972 - INFO - model: llama3.2 
+2025-12-27 15:22:41,972 - INFO - Optimizing query... 
+2025-12-27 15:22:41,972 - INFO - Simulating query optimization... 
+2025-12-27 15:22:41,972 - INFO - Original Query: how to redeem 
+2025-12-27 15:22:42,973 - INFO - Passing through optimizer... 
+2025-12-27 15:22:43,974 - INFO - Query optimized. 
+2025-12-27 15:22:43,975 - INFO - Optimized Query: TEST OPTIMIZED QUERY 
+2025-12-27 15:22:43,975 - INFO - Fetching search results... 
+2025-12-27 15:22:43,975 - INFO - Simulating search results fetch... 
+2025-12-27 15:22:43,975 - INFO - Fetched 3 results. 
+2025-12-27 15:22:43,975 - INFO - Summarizing search results... 
+2025-12-27 15:22:43,975 - INFO - Summary: 
+2025-12-27 15:22:43,975 - INFO - {'TEST RESUTLS FROM SEARXNG'} 
