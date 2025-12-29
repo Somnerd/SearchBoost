@@ -5,7 +5,7 @@ from searchboost_src.chat_class import ChatDetails
 import searchboost_src.logger
 
 
-async def api_call(ChatDetails):
+async def api_call(ChatDetails,):
     logger = await searchboost_src.logger.setup_logger()
     
     # Check if we should use the local Ollama instance

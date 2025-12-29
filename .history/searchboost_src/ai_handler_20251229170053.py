@@ -17,7 +17,7 @@ async def optimizer_query(ChatDetails):
     logger.info("Query optimized.")
 
     if (ChatDetails.model.lower() == "local" or "llama" in ChatDetails.model.lower()):
-        logger.info("Using local for query optimization.")
+        logging.info("Using local for query optimization.")
         optimized_query = await query_ollama(ChatDetails)
     else:
         logging.info("Using cloud for query optimization.")

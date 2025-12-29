@@ -15,10 +15,10 @@ async def main():
     
     logger.info("Optimizing query...")
     optimized_query = await optimizer_query(chat_details)
-    logger.info(f"Optimized Query: {optimized_query}")
+    #logger.info(f"Optimized Query: {optimized_query}")
     logger.info("Fetching search results...")
     logger.info("Summarizing search results...")
-    logger.info(f"Summary:{await test_searxng(optimized_query)}")
+    logger.info(f"Summary:{await test_searxng(chat_details.prompt)}")
 
 
 if __name__ == "__main__":

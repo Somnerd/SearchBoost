@@ -1,18 +1,11 @@
 import asyncio
 import ollama
-from openai import OpenAI
 from ollama import AsyncClient
 
 from searchboost_src.chat_class import ChatDetails
 import searchboost_src.logger
 async def query_ollama(ChatDetails):
     logger = await searchboost_src.logger.setup_logger()
-
-    system_instruction = (
-            "You are an expert research assistant. Use the provided search context to "
-            "answer the user's question accurately. If the answer isn't in the context, "
-            "say so. Cite your sources using [Source Title](URL)."
-        )
 
     try:
         response = await AsyncClient().message(model=ChatDetails.model, messages=[{"role": "user", "content": ChatDetails.prompt}])

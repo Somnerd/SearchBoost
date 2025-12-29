@@ -8,7 +8,7 @@ from searchboost_src.logger import *
 
 async def main():
     args = await final_arguments()
-    logger = await searchboost_src.logger.setup_logger()
+    logger = await searchboost_src.logger.setup_logger() 
 
     chat_details = ChatDetails()
     await chat_details.args_to_class(args)
@@ -17,8 +17,13 @@ async def main():
     optimized_query = await optimizer_query(chat_details)
     logger.info(f"Optimized Query: {optimized_query}")
     logger.info("Fetching search results...")
+    
+    await test_query(optimized_query)
+
     logger.info("Summarizing search results...")
-    logger.info(f"Summary:{await test_searxng(optimized_query)}")
+    summary = await test_searxng(optimized_query, chat_details.engine)
+    logger.info("Summary:")
+    logger.info(summary)
 
 
 if __name__ == "__main__":

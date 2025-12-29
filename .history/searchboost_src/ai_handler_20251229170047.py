@@ -2,7 +2,7 @@ import asyncio
 from searchboost_src.chat_class import ChatDetails
 from searchboost_src.ollama_client import query_ollama
 from searchboost_src.api_client import api_call
-import searchboost_src.logger
+from searchboost_src.logger import *
 
 #TODO : Implement the optimizer_query method
 async def optimizer_query(ChatDetails):
@@ -17,7 +17,7 @@ async def optimizer_query(ChatDetails):
     logger.info("Query optimized.")
 
     if (ChatDetails.model.lower() == "local" or "llama" in ChatDetails.model.lower()):
-        logger.info("Using local for query optimization.")
+        logging.info("Using local for query optimization.")
         optimized_query = await query_ollama(ChatDetails)
     else:
         logging.info("Using cloud for query optimization.")

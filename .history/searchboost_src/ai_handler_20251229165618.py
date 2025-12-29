@@ -7,7 +7,6 @@ import searchboost_src.logger
 #TODO : Implement the optimizer_query method
 async def optimizer_query(ChatDetails):
     logger = await searchboost_src.logger.setup_logger()
-
     #TODO : implement pass through llm , and follow up question to refine the query . There should be no more than one query from LLM to user
     logger.info("Simulating query optimization...")
     logger.info(f"Original Query: {ChatDetails.prompt}")
@@ -17,8 +16,8 @@ async def optimizer_query(ChatDetails):
     logger.info("Query optimized.")
 
     if (ChatDetails.model.lower() == "local" or "llama" in ChatDetails.model.lower()):
-        logger.info("Using local for query optimization.")
+        # Use Ollama for local models
         optimized_query = await query_ollama(ChatDetails)
     else:
-        logging.info("Using cloud for query optimization.")
+        # Use Poe API for cloud models
         optimized_query = await api_call(ChatDetails)

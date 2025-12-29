@@ -20,15 +20,17 @@ async def test_searxng(query: str, host="http://localhost:8080"):
 
         for result in results[:5]:
             normalized_context.append(
-                f"Source: {result.get('title')}\n"
-                f"Content: {result.get('content')}\n"
-                f"URL: {result.get('url')}\n"
+                f"Source: {result.get("title")}\n",
+                f"Content: {result.get("content")}\n",
+                f"URL: {result.get("url")}\n"
             )
 
+        engine = {"searxng.example.com"}
+        results = {"TEST RESUTLS FROM SEARXNG"}
         return "\n---\n".join(normalized_context) if normalized_context else "No results found."
 
     except Exception as e:
-        logger.error(f"SearXNG Error: {e}")
+        logger.error(f"SearXNG Error: {f'Could not connect to {host}'}")
         if 'ConnectionError' in str(e):
             return f"Could not connect to {host}"
         return str(e)
