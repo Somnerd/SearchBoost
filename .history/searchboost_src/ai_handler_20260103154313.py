@@ -1,0 +1,55 @@
+import asyncio
+
+from searchboost_src.chat_class import *
+from searchboost_src.ollama_client import *
+from searchboost_src.api_client import *
+import searchboost_src.logger
+
+#TODO : Implement the optimizer_query method
+
+class AIHandler:
+    def __init__(self,logger=None,reason="optimization"):
+        self.logger = logger
+        self.reason = reason
+
+        self.query_optimization_prompt = (
+            "You are a search query optimizer. Convert the user's request "
+            "into a concise, keyword-rich search string for a search engine. "
+            "Output ONLY the optimized string."
+        )
+
+        self.query_system_instruction = (
+            "You are an expert research assistant. Use the provided search context to "
+            "answer the user's question accurately. If the answer isn't in the context, "
+            "say so. Cite your sources using [Source Title](URL)."
+        )
+        pass
+
+    async def query_LLM(self, ChatDetails):
+        #TODO : implement pass through llm , and follow up question to refine the query . There should be no more than one query from LLM to user
+
+        try:
+
+            self.logger.info(f"Original Query: {ChatDetails.prompt}")
+            original_prompt = ChatDetails.prompt
+
+            if self.reason == "optimization":
+                ChatDetails.prompt = self.query_optimization_prompt + "\nUser Question : " + ChatDetails.prompt
+            elif self.reason == "research":
+                ChatDetails.prompt = self.query_system_instruction + "\nUser Question : "+ ChatDetails.prompt
+            else:
+                self.logger.error(f"Unknown reason for LLM query: {self.reason}")
+                ChatDetails.prompt = original_prompt
+                return ChatDetails.prompt
+
+            if (ChatDetails.model.lower() == "local" or "llama" in ChatDetails.model.lower()):
+                self.logger.info(f"Using local AI for query {self.reason}.")
+                return QueryClient = OllamaClient(logger = self.logger)
+            else:
+                self.logger.info(f"Using cloud AI for query {self.reason}.")
+                optimized_query = await api_client().api_call(ChatDetails)
+                return optimized_query
+
+        except Exception as e:
+            self.logger.error(f"Error optimizing query: {e}")
+            return ChatDetails.prompt
