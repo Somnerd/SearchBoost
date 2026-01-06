@@ -16,41 +16,25 @@ class OllamaClient:
         self.client = AsyncClient(host=self.host)
         self.client = AsyncClient(headers={"Ollama-Client": "SearchBoost"})
 
-        #self.response = self.client.chat(model = ChatDetails.model , messages=[
-        #    {"role": ChatDetails.role, "content": ChatDetails.prompt}
-        #])
         pass
 
     async def query_ollama(self):
         try:
-
-            message = {
-                "role": self.ChatDetails.role,
-                "content": self.ChatDetails.prompt
-                }
-
-            async for part in await self.client().chat(model=self.ChatDetails.model, messages=[ {
-                "role": self.ChatDetails.role,
-                "content": self.ChatDetails.prompt
-                } ] , stream=self.ChatDetails.stream):
-
-
-
-                response = await self.client.chat(
+            response = await self.client.chat(
                 model=self.ChatDetails.model,
-                messages=[{
+                messages=[
+                    {
+                    "role": "system",
+                    "content": self.ChatDetails.system_prompt
+                    },
+                    {
                     "role": self.ChatDetails.role,
                     "content": self.ChatDetails.prompt
-                }]
+                    }
+                ]
             )
-
-            if response != None:
-                self.logger.info(f"Ollama response: {response.strip()}")
-                return response["text"].strip()
-
-            else:
-                self.logger.error("Error: No 'text' field found in response from Ollama API.")
-                return "Error: No response text from LLM."
+            return response['message']['content']
+            await self.client.aclose()
         except Exception as e:
             self.logger.error(f"Error querying Ollama API: {e}")
             return "Error: Unable to connect to the LLM."

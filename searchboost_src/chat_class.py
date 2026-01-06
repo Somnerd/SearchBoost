@@ -1,7 +1,10 @@
+import searchboost_src.logger
+
 class ChatDetails:
     def __init__(self):
         self.model = "llama3.2"
         self.prompt = None
+        self.system_prompt = None
         self.stream = True
         self.role = "user"
         # Thinking budget and web search are Poe-specific extra_body params

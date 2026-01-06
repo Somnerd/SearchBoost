@@ -10,19 +10,24 @@ async def main():
     try:
         args = await final_arguments()
         logger = await searchboost_src.logger.setup_logger()
-
         chatdetails = ChatDetails()
+
         await chatdetails.args_to_class(args)
 
         logger.info("Optimizing query...")
-
         ai_handler = AIHandler(logger, reason="optimization")
         optimized_query = await ai_handler.query_LLM(chatdetails)
-        logger.info(f"MAIN : Optimized Query: \n---\n{optimized_query}")
+        logger.info(f"MAIN : Optimized Query: {optimized_query}")
+
 
         WebScraperInstance = WebScraper(optimized_query)
-        logger.info(f"MAIN : Summary:\n---\n{await WebScraperInstance.searxng_search()}")
+        web_search_results = await WebScraperInstance.searxng_search()
+        chatdetails.prompt = f"Using the following web search results, answer the question: {chatdetails.prompt}\n\nWeb Search Results:\n{web_search_results}"
 
+        logger.info("Querying LLM with web search context...")
+        ai_handler = AIHandler(logger, reason="research")
+        final_response = await ai_handler.query_LLM(chatdetails)
+        logger.info(f"FINAL RESPONSE:\n---\n{final_response}")
     except Exception as e:
         logger.error(f"CRITICAL:{e}")
 

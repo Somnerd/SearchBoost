@@ -5,7 +5,6 @@ from searchboost_src.ollama_client import *
 from searchboost_src.api_client import *
 import searchboost_src.logger
 
-#TODO : Implement the optimizer_query method
 
 class AIHandler:
     def __init__(self,logger=None,reason="optimization"):
@@ -30,16 +29,12 @@ class AIHandler:
 
         try:
 
-            self.logger.info(f"Original Query: {ChatDetails.prompt}")
-            original_prompt = ChatDetails.prompt
-
             if self.reason == "optimization":
-                ChatDetails.prompt = self.query_optimization_prompt + "\nUser Question : " + ChatDetails.prompt
+                ChatDetails.system_prompt = self.query_optimization_prompt
             elif self.reason == "research":
-                ChatDetails.prompt = self.query_system_instruction + "\nUser Question : "+ ChatDetails.prompt
+                ChatDetails.system_prompt = self.query_system_instruction
             else:
                 self.logger.error(f"Unknown reason for LLM query: {self.reason}")
-                ChatDetails.prompt = original_prompt
                 return ChatDetails.prompt
 
             if (ChatDetails.model.lower() == "local" or "llama" in ChatDetails.model.lower()):
@@ -52,5 +47,5 @@ class AIHandler:
                 return optimized_query
 
         except Exception as e:
-            self.logger.error(f"Error optimizing query: {e}")
+            self.logger.error(f"Error in AI Handler: {e}")
             return ChatDetails.prompt
