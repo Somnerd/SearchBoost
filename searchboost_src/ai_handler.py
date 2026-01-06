@@ -25,8 +25,6 @@ class AIHandler:
         pass
 
     async def query_LLM(self, ChatDetails):
-        #TODO : implement pass through llm , and follow up question to refine the query . There should be no more than one query from LLM to user
-
         try:
 
             if self.reason == "optimization":
@@ -34,18 +32,23 @@ class AIHandler:
             elif self.reason == "research":
                 ChatDetails.system_prompt = self.query_system_instruction
             else:
-                self.logger.error(f"Unknown reason for LLM query: {self.reason}")
+                self.logger.warning(f"AI Handler : Unknown reason for LLM query: {self.reason}")
                 return ChatDetails.prompt
 
-            if (ChatDetails.model.lower() == "local" or "llama" in ChatDetails.model.lower()):
-                self.logger.info(f"Using local AI for query {self.reason}.")
-                QueryClient = OllamaClient(logger = self.logger,ChatDetails=ChatDetails)
-                return await QueryClient.query_ollama()
-            else:
-                self.logger.info(f"Using cloud AI for query {self.reason}.")
+            if ChatDetails.model.lower() == "cloud" or "gpt" in ChatDetails.model.lower() or "poe" in ChatDetails.model.lower():
+                self.logger.info(f"AIHandler : Using cloud AI for query {self.reason}.")
                 optimized_query = await api_client().api_call(ChatDetails)
+                self.logger.debug(f"AIHandler : Optimized Query: {optimized_query}")
                 return optimized_query
+            elif ChatDetails.model.lower() == "local" or "llama" in ChatDetails.model.lower():
+                pass
+            else:
+                self.logger.warning(f"AIHandler : Unknown model specified: {ChatDetails.model}. Defaulting to cloud AI.")
 
+            self.logger.info(f"AIHandler : Using local AI for query {self.reason}.")
+            optimized_query = await OllamaClient(logger = self.logger,ChatDetails = ChatDetails).query_ollama()
+            self.logger.debug(f"AIHandler : Optimized Query: {optimized_query}")
+            return optimized_query
         except Exception as e:
-            self.logger.error(f"Error in AI Handler: {e}")
+            self.logger.error(f"AI Handler : Error in AI Handler: {e}")
             return ChatDetails.prompt

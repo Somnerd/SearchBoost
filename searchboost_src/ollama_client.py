@@ -33,8 +33,9 @@ class OllamaClient:
                     }
                 ]
             )
+            self.logger.debug(f"OLLAMA CLIENT : Ollama Response: {response}")
             return response['message']['content']
             await self.client.aclose()
         except Exception as e:
-            self.logger.error(f"Error querying Ollama API: {e}")
+            self.logger.error(f"OLLAMA CLIENT : Error querying Ollama API: {e}")
             return "Error: Unable to connect to the LLM."

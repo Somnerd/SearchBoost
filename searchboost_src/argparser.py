@@ -32,6 +32,13 @@ async def parse_arguments():
         help="Search query"
     )
 
+    parser.add_argument(
+        "--info",
+        type=str,
+        default="info",
+        help="Set logging level (default: info)"
+    )
+
     # LLM model argument
     parser.add_argument(
         "-m","--model",
