@@ -3,6 +3,7 @@ import sys
     
 async def setup_logger():
     logging.basicConfig(
+        #exec_info=True,
         level=logging.INFO,
         encoding='utf-8',
         format='%(asctime)s - %(levelname)s - %(message)s ',
