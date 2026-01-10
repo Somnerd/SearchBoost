@@ -11,18 +11,6 @@ class ApiClient:
         pass
 
     async def api_call(self, ChatDetails):
-
-        # Check if we should use the local Ollama instance
-        if self.model.lower() == "local" or "llama" in self.model.lower():
-            base_url = "http://localhost:11434/v1"
-            api_key = "ollama"  # Ollama doesn't need a real key, but the client requires a string
-            model_name = "llama3.2" if self.model.lower() == "local" else self.model
-            extra_params = {} # Local models don't support Poe's 'extra_body'
-        else:
-            # Default to Poe Cloud API
-            base_url = "https://api.poe.com/v1"
-            api_key = API_KEY
-
         try:
             client = AsyncOpenAI(
                 api_key=api_key,

@@ -53,4 +53,5 @@ Thumbs.db
 # --- Other ---
 searchboost_src.zip
 .history
-
+.todo
+notes.text

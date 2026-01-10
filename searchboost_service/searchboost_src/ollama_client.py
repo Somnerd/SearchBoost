@@ -20,20 +20,24 @@ class OllamaClient:
 
     async def query_ollama(self):
         try:
+            self.logger.debug(f"""OLLAMA  CLIENT: User Prompt :{self.ChatDetails.prompt}""")
             response = await self.client.chat(
-                model=self.ChatDetails.model,
+                model=self.ChatDetails.config.model,
                 messages=[
                     {
                     "role": "system",
                     "content": self.ChatDetails.system_prompt
                     },
                     {
-                    "role": self.ChatDetails.role,
+                    "role": self.ChatDetails.config.role,
                     "content": self.ChatDetails.prompt
                     }
                 ]
             )
-            self.logger.debug(f"OLLAMA CLIENT : Ollama Response: {response}")
+            self.logger.debug(f"""OLLAMA CLIENT :
+                                    Ollama Response:
+                                        {response}
+                                        """)
             return response['message']['content']
             await self.client.aclose()
         except Exception as e:

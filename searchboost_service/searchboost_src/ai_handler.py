@@ -34,12 +34,12 @@ class AIHandler:
                 self.logger.warning(f"AI Handler : Unknown reason for LLM query: {self.reason}")
                 return ChatDetails.prompt
 
-            if ChatDetails.model.lower() == "cloud" or "gpt" in ChatDetails.model.lower() or "poe" in ChatDetails.model.lower():
+            if ChatDetails.config.model.lower() == "cloud" or "gpt" in ChatDetails.config.model.lower() or "poe" in ChatDetails.config.model.lower():
                 self.logger.debug(f"AIHandler : Using cloud AI for query {self.reason}.")
                 optimized_query = await api_client().api_call(ChatDetails)
                 self.logger.debug(f"AIHandler : Optimized Query: {optimized_query}")
                 return optimized_query
-            elif ChatDetails.model.lower() == "local" or "llama" in ChatDetails.model.lower():
+            elif ChatDetails.config.model.lower() == "local" or "llama" in ChatDetails.config.model.lower():
                 pass
             else:
                 self.logger.warning(f"AIHandler : Unknown model specified: {ChatDetails.model}. Defaulting to cloud AI.")
