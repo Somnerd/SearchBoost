@@ -38,6 +38,7 @@ class WebSearch:
                     f"URL: {result.get('url')}\n"
                 )
 
+            self.logger.debug(f"Web Search : Results {normalized_context}")
             return "\n---\n".join(normalized_context) if normalized_context else "No results found."
 
         except Exception as e:

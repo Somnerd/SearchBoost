@@ -5,170 +5,114 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m'
 
+# --- 1. PRE-FLIGHT CHECKS ---
 setup_directories() {
-    if [ ! -d "configs" ] || [ ! -d "searchboost_src" ]; then
-        echo -e "${YELLOW}Creating directory structure...${NC}"
-        mkdir -p configs searchboost_src
-    else
-        echo -e "${YELLOW}Directory structure already exists. Skipping creation...${NC}"
+    echo -e "${YELLOW}Setting up project structure...${NC}"
+    mkdir -p configs searchboost_src container_configs
+
+    # Take ownership of container configs if they exist to prevent EACCES
+    if [ -d "container_configs" ]; then
+        sudo chown -R $(whoami):$(whoami) container_configs/
     fi
 }
 
-check_docker() {
-    echo "Checking for Docker and Docker Compose..."
-    if ! command -v docker &> /dev/null; then
-        echo "Error: Docker is not installed. Please install it first."
-        return 1
+check_and_set_env() {
+    # If .env doesn't exist, create it with defaults
+    if [ ! -f ".env" ]; then
+        echo -e "${YELLOW}No .env found. Generating defaults...${NC}"
+        cat <<EOT >> .env
+OLLAMA_PORT=11434
+OLLAMA_MODEL=llama3.2
+SEARXNG_PORT=8080
+REDIS_PORT=6379
+REDIS_PASSWORD=$(openssl rand -hex 12)
+EOT
     fi
-    echo "Docker is installed."
-
-    if docker compose version &> /dev/null; then
-        echo "Docker Compose (v2) is installed."
-    elif command -v docker-compose &> /dev/null; then
-        echo "Docker Compose (v1) is installed."
-    else
-        echo "Error: Docker Compose is not installed. Please install it first."
-        return 1
-    fi
+    # Export variables for use in this script
+    export $(grep -v '^#' .env | xargs)
 }
 
-check_and_set_ports() {
-    OLLAMA_PORT=11434
-    SEARXNG_PORT=8080
+# --- 2. SERVICE ORCHESTRATION ---
+check_service() {
+    local NAME=$1
+    local CMD=$2
+    local EXPECTED=$3
+    local RETRIES=15
+    local COUNT=0
 
-    EXISTING_OLLAMA_IMG=$(docker ps --format '{{.Names}} ({{.Ports}})' --filter "ancestor=ollama/ollama")
-    EXISTING_SEARXNG_IMG=$(docker ps --format '{{.Names}} ({{.Ports}})' --filter "ancestor=searxng/searxng")
-
-    if [ ! -z "$EXISTING_OLLAMA_IMG" ] || [ ! -z "$EXISTING_SEARXNG_IMG" ]; then
-        echo -e "${YELLOW}Existing service instances detected:${NC}"
-        [ ! -z "$EXISTING_OLLAMA_IMG" ] && echo -e "Ollama: $EXISTING_OLLAMA_IMG"
-        [ ! -z "$EXISTING_SEARXNG_IMG" ] && echo -e "SearXNG: $EXISTING_SEARXNG_IMG"
-        read -p "Install SearchBoost alongside these? (y/n): " DUPE_CHOICE
-        if [[ ! "$DUPE_CHOICE" =~ ^[Yy]$ ]]; then
+    echo -n "Checking $NAME..."
+    while [ $COUNT -lt $RETRIES ]; do
+        RESULT=$(eval "$CMD" 2>/dev/null)
+        if echo "$RESULT" | grep -q "$EXPECTED"; then
+            echo -e " [${GREEN}READY${NC}]"
             return 0
         fi
-    fi
-
-    while lsof -Pi :$OLLAMA_PORT -sTCP:LISTEN -t >/dev/null ; do
-        echo -e "${RED}Port $OLLAMA_PORT is in use.${NC}"
-        read -p "Enter new port for Ollama: " OLLAMA_PORT
+        echo -n "."
+        sleep 2
+        ((COUNT++))
     done
 
-    while lsof -Pi :$SEARXNG_PORT -sTCP:LISTEN -t >/dev/null ; do
-        echo -e "${RED}Port $SEARXNG_PORT is in use.${NC}"
-        read -p "Enter new port for SearXNG: " SEARXNG_PORT
-    done
-
-    echo "OLLAMA_PORT=$OLLAMA_PORT" > .env
-    echo "SEARXNG_PORT=$SEARXNG_PORT" >> .env
-
-    if [ -f "configs/local_ai.json" ]; then
-        sed -i "s/\"port\": [0-9]*/\"port\": $OLLAMA_PORT/" configs/local_ai.json
-    fi
-    if [ -f "configs/web_search.json" ]; then
-        sed -i "s/\"port\": [0-9]*/\"port\": $SEARXNG_PORT/" configs/web_search.json
-    fi
+    echo -e " [${RED}FAILED${NC}]"
+    exit 1
 }
 
-run_docker_compose() {
-    if [ "$(docker ps -q -f name=sb_ollama)" ] && [ "$(docker ps -q -f name=sb_searxng)" ]; then
-        echo -e "${GREEN}Containers are already running.${NC}"
-        return 0
-    fi
-
-    if [ "$(docker ps -aq -f name=sb_ollama)" ]; then
-        echo -e "${YELLOW}Starting existing containers...${NC}"
-        docker compose start
-    else
-        echo -e "${YELLOW}Deploying containers...${NC}"
-        docker compose up -d
-    fi
-
-    if [ $? -ne 0 ]; then
-        echo -e "${RED}Docker Compose failed.${NC}"
-        return 1
-    fi
+run_stack() {
+    echo -e "${YELLOW}Launching Docker Stack...${NC}"
+    docker compose up -d
+    sleep 10
+    # Use our function for specific health checks
+    check_service "Redis" "docker exec sb_redis redis-cli -a $REDIS_PASSWORD ping" "PONG"
+    check_service "Ollama" "curl -s http://localhost:$OLLAMA_PORT/api/tags" "models"
+    check_service "SearXNG" "curl -s http://localhost:$SEARXNG_PORT/status" "version"
 }
 
 setup_ollama_model() {
-    echo -e "${YELLOW}Checking model status...${NC}"
-    if docker exec sb_ollama ollama list | grep -q "llama3.2"; then
-        echo -e "${GREEN}Llama 3.2 is already present.${NC}"
+    echo -e "${YELLOW}Ensuring model $OLLAMA_MODEL is available...${NC}"
+    if docker exec sb_ollama ollama list | grep -q "$OLLAMA_MODEL"; then
+        echo -e "${GREEN}Model is already present.${NC}"
     else
-        MAX_RETRIES=5
-        RETRY_COUNT=0
-        SUCCESS=false
-        while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-            if docker exec sb_ollama ollama pull llama3.2; then
-                SUCCESS=true
-                break
-            else
-                RETRY_COUNT=$((RETRY_COUNT+1))
-                sleep 5
-            fi
-        done
-        if [ "$SUCCESS" = false ]; then
-            return 1
-        fi
+        docker exec sb_ollama ollama pull "$OLLAMA_MODEL"
     fi
 }
 
-verify_services_alive() {
-    if curl -s -o /dev/null -w "%{http_code}" http://localhost:${SEARXNG_PORT:-8080}/ | grep -qE "200|302"; then
-        echo -e "${GREEN}SearXNG is alive.${NC}"
-    else
-        echo -e "${RED}SearXNG not responding.${NC}"
-    fi
-
-    if curl -s -o /dev/null -w "%{http_code}" http://localhost:${OLLAMA_PORT:-11434}/ | grep -q "200"; then
-        echo -e "${GREEN}Ollama is alive.${NC}"
-    else
-        echo -e "${RED}Ollama not responding.${NC}"
-    fi
-}
-
-setup_venv() {
-    if [ ! -d "venv" ]; then
-        python3 -m venv venv
-    fi
+# --- 3. PYTHON ENVIRONMENT ---
+setup_python() {
+    echo -e "${YELLOW}Preparing Python environment...${NC}"
+    [ ! -d "venv" ] && python3 -m venv venv
     source venv/bin/activate
-}
-
-install_dependencies() {
     pip install --upgrade pip
-    if [ -f "requirements.txt" ]; then
-        pip install -r requirements.txt
-    else
-        pip install ollama requests aiohttp openai argparse
-    fi
+    # Add 'redis' and 'pydantic-settings' to your requirements
+    pip install ollama requests aiohttp pydantic pydantic-settings redis arq
 }
 
 scaffold_configs() {
-    if [ ! -f "configs/local_ai.json" ]; then
-        echo "{\"model\": \"llama3.2\", \"host\": \"localhost\", \"port\": 11434, \"stream\": false, \"role\":\"user\"}" > configs/local_ai.json
+    # Add Redis config scaffold
+    if [ ! -f "configs/redis.json" ]; then
+        echo "{\"host\": \"localhost\", \"port\": $REDIS_PORT, \"password\": \"$REDIS_PASSWORD\"}" > configs/redis.json
     fi
-    if [ ! -f "configs/web_search.json" ]; then
-        echo "{\"search_engine\": \"searxng\", \"num_results\": 5, \"host\": \"localhost\", \"port\": 8080}" > configs/web_search.json
+    # Ensure SearXNG Settings exist for the container mount
+    if [ ! -f "container_configs/searxng_settings.yml" ]; then
+        cat <<EOT >> container_configs/searxng_settings.yml
+use_default_settings: true
+server:
+  secret_key: "$(openssl rand -hex 16)"
+  limiter: false
+search:
+  formats:
+    - html
+    - json
+EOT
     fi
 }
 
-setup_alias() {
-    ALIAS_CMD="alias searchboost='$(pwd)/venv/bin/python $(pwd)/main.py'"
-    if ! grep -q "alias searchboost=" ~/.bashrc; then
-        echo -e "\n$ALIAS_CMD" >> ~/.bashrc
-    fi
-}
-
-echo -e "${GREEN}SearchBoost Installation Started...${NC}"
+# --- MAIN EXECUTION ---
+clear
+echo -e "${GREEN}SearchBoost Orchestrator${NC}"
 setup_directories
-check_docker
-check_and_set_ports
-run_docker_compose
-sleep 5
-setup_ollama_model
-verify_services_alive
-setup_venv
-install_dependencies
+check_and_set_env
 scaffold_configs
-setup_alias
-echo -e "${GREEN}Installation complete.${NC}"
+run_stack
+setup_ollama_model
+setup_python
+
+echo -e "\n${GREEN}Success: Infrastructure is synchronized and healthy.${NC}"
