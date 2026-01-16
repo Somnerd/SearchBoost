@@ -1,6 +1,6 @@
 {
     "model": "llama3.2",
-    "host": "localhost",
+    "host": "sb_ollama",
     "port": 11434,
     "stream": false,
     "role":"user"

@@ -11,10 +11,12 @@ class OllamaClient:
         self.client = AsyncClient()
         self.logger = logger
         self.ChatDetails = ChatDetails
-        self.host = "http://localhost:11434"
+        self.host = self.ChatDetails.config.base_url
 
-        self.client = AsyncClient(host=self.host)
-        self.client = AsyncClient(headers={"Ollama-Client": "SearchBoost"})
+        self.client = AsyncClient(
+            host=self.host,
+            headers={"Ollama-Client": "SearchBoost"}
+            )
 
         pass
 
@@ -39,7 +41,6 @@ class OllamaClient:
                                         {response}
                                         """)
             return response['message']['content']
-            await self.client.aclose()
         except Exception as e:
             self.logger.error(f"OLLAMA CLIENT : Error querying Ollama API: {e}")
             return "Error: Unable to connect to the LLM."

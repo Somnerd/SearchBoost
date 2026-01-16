@@ -1,32 +1,50 @@
 import asyncio
 import sys
 
+from arq import create_pool
+from arq.connections import RedisSettings
+
+from searchboost_src.configurator import Configurator,get_configurator
 from searchboost_src.argparser import Argsparser_Instance
-from searchboost_src.service import SearchBoostService
 from searchboost_src.logger import setup_logger
-from searchboost_src.configurator import Configurator
+
 
 async def main():
 
-    argsparser= Argsparser_Instance()
-    args = await argsparser.final_arguments()
+    args = await Argsparser_Instance().final_arguments()
 
     logger = setup_logger(args.info)
     logger.info("Starting SearchBoost Service...")
-    config_manager = Configurator(logger=logger)
+
+    #config = get_configurator(logger=logger)
 
     try:
-        logger.debug("MAIN : CONFIGURATOR INIT ")
-        settings_bundle = await config_manager.initialize(args)
-        logger.debug("MAIN : CONFIGURATOR INIT DONE ")
-        logger.debug("MAIN : PASSING ARGS TO SERVICE ")
-        service = SearchBoostService(
-            **settings_bundle,
-            logger=logger,
-            args=args
-            )
         logger.debug("MAIN : RUNNING SERVICE ")
-        await service.run()
+
+        config = get_configurator(logger=logger)
+
+        bundle = await config.initialize(args)
+        redis_pool = await create_pool(bundle['redis'].arq_settings)
+
+        job = await redis_pool.enqueue_job('run_task', args.query, args)
+        logger.info(f"Research job submitted! ID: {job.job_id}")
+
+        while True:
+            status = await job.status()
+            if status == "completed":
+                final_answer = await job.result()
+
+                separator = "=" * 50
+                logger.info(f"""{separator}
+                MAIN : RESPONSE : \n---{final_answer}")
+                {separator}""")
+                break
+            elif status == "failed":
+                logger.error("\nMAIN : JOB : FAILED")
+                break
+            print(".",end="",flush=True)
+            await asyncio.sleep(1)
+
     except Exception as e:
         logger.error(f"MAIN : CRITICAL:{e}")
 
@@ -34,4 +52,8 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
+        print("""
+        Disconnected from job tracking.
+        The worker will still continue in the background.
+        """)
         pass

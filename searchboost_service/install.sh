@@ -91,8 +91,8 @@ scaffold_configs() {
         echo "{\"host\": \"localhost\", \"port\": $REDIS_PORT, \"password\": \"$REDIS_PASSWORD\"}" > configs/redis.json
     fi
     # Ensure SearXNG Settings exist for the container mount
-    if [ ! -f "container_configs/searxng_settings.yml" ]; then
-        cat <<EOT >> container_configs/searxng_settings.yml
+    if [ ! -f "configs/searxng_settings.yml" ]; then
+        cat <<EOT >> configs/searxng_settings.yml
 use_default_settings: true
 server:
   secret_key: "$(openssl rand -hex 16)"

@@ -1,5 +1,5 @@
 {
-    "host": "localhost",
+    "host": "sb_redis",
     "port": 6379,
     "password": "searchboost_pass",
     "db": 0,
