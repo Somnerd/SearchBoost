@@ -26,6 +26,7 @@ class AIHandler:
 
     async def query_LLM(self, ChatDetails):
         try:
+            self.logger.debug(f"AI Handler : Reason for LLM Call : {self.reason}")
             if self.reason == "optimization":
                 ChatDetails.system_prompt = self.query_optimization_prompt
             elif self.reason == "research":

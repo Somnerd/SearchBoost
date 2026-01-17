@@ -7,6 +7,7 @@ services:
       - SEARCHBOOST_REDIS_HOST=sb_redis
       - SEARCHBOOST_AI_HOST=sb_ollama
       - SEARCHBOOST_SEARCH_HOST=sb_searxng
+      - PYTHONBUFFERED=1
       - SEARCHBOOST_REDIS_PASSWORD=${REDIS_PASSWORD:-searchboost_pass}
     volumes:
       - .:/app

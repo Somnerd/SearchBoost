@@ -29,21 +29,19 @@ async def main():
         job = await redis_pool.enqueue_job('run_task', args.query, args)
         logger.info(f"Research job submitted! ID: {job.job_id}")
 
-        while True:
-            status = await job.status()
-            if status == "completed":
-                final_answer = await job.result()
 
-                separator = "=" * 50
-                logger.info(f"""{separator}
-                MAIN : RESPONSE : \n---{final_answer}")
-                {separator}""")
-                break
-            elif status == "failed":
-                logger.error("\nMAIN : JOB : FAILED")
-                break
-            print(".",end="",flush=True)
-            await asyncio.sleep(1)
+        try:
+            status = await job.status()
+
+            final_answer = await job.result()
+
+            separator = "=" * 50
+            logger.info(f"""{separator}
+            MAIN : RESPONSE : \n---{final_answer}")
+            {separator}""")
+        except Exception as e:
+            logger.error(f"MAIN: Error retrieving job result : {e}")
+        #await asyncio.sleep(1)
 
     except Exception as e:
         logger.error(f"MAIN : CRITICAL:{e}")

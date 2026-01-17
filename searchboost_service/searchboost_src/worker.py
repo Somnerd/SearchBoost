@@ -15,32 +15,35 @@ async def shutdown(ctx):
     ctx['logger'].info("Worker shutting down...")
 
 async def run_task(ctx, query: str, args_namespace):
-    job_logger = logging.getLogger("searchboost.job")
     new_level = args_namespace.info.upper()
-    job_logger.setLevel(new_level)
+    ctx['logger'].setLevel(new_level)
 
-    ctx['logger'].info(f"Task Received | Query: {query} | JobID: {ctx.get('job_id')}")
+    ctx['logger'].info(f"WORKER : Task Received | Query: {query} | JobID: {ctx.get('job_id')}")
 
     try:
+        ctx['logger'].info(f"WORKER : Initiating configs")
         settings_bundle = await ctx['config_manager'].initialize(args_namespace)
 
+        ctx['logger'].info(f"WORKER : Starting Service")
         service = SearchBoostService(
             **settings_bundle,
-            logger=job_logger,
+            logger=ctx['logger'],
             args=args_namespace
         )
 
+        ctx['logger'].info(f"WORKER : Running Service")
         result = await service.run()
 
-        job_logger.info(f"Task Successful | JobID: {ctx.get('job_id')}")
+        ctx['logger'].info(f"WORKER : Serving Results : {result}")
+        ctx['logger'].info(f"Task Successful | JobID: {ctx.get('job_id')}")
         return result
 
     except Exception as e:
-        job_logger.error(f"Task Failed | JobID: {ctx.get('job_id')} | Error: {e}")
+        ctx['logger'].error(f"Task Failed | JobID: {ctx.get('job_id')} | Error: {e}")
         raise e
 
     finally:
-        job_logger.setLevel(logging.INFO)
+        ctx['logger'].setLevel(logging.INFO)
 
 class WorkerSettings:
     functions = [run_task]

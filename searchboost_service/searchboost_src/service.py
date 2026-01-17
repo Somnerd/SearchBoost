@@ -69,7 +69,7 @@ class SearchBoostService:
             if cached_result:
                 self.logger.info("--- CACHE HIT ---")
                 print(f"\nFinal Response (Cached):\n{cached_result}")
-                return
+                return cached_result
 
             self.logger.info("--- CACHE MISS: Executing Research Loop ---")
 
@@ -90,6 +90,7 @@ class SearchBoostService:
 
             final_response = await self.ai_handler.query_LLM(self.chatdetails)
             await self.cache.cache_response(self.args.query, final_response)
+            return final_response
 
             self.logger.info(f"SearchBoostService : Final Response :\n---\n{final_response}")
         except Exception as e:
