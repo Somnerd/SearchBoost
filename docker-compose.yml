@@ -1,4 +1,22 @@
 services:
+  worker:
+    build: .
+    container_name: sb_worker
+    env_file: .env
+    environment:
+      - SEARCHBOOST_REDIS_HOST=sb_redis
+      - SEARCHBOOST_AI_HOST=sb_ollama
+      - SEARCHBOOST_SEARCH_HOST=sb_searxng
+      - PYTHONBUFFERED=1
+      - SEARCHBOOST_REDIS_PASSWORD=${REDIS_PASSWORD:-searchboost_pass}
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - ollama
+      - searxng
+    restart: always
+
   redis:
     image: redis:7.4-alpine
     container_name: sb_redis
@@ -12,6 +30,8 @@ services:
   ollama:
     image: ollama/ollama
     container_name: sb_ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
     ports:
       - "${OLLAMA_PORT:-11434}:11434"
     volumes:
@@ -24,9 +44,9 @@ services:
     ports:
       - "${SEARXNG_PORT:-8080}:8080"
     volumes:
-      - ./container_configs:/etc/searxng:ro
+      - ./configs:/etc/searxng:ro
     environment:
-      - SEARXNG_BASE_URL=http://localhost:${SEARXNG_PORT:-8080}/
+      - SEARXNG_BASE_URL=http://sb_searxng:${SEARXNG_PORT:-8080}/
       - SEARXNG_SETTINGS_PATH=/etc/searxng/searxng_settings.yml
     restart: always
 

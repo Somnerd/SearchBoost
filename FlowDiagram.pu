@@ -1,0 +1,42 @@
+@startuml
+User --> SearchBoost : initial query
+Worker <-- SearchBoost : SearchBoost service starts Worker Containers
+Worker --> Redis : Request ID
+Worker <-- Redis : Give Job ID 
+Worker <-- Redis : Add job to queue
+Worker --> Redis : ask Redis if query previously asked
+
+alt Query Already in Redis
+Worker <-- Redis : Give previous answer to worker
+Worker --> SearchBoost : Give answer to service
+else Query not in Redis
+
+    Worker --> AIHandler : Give request to appropriate AI service
+    alt Local AI
+    Ollama <-- AIHandler : Give request for search engine optimization
+    else Cloud AI
+    Poe API <-- AIHandler : Give request for search engine optimization
+    end
+
+    alt Local AI
+    Ollama --> SearXNG : Give optimized query
+    else Cloud AI
+    Poe API --> SearXNG : Give optimized query
+    end
+
+    SearXNG --> SearXNG : Search for query and normalize results
+
+
+    alt Local AI
+    Ollama <-- SearXNG : Give results to AI for final response
+    Ollama --> Redis : Store answer as to skip search and research if asked again
+    Ollama --> Worker : Give answer to worker
+    else Cloud AI
+    PoeAPI <-- SearXNG : Give results to AI for final response
+    PoeAPI --> Redis : Store answer as to skip search and research if asked again
+    PoeAPI --> Worker : Give answer to worker
+    end
+
+    Worker --> SearchBoost : Give final answer to user
+ end
+@enduml

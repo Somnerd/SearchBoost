@@ -35,6 +35,7 @@ class AIHandler:
                 self.logger.warning(f"AI Handler : Unknown reason for LLM query: {self.reason}")
                 return ChatDetails.prompt
 
+            self.logger.debug("AI Handler : Calling {}")
             if ChatDetails.config.model.lower() == "cloud" or "gpt" in ChatDetails.config.model.lower() or "poe" in ChatDetails.config.model.lower():
                 self.logger.debug(f"AIHandler : Using cloud AI for query {self.reason}.")
                 optimized_query = await api_client().api_call(ChatDetails)
