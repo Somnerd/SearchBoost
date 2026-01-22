@@ -45,18 +45,30 @@ class RedisSettings(BaseModel):
         from arq.connections import RedisSettings as ArqRedisSettings
         return ArqRedisSettings(host=self.host, port=self.port , password=self.password)
 
+class PostgreSQLSettings(BaseModel):
+    host: str = Field(default="sb_db", description="PostgreSQL server host")
+    port: int = Field(default=5432, description="PostgreSQL server port")
+    user: str = Field(default="searchboost", description="PostgreSQL username")
+    password: str = Field(default="searchboost_pass", description="PostgreSQL password")
+    database: str = Field(default="searchboost_db", description="PostgreSQL database name")
+
+    @property
+    def database_url(self) -> str:
+        return f"postgresql+asyncpg://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
+
 class Configurator(BaseSettings):
     _REGISTRY: Dict[str, Type[BaseModel]] = {
         "local_ai": AISettings,
         "cloud_ai": CloudAISettings,
         "web_search": SearchSettings,
-        "redis": RedisSettings
+        "redis": RedisSettings,
+        "db": PostgreSQLSettings
     }
 
-    # These are the nested models Pydantic will populate from SEARCHBOOST_AI_HOST etc.
     ai: AISettings = Field(default_factory=AISettings)
     search: SearchSettings = Field(default_factory=SearchSettings)
     redis: RedisSettings = Field(default_factory=RedisSettings)
+    db: PostgreSQLSettings = Field(default_factory=PostgreSQLSettings)
 
     model_config = SettingsConfigDict(
         env_prefix="SEARCHBOOST_",
@@ -79,15 +91,16 @@ class Configurator(BaseSettings):
 
         self._logger.info(f"Configurator: Resolving {ai_strategy}, web_search and redis...")
 
-        # Load each component via get_settings to handle merge logic
         ai_settings = await self.get_settings(ai_strategy, cli_overrides=cli_data)
         search_settings = await self.get_settings("web_search", cli_overrides=cli_data)
         redis_settings = await self.get_settings("redis", cli_overrides=cli_data)
+        db_settings = await self.get_settings("db", cli_overrides=cli_data)
 
         return {
             "ai": ai_settings,
             "search": search_settings,
-            "redis": redis_settings
+            "redis": redis_settings,
+            "db": db_settings
         }
 
     async def get_settings(self, config_name: str, cli_overrides: dict = None) -> Any:
@@ -95,18 +108,15 @@ class Configurator(BaseSettings):
         if not model_cls:
             raise ValueError(f"Unknown config: {config_name}")
 
-        # 1. Map config_name to the prefix used in ENV vars
         prefix_map = {
             "local_ai": "AI",
             "cloud_ai": "AI",
             "web_search": "SEARCH",
-            "redis": "REDIS"
+            "redis": "REDIS",
+            "db": "DB"
         }
         prefix = prefix_map.get(config_name)
 
-        # 2. MANUAL ENV OVERRIDE (The "I'm not asking" approach)
-        # We manually check the OS environment for the specific keys
-        # because Pydantic nesting is clearly failing here.
         manual_env_data = {}
         for field_name in model_cls.model_fields.keys():
             env_key = f"SEARCHBOOST_{prefix}_{field_name.upper()}"
@@ -114,17 +124,20 @@ class Configurator(BaseSettings):
             if env_val:
                 manual_env_data[field_name] = env_val
 
-        # 3. Get existing data from Pydantic's internal state
-        attr_map = {"local_ai": "ai", "cloud_ai": "ai", "web_search": "search", "redis": "redis"}
+        attr_map = {
+            "local_ai": "ai",
+             "cloud_ai": "ai",
+             "web_search": "search",
+             "redis": "redis",
+             "db": "db"
+             }
+
         env_instance = getattr(self, attr_map.get(config_name))
         base_data = env_instance.model_dump()
 
-        # 4. Filter CLI overrides
         allowed_keys = model_cls.model_fields.keys()
         filtered_cli = {k: v for k, v in (cli_overrides or {}).items() if k in allowed_keys}
 
-        # 5. Merge Order: Base < Manual Env < CLI
-        # Manual Env is specifically added here to fix the 127.0.0.1 bug
         final_data = {**base_data, **manual_env_data, **filtered_cli}
 
         try:

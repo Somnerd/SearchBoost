@@ -10,6 +10,7 @@ async def startup(ctx):
     ctx['logger'].info("Worker starting up...")
     ctx['config_manager'] = get_configurator(ctx['logger'])
     ctx['logger'].info("Worker context initialized.")
+    await init_db()
 
 async def shutdown(ctx):
     ctx['logger'].info("Worker shutting down...")
@@ -20,30 +21,39 @@ async def run_task(ctx, query: str, args_namespace):
 
     ctx['logger'].info(f"WORKER : Task Received | Query: {query} | JobID: {ctx.get('job_id')}")
 
-    try:
-        ctx['logger'].info(f"WORKER : Initiating configs")
-        settings_bundle = await ctx['config_manager'].initialize(args_namespace)
+    async with AsyncSessionLocal() as session:
+        try:
+            ctx['logger'].info(f"WORKER : Initiating configs")
+            settings_bundle = await ctx['config_manager'].initialize(args_namespace)
 
-        ctx['logger'].info(f"WORKER : Starting Service")
-        service = SearchBoostService(
-            **settings_bundle,
-            logger=ctx['logger'],
-            args=args_namespace
-        )
+            ctx['logger'].info(f"WORKER : Starting Service")
+            service = SearchBoostService(
+                **settings_bundle,
+                logger=ctx['logger'],
+                args=args_namespace
+            )
 
-        ctx['logger'].info(f"WORKER : Running Service")
-        result = await service.run()
+            ctx['logger'].info(f"WORKER : Running Service")
+            result = await service.run()
 
-        ctx['logger'].info(f"WORKER : Serving Results : {result}")
-        ctx['logger'].info(f"Task Successful | JobID: {ctx.get('job_id')}")
-        return result
+            db_service = PersistenceService(session, logger=ctx['logger'])
+            await db_service.save_result(
+                job_id=ctx.get('job_id'),
+                query=query,
+                final_answer=result
+            )
 
-    except Exception as e:
-        ctx['logger'].error(f"Task Failed | JobID: {ctx.get('job_id')} | Error: {e}")
-        raise e
+            ctx['logger'].info(f"WORKER : Serving Results : {result}")
+            ctx['logger'].info(f"Task Successful | JobID: {ctx.get('job_id')}")
 
-    finally:
-        ctx['logger'].setLevel(logging.INFO)
+            return result
+
+        except Exception as e:
+            ctx['logger'].error(f"Task Failed | JobID: {ctx.get('job_id')} | Error: {e}")
+            raise e
+
+        finally:
+            ctx['logger'].setLevel(logging.INFO)
 
 class WorkerSettings:
     functions = [run_task]

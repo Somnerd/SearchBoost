@@ -3,18 +3,23 @@ services:
     build: .
     container_name: sb_worker
     env_file: .env
+    #context: .
+    #dockerfile: Dockerfile
     environment:
       - SEARCHBOOST_REDIS_HOST=sb_redis
       - SEARCHBOOST_AI_HOST=sb_ollama
       - SEARCHBOOST_SEARCH_HOST=sb_searxng
       - PYTHONBUFFERED=1
       - SEARCHBOOST_REDIS_PASSWORD=${REDIS_PASSWORD:-searchboost_pass}
+      - PYTHONPATH=/app
+    command : arq searchboost_src.worker.WorkerSettings
     volumes:
-      - .:/app
+      - ./searchboost_service/app
     depends_on:
       - redis
       - ollama
       - searxng
+      - db
     restart: always
 
   redis:
@@ -44,12 +49,25 @@ services:
     ports:
       - "${SEARXNG_PORT:-8080}:8080"
     volumes:
-      - ./configs:/etc/searxng:ro
+      - ./searchboost_service/configs:/etc/searxng:ro
     environment:
       - SEARXNG_BASE_URL=http://sb_searxng:${SEARXNG_PORT:-8080}/
       - SEARXNG_SETTINGS_PATH=/etc/searxng/searxng_settings.yml
     restart: always
 
+  db:
+      image: postgres:16-alpine
+      container_name: sb_db
+      restart: always
+      environment:
+        - POSTGRES_USER=${DB_USER:-searchboost}
+        - POSTGRES_PASSWORD=${DB_PASSWORD:-searchboost_pass}
+        - POSTGRES_DB=${DB_NAME:-searchboost_db}
+      ports:
+        - "${POSTGRES_PORT:-5432}:5432"
+      volumes:
+        - postgres_data:/var/lib/postgresql/data
 volumes:
   ollama_data:
   redis_data:
+  postgres_data:

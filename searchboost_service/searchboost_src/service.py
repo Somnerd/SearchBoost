@@ -1,4 +1,5 @@
 import asyncio
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from searchboost_src.argparser import Argsparser_Instance
 from searchboost_src.chat_class import ChatDetails
@@ -6,6 +7,7 @@ from searchboost_src.ai_handler import AIHandler
 from searchboost_src.web_search import WebSearch
 from searchboost_src.redis_manager import RedisManager
 from searchboost_src.logger import setup_logger
+from searchboost_src.models import SearchResult
 
 class SearchBoostService:
     def __init__(self ,ai,search,redis,logger=None, args=None):
@@ -24,6 +26,24 @@ class SearchBoostService:
                                             config = self.search_config,
                                             logger=self.logger)
 
+class PersistenceService:
+    def __init__(self, session: AsyncSession, logger=None):
+        self.session = session
+        self.logger = logger or setup_logger(info=False)
+
+    async def save_result(self, job_id: str, query: str, final_answer: str):
+        self.logger.debug(f"PersistenceService: Saving result for Job ID: {job_id}")
+        try:
+            search_result = SearchResult(
+                job_id=job_id,
+                query=query,
+                final_answer=final_answer
+            )
+            self.session.add(search_result)
+            await self.session.commit()
+            self.logger.info(f"PersistenceService: Saved result for Job ID: {job_id}")
+        except Exception as e:
+            self.logger.error(f"PersistenceService: Error saving result for Job ID {job_id}: {e}")
 
     async def debug_logs(self):
         try:
