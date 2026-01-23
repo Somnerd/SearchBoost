@@ -14,7 +14,7 @@ services:
       - PYTHONPATH=/app
     command : arq searchboost_src.worker.WorkerSettings
     volumes:
-      - ./searchboost_service/app
+      - ./searchboost_service:/app
     depends_on:
       - redis
       - ollama

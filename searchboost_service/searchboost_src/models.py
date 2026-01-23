@@ -1,6 +1,6 @@
 from sqlalchemy import Column, String, Text, DateTime
 from datetime import datetime
-from database import Base
+from searchboost_src.database import Base
 
 class SearchResult(Base):
     __tablename__ = "search_results"

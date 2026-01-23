@@ -1,330 +1,280 @@
-Traceback (most recent call last):
-  File "/usr/local/bin/arq", line 7, in <module>
-    sys.exit(cli())
-             ^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1485, in __call__
-    return self.main(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1406, in main
-    rv = self.invoke(ctx)
-         ^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1269, in invoke
-    return ctx.invoke(self.callback, **ctx.params)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 824, in invoke
-    return callback(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/arq/cli.py", line 40, in cli
-    worker_settings_ = cast('WorkerSettingsType', import_string(worker_settings))
-                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/arq/utils.py", line 146, in import_string
-    module = import_module(module_path)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
-    return _bootstrap._gcd_import(name[level:], package, level)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
-  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
-  File "<frozen importlib._bootstrap>", line 1126, in _find_and_load_unlocked
-  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
-  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
-  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
-  File "<frozen importlib._bootstrap>", line 1140, in _find_and_load_unlocked
-ModuleNotFoundError: No module named 'searchboost_src'
-Traceback (most recent call last):
-  File "/usr/local/bin/arq", line 7, in <module>
-    sys.exit(cli())
-             ^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1485, in __call__
-    return self.main(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1406, in main
-    rv = self.invoke(ctx)
-         ^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1269, in invoke
-    return ctx.invoke(self.callback, **ctx.params)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 824, in invoke
-    return callback(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/arq/cli.py", line 40, in cli
-    worker_settings_ = cast('WorkerSettingsType', import_string(worker_settings))
-                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/arq/utils.py", line 146, in import_string
-    module = import_module(module_path)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
-    return _bootstrap._gcd_import(name[level:], package, level)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
-  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
-  File "<frozen importlib._bootstrap>", line 1126, in _find_and_load_unlocked
-  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
-  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
-  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
-  File "<frozen importlib._bootstrap>", line 1140, in _find_and_load_unlocked
-ModuleNotFoundError: No module named 'searchboost_src'
-Traceback (most recent call last):
-  File "/usr/local/bin/arq", line 7, in <module>
-    sys.exit(cli())
-             ^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1485, in __call__
-    return self.main(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1406, in main
-    rv = self.invoke(ctx)
-         ^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1269, in invoke
-    return ctx.invoke(self.callback, **ctx.params)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 824, in invoke
-    return callback(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/arq/cli.py", line 40, in cli
-    worker_settings_ = cast('WorkerSettingsType', import_string(worker_settings))
-                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/arq/utils.py", line 146, in import_string
-    module = import_module(module_path)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
-    return _bootstrap._gcd_import(name[level:], package, level)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
-  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
-  File "<frozen importlib._bootstrap>", line 1126, in _find_and_load_unlocked
-  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
-  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
-  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
-  File "<frozen importlib._bootstrap>", line 1140, in _find_and_load_unlocked
-ModuleNotFoundError: No module named 'searchboost_src'
-Traceback (most recent call last):
-  File "/usr/local/bin/arq", line 7, in <module>
-    sys.exit(cli())
-             ^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1485, in __call__
-    return self.main(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1406, in main
-    rv = self.invoke(ctx)
-         ^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1269, in invoke
-    return ctx.invoke(self.callback, **ctx.params)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 824, in invoke
-    return callback(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/arq/cli.py", line 40, in cli
-    worker_settings_ = cast('WorkerSettingsType', import_string(worker_settings))
-                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/arq/utils.py", line 146, in import_string
-    module = import_module(module_path)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
-    return _bootstrap._gcd_import(name[level:], package, level)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
-  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
-  File "<frozen importlib._bootstrap>", line 1126, in _find_and_load_unlocked
-  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
-  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
-  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
-  File "<frozen importlib._bootstrap>", line 1140, in _find_and_load_unlocked
-ModuleNotFoundError: No module named 'searchboost_src'
-Traceback (most recent call last):
-  File "/usr/local/bin/arq", line 7, in <module>
-    sys.exit(cli())
-             ^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1485, in __call__
-    return self.main(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1406, in main
-    rv = self.invoke(ctx)
-         ^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1269, in invoke
-    return ctx.invoke(self.callback, **ctx.params)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 824, in invoke
-    return callback(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/arq/cli.py", line 40, in cli
-    worker_settings_ = cast('WorkerSettingsType', import_string(worker_settings))
-                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/arq/utils.py", line 146, in import_string
-    module = import_module(module_path)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
-    return _bootstrap._gcd_import(name[level:], package, level)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
-  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
-  File "<frozen importlib._bootstrap>", line 1126, in _find_and_load_unlocked
-  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
-  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
-  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
-  File "<frozen importlib._bootstrap>", line 1140, in _find_and_load_unlocked
-ModuleNotFoundError: No module named 'searchboost_src'
-Traceback (most recent call last):
-  File "/usr/local/bin/arq", line 7, in <module>
-    sys.exit(cli())
-             ^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1485, in __call__
-    return self.main(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1406, in main
-    rv = self.invoke(ctx)
-         ^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1269, in invoke
-    return ctx.invoke(self.callback, **ctx.params)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 824, in invoke
-    return callback(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/arq/cli.py", line 40, in cli
-    worker_settings_ = cast('WorkerSettingsType', import_string(worker_settings))
-                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/arq/utils.py", line 146, in import_string
-    module = import_module(module_path)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
-    return _bootstrap._gcd_import(name[level:], package, level)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
-  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
-  File "<frozen importlib._bootstrap>", line 1126, in _find_and_load_unlocked
-  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
-  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
-  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
-  File "<frozen importlib._bootstrap>", line 1140, in _find_and_load_unlocked
-ModuleNotFoundError: No module named 'searchboost_src'
-Traceback (most recent call last):
-  File "/usr/local/bin/arq", line 7, in <module>
-    sys.exit(cli())
-             ^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1485, in __call__
-    return self.main(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1406, in main
-    rv = self.invoke(ctx)
-         ^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1269, in invoke
-    return ctx.invoke(self.callback, **ctx.params)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 824, in invoke
-    return callback(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/arq/cli.py", line 40, in cli
-    worker_settings_ = cast('WorkerSettingsType', import_string(worker_settings))
-                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/arq/utils.py", line 146, in import_string
-    module = import_module(module_path)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
-    return _bootstrap._gcd_import(name[level:], package, level)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
-  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
-  File "<frozen importlib._bootstrap>", line 1126, in _find_and_load_unlocked
-  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
-  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
-  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
-  File "<frozen importlib._bootstrap>", line 1140, in _find_and_load_unlocked
-ModuleNotFoundError: No module named 'searchboost_src'
-Traceback (most recent call last):
-  File "/usr/local/bin/arq", line 7, in <module>
-    sys.exit(cli())
-             ^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1485, in __call__
-    return self.main(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1406, in main
-    rv = self.invoke(ctx)
-         ^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1269, in invoke
-    return ctx.invoke(self.callback, **ctx.params)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 824, in invoke
-    return callback(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/arq/cli.py", line 40, in cli
-    worker_settings_ = cast('WorkerSettingsType', import_string(worker_settings))
-                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/arq/utils.py", line 146, in import_string
-    module = import_module(module_path)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
-    return _bootstrap._gcd_import(name[level:], package, level)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
-  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
-  File "<frozen importlib._bootstrap>", line 1126, in _find_and_load_unlocked
-  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
-  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
-  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
-  File "<frozen importlib._bootstrap>", line 1140, in _find_and_load_unlocked
-ModuleNotFoundError: No module named 'searchboost_src'
-Traceback (most recent call last):
-  File "/usr/local/bin/arq", line 7, in <module>
-    sys.exit(cli())
-             ^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1485, in __call__
-    return self.main(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1406, in main
-    rv = self.invoke(ctx)
-         ^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1269, in invoke
-    return ctx.invoke(self.callback, **ctx.params)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 824, in invoke
-    return callback(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/arq/cli.py", line 40, in cli
-    worker_settings_ = cast('WorkerSettingsType', import_string(worker_settings))
-                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/arq/utils.py", line 146, in import_string
-    module = import_module(module_path)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
-    return _bootstrap._gcd_import(name[level:], package, level)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
-  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
-  File "<frozen importlib._bootstrap>", line 1126, in _find_and_load_unlocked
-  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
-  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
-  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
-  File "<frozen importlib._bootstrap>", line 1140, in _find_and_load_unlocked
-ModuleNotFoundError: No module named 'searchboost_src'
-Traceback (most recent call last):
-  File "/usr/local/bin/arq", line 7, in <module>
-    sys.exit(cli())
-             ^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1485, in __call__
-    return self.main(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1406, in main
-    rv = self.invoke(ctx)
-         ^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1269, in invoke
-    return ctx.invoke(self.callback, **ctx.params)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/click/core.py", line 824, in invoke
-    return callback(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/arq/cli.py", line 40, in cli
-    worker_settings_ = cast('WorkerSettingsType', import_string(worker_settings))
-                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/site-packages/arq/utils.py", line 146, in import_string
-    module = import_module(module_path)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
-    return _bootstrap._gcd_import(name[level:], package, level)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
-  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
-  File "<frozen importlib._bootstrap>", line 1126, in _find_and_load_unlocked
-  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
-  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
-  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
-  File "<frozen importlib._bootstrap>", line 1140, in _find_and_load_unlocked
-ModuleNotFoundError: No module named 'searchboost_src'
+2026-01-23T21:59:07.230497337Z Traceback (most recent call last):
+2026-01-23T21:59:07.230529763Z   File "/usr/local/bin/arq", line 7, in <module>
+2026-01-23T21:59:07.230534209Z     sys.exit(cli())
+2026-01-23T21:59:07.230537071Z              ^^^^^
+2026-01-23T21:59:07.230539564Z   File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1485, in __call__
+2026-01-23T21:59:07.230731743Z     return self.main(*args, **kwargs)
+2026-01-23T21:59:07.230738709Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:07.230741562Z   File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1406, in main
+2026-01-23T21:59:07.230961592Z     rv = self.invoke(ctx)
+2026-01-23T21:59:07.230967838Z          ^^^^^^^^^^^^^^^^
+2026-01-23T21:59:07.230969935Z   File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1269, in invoke
+2026-01-23T21:59:07.231158401Z     return ctx.invoke(self.callback, **ctx.params)
+2026-01-23T21:59:07.231164233Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:07.231166474Z   File "/usr/local/lib/python3.11/site-packages/click/core.py", line 824, in invoke
+2026-01-23T21:59:07.231364682Z     return callback(*args, **kwargs)
+2026-01-23T21:59:07.231371243Z            ^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:07.231374123Z   File "/usr/local/lib/python3.11/site-packages/arq/cli.py", line 40, in cli
+2026-01-23T21:59:07.231452414Z     worker_settings_ = cast('WorkerSettingsType', import_string(worker_settings))
+2026-01-23T21:59:07.231490572Z                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:07.231504064Z   File "/usr/local/lib/python3.11/site-packages/arq/utils.py", line 146, in import_string
+2026-01-23T21:59:07.231671309Z     module = import_module(module_path)
+2026-01-23T21:59:07.231678005Z              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:07.231680750Z   File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+2026-01-23T21:59:07.231854286Z     return _bootstrap._gcd_import(name[level:], package, level)
+2026-01-23T21:59:07.231860622Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:07.231863124Z   File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+2026-01-23T21:59:07.231865572Z   File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+2026-01-23T21:59:07.231867849Z   File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+2026-01-23T21:59:07.231869928Z   File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+2026-01-23T21:59:07.231871944Z   File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+2026-01-23T21:59:07.231874113Z   File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+2026-01-23T21:59:07.231876165Z   File "/app/searchboost_src/worker.py", line 4, in <module>
+2026-01-23T21:59:07.231956129Z     from searchboost_src.service import SearchBoostService
+2026-01-23T21:59:07.231962240Z   File "/app/searchboost_src/service.py", line 10, in <module>
+2026-01-23T21:59:07.231964697Z     from searchboost_src.models import SearchResult
+2026-01-23T21:59:07.231966785Z   File "/app/searchboost_src/models.py", line 3, in <module>
+2026-01-23T21:59:07.232090577Z     from searchboost_src.database import Base
+2026-01-23T21:59:07.232097066Z   File "/app/searchboost_src/database.py", line 3, in <module>
+2026-01-23T21:59:07.232099532Z     from searchboost_src.configurator import settings
+2026-01-23T21:59:07.232101647Z ImportError: cannot import name 'settings' from 'searchboost_src.configurator' (/app/searchboost_src/configurator.py)
+2026-01-23T21:59:08.510971463Z Traceback (most recent call last):
+2026-01-23T21:59:08.511016687Z   File "/usr/local/bin/arq", line 7, in <module>
+2026-01-23T21:59:08.511027739Z     sys.exit(cli())
+2026-01-23T21:59:08.511032869Z              ^^^^^
+2026-01-23T21:59:08.511037198Z   File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1485, in __call__
+2026-01-23T21:59:08.511150890Z     return self.main(*args, **kwargs)
+2026-01-23T21:59:08.511163256Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:08.511168710Z   File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1406, in main
+2026-01-23T21:59:08.511651723Z     rv = self.invoke(ctx)
+2026-01-23T21:59:08.511662586Z          ^^^^^^^^^^^^^^^^
+2026-01-23T21:59:08.511667095Z   File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1269, in invoke
+2026-01-23T21:59:08.511830434Z     return ctx.invoke(self.callback, **ctx.params)
+2026-01-23T21:59:08.511841558Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:08.511868798Z   File "/usr/local/lib/python3.11/site-packages/click/core.py", line 824, in invoke
+2026-01-23T21:59:08.512065621Z     return callback(*args, **kwargs)
+2026-01-23T21:59:08.512108847Z            ^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:08.512121591Z   File "/usr/local/lib/python3.11/site-packages/arq/cli.py", line 40, in cli
+2026-01-23T21:59:08.512195228Z     worker_settings_ = cast('WorkerSettingsType', import_string(worker_settings))
+2026-01-23T21:59:08.512255230Z                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:08.512264446Z   File "/usr/local/lib/python3.11/site-packages/arq/utils.py", line 146, in import_string
+2026-01-23T21:59:08.512470769Z     module = import_module(module_path)
+2026-01-23T21:59:08.512483305Z              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:08.512488462Z   File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+2026-01-23T21:59:08.512723679Z     return _bootstrap._gcd_import(name[level:], package, level)
+2026-01-23T21:59:08.512730276Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:08.512733111Z   File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+2026-01-23T21:59:08.512735586Z   File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+2026-01-23T21:59:08.512772263Z   File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+2026-01-23T21:59:08.512780345Z   File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+2026-01-23T21:59:08.512784017Z   File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+2026-01-23T21:59:08.512786807Z   File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+2026-01-23T21:59:08.512789660Z   File "/app/searchboost_src/worker.py", line 4, in <module>
+2026-01-23T21:59:08.512928602Z     from searchboost_src.service import SearchBoostService
+2026-01-23T21:59:08.512937674Z   File "/app/searchboost_src/service.py", line 10, in <module>
+2026-01-23T21:59:08.513007214Z     from searchboost_src.models import SearchResult
+2026-01-23T21:59:08.513015440Z   File "/app/searchboost_src/models.py", line 3, in <module>
+2026-01-23T21:59:08.513129123Z     from searchboost_src.database import Base
+2026-01-23T21:59:08.513135927Z   File "/app/searchboost_src/database.py", line 3, in <module>
+2026-01-23T21:59:08.513214231Z     from searchboost_src.configurator import settings
+2026-01-23T21:59:08.513220720Z ImportError: cannot import name 'settings' from 'searchboost_src.configurator' (/app/searchboost_src/configurator.py)
+2026-01-23T21:59:09.902555688Z Traceback (most recent call last):
+2026-01-23T21:59:09.902581679Z   File "/usr/local/bin/arq", line 7, in <module>
+2026-01-23T21:59:09.902586998Z     sys.exit(cli())
+2026-01-23T21:59:09.902590634Z              ^^^^^
+2026-01-23T21:59:09.902594085Z   File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1485, in __call__
+2026-01-23T21:59:09.902935250Z     return self.main(*args, **kwargs)
+2026-01-23T21:59:09.902946717Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:09.902950546Z   File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1406, in main
+2026-01-23T21:59:09.903243772Z     rv = self.invoke(ctx)
+2026-01-23T21:59:09.903253795Z          ^^^^^^^^^^^^^^^^
+2026-01-23T21:59:09.903258314Z   File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1269, in invoke
+2026-01-23T21:59:09.903530028Z     return ctx.invoke(self.callback, **ctx.params)
+2026-01-23T21:59:09.903542232Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:09.903547920Z   File "/usr/local/lib/python3.11/site-packages/click/core.py", line 824, in invoke
+2026-01-23T21:59:09.903775321Z     return callback(*args, **kwargs)
+2026-01-23T21:59:09.903781994Z            ^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:09.903784865Z   File "/usr/local/lib/python3.11/site-packages/arq/cli.py", line 40, in cli
+2026-01-23T21:59:09.903944786Z     worker_settings_ = cast('WorkerSettingsType', import_string(worker_settings))
+2026-01-23T21:59:09.903951477Z                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:09.903959484Z   File "/usr/local/lib/python3.11/site-packages/arq/utils.py", line 146, in import_string
+2026-01-23T21:59:09.904130934Z     module = import_module(module_path)
+2026-01-23T21:59:09.904137597Z              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:09.904139833Z   File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+2026-01-23T21:59:09.904286239Z     return _bootstrap._gcd_import(name[level:], package, level)
+2026-01-23T21:59:09.904293344Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:09.904296160Z   File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+2026-01-23T21:59:09.904298682Z   File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+2026-01-23T21:59:09.904301020Z   File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+2026-01-23T21:59:09.904303146Z   File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+2026-01-23T21:59:09.904305189Z   File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+2026-01-23T21:59:09.904307269Z   File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+2026-01-23T21:59:09.904309376Z   File "/app/searchboost_src/worker.py", line 4, in <module>
+2026-01-23T21:59:09.904449665Z     from searchboost_src.service import SearchBoostService
+2026-01-23T21:59:09.904456291Z   File "/app/searchboost_src/service.py", line 10, in <module>
+2026-01-23T21:59:09.904458831Z     from searchboost_src.models import SearchResult
+2026-01-23T21:59:09.904460967Z   File "/app/searchboost_src/models.py", line 3, in <module>
+2026-01-23T21:59:09.904508862Z     from searchboost_src.database import Base
+2026-01-23T21:59:09.904514421Z   File "/app/searchboost_src/database.py", line 3, in <module>
+2026-01-23T21:59:09.904639589Z     from searchboost_src.configurator import settings
+2026-01-23T21:59:09.904646031Z ImportError: cannot import name 'settings' from 'searchboost_src.configurator' (/app/searchboost_src/configurator.py)
+2026-01-23T21:59:11.428683359Z Traceback (most recent call last):
+2026-01-23T21:59:11.428714191Z   File "/usr/local/bin/arq", line 7, in <module>
+2026-01-23T21:59:11.428719363Z     sys.exit(cli())
+2026-01-23T21:59:11.428723192Z              ^^^^^
+2026-01-23T21:59:11.428737577Z   File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1485, in __call__
+2026-01-23T21:59:11.428977200Z     return self.main(*args, **kwargs)
+2026-01-23T21:59:11.428983707Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:11.428986100Z   File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1406, in main
+2026-01-23T21:59:11.429254374Z     rv = self.invoke(ctx)
+2026-01-23T21:59:11.429261433Z          ^^^^^^^^^^^^^^^^
+2026-01-23T21:59:11.429264314Z   File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1269, in invoke
+2026-01-23T21:59:11.429480312Z     return ctx.invoke(self.callback, **ctx.params)
+2026-01-23T21:59:11.429490132Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:11.429492534Z   File "/usr/local/lib/python3.11/site-packages/click/core.py", line 824, in invoke
+2026-01-23T21:59:11.429714983Z     return callback(*args, **kwargs)
+2026-01-23T21:59:11.429720901Z            ^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:11.429723147Z   File "/usr/local/lib/python3.11/site-packages/arq/cli.py", line 40, in cli
+2026-01-23T21:59:11.429819255Z     worker_settings_ = cast('WorkerSettingsType', import_string(worker_settings))
+2026-01-23T21:59:11.429865843Z                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:11.429871227Z   File "/usr/local/lib/python3.11/site-packages/arq/utils.py", line 146, in import_string
+2026-01-23T21:59:11.430013914Z     module = import_module(module_path)
+2026-01-23T21:59:11.430020522Z              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:11.430023422Z   File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+2026-01-23T21:59:11.430184184Z     return _bootstrap._gcd_import(name[level:], package, level)
+2026-01-23T21:59:11.430190424Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:11.430192845Z   File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+2026-01-23T21:59:11.430195247Z   File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+2026-01-23T21:59:11.430197520Z   File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+2026-01-23T21:59:11.430199729Z   File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+2026-01-23T21:59:11.430201846Z   File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+2026-01-23T21:59:11.430203935Z   File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+2026-01-23T21:59:11.430206034Z   File "/app/searchboost_src/worker.py", line 4, in <module>
+2026-01-23T21:59:11.430355043Z     from searchboost_src.service import SearchBoostService
+2026-01-23T21:59:11.430361541Z   File "/app/searchboost_src/service.py", line 10, in <module>
+2026-01-23T21:59:11.430372779Z     from searchboost_src.models import SearchResult
+2026-01-23T21:59:11.430375144Z   File "/app/searchboost_src/models.py", line 3, in <module>
+2026-01-23T21:59:11.430429132Z     from searchboost_src.database import Base
+2026-01-23T21:59:11.430435298Z   File "/app/searchboost_src/database.py", line 3, in <module>
+2026-01-23T21:59:11.430437783Z     from searchboost_src.configurator import settings
+2026-01-23T21:59:11.430439965Z ImportError: cannot import name 'settings' from 'searchboost_src.configurator' (/app/searchboost_src/configurator.py)
+2026-01-23T21:59:13.345004023Z Traceback (most recent call last):
+2026-01-23T21:59:13.345031625Z   File "/usr/local/bin/arq", line 7, in <module>
+2026-01-23T21:59:13.345036834Z     sys.exit(cli())
+2026-01-23T21:59:13.345040562Z              ^^^^^
+2026-01-23T21:59:13.345044261Z   File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1485, in __call__
+2026-01-23T21:59:13.345288321Z     return self.main(*args, **kwargs)
+2026-01-23T21:59:13.345299890Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:13.345303948Z   File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1406, in main
+2026-01-23T21:59:13.345573120Z     rv = self.invoke(ctx)
+2026-01-23T21:59:13.345587100Z          ^^^^^^^^^^^^^^^^
+2026-01-23T21:59:13.345592686Z   File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1269, in invoke
+2026-01-23T21:59:13.345794897Z     return ctx.invoke(self.callback, **ctx.params)
+2026-01-23T21:59:13.345806696Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:13.345811574Z   File "/usr/local/lib/python3.11/site-packages/click/core.py", line 824, in invoke
+2026-01-23T21:59:13.345982323Z     return callback(*args, **kwargs)
+2026-01-23T21:59:13.345991987Z            ^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:13.345996082Z   File "/usr/local/lib/python3.11/site-packages/arq/cli.py", line 40, in cli
+2026-01-23T21:59:13.346023205Z     worker_settings_ = cast('WorkerSettingsType', import_string(worker_settings))
+2026-01-23T21:59:13.346110795Z                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:13.346122576Z   File "/usr/local/lib/python3.11/site-packages/arq/utils.py", line 146, in import_string
+2026-01-23T21:59:13.346299905Z     module = import_module(module_path)
+2026-01-23T21:59:13.346310434Z              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:13.346314851Z   File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+2026-01-23T21:59:13.346405304Z     return _bootstrap._gcd_import(name[level:], package, level)
+2026-01-23T21:59:13.346473948Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:13.346483658Z   File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+2026-01-23T21:59:13.346499488Z   File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+2026-01-23T21:59:13.346502166Z   File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+2026-01-23T21:59:13.346504310Z   File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+2026-01-23T21:59:13.346506400Z   File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+2026-01-23T21:59:13.346508553Z   File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+2026-01-23T21:59:13.346510854Z   File "/app/searchboost_src/worker.py", line 4, in <module>
+2026-01-23T21:59:13.346595324Z     from searchboost_src.service import SearchBoostService
+2026-01-23T21:59:13.346601546Z   File "/app/searchboost_src/service.py", line 10, in <module>
+2026-01-23T21:59:13.346604206Z     from searchboost_src.models import SearchResult
+2026-01-23T21:59:13.346606387Z   File "/app/searchboost_src/models.py", line 3, in <module>
+2026-01-23T21:59:13.346689743Z     from searchboost_src.database import Base
+2026-01-23T21:59:13.346696149Z   File "/app/searchboost_src/database.py", line 3, in <module>
+2026-01-23T21:59:13.346730165Z     from searchboost_src.configurator import settings
+2026-01-23T21:59:13.346735522Z ImportError: cannot import name 'settings' from 'searchboost_src.configurator' (/app/searchboost_src/configurator.py)
+2026-01-23T21:59:16.028854799Z Traceback (most recent call last):
+2026-01-23T21:59:16.028883468Z   File "/usr/local/bin/arq", line 7, in <module>
+2026-01-23T21:59:16.028889376Z     sys.exit(cli())
+2026-01-23T21:59:16.028893978Z              ^^^^^
+2026-01-23T21:59:16.028898331Z   File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1485, in __call__
+2026-01-23T21:59:16.029124646Z     return self.main(*args, **kwargs)
+2026-01-23T21:59:16.029138093Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:16.029143808Z   File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1406, in main
+2026-01-23T21:59:16.029489640Z     rv = self.invoke(ctx)
+2026-01-23T21:59:16.029501274Z          ^^^^^^^^^^^^^^^^
+2026-01-23T21:59:16.029505691Z   File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1269, in invoke
+2026-01-23T21:59:16.029728067Z     return ctx.invoke(self.callback, **ctx.params)
+2026-01-23T21:59:16.029770012Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:16.029780265Z   File "/usr/local/lib/python3.11/site-packages/click/core.py", line 824, in invoke
+2026-01-23T21:59:16.029983208Z     return callback(*args, **kwargs)
+2026-01-23T21:59:16.029993037Z            ^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:16.029996857Z   File "/usr/local/lib/python3.11/site-packages/arq/cli.py", line 40, in cli
+2026-01-23T21:59:16.030073447Z     worker_settings_ = cast('WorkerSettingsType', import_string(worker_settings))
+2026-01-23T21:59:16.030119825Z                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:16.030163651Z   File "/usr/local/lib/python3.11/site-packages/arq/utils.py", line 146, in import_string
+2026-01-23T21:59:16.030290118Z     module = import_module(module_path)
+2026-01-23T21:59:16.030296993Z              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:16.030299368Z   File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+2026-01-23T21:59:16.030459693Z     return _bootstrap._gcd_import(name[level:], package, level)
+2026-01-23T21:59:16.030466172Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:16.030469035Z   File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+2026-01-23T21:59:16.030471529Z   File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+2026-01-23T21:59:16.030473765Z   File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+2026-01-23T21:59:16.030475910Z   File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+2026-01-23T21:59:16.030478091Z   File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+2026-01-23T21:59:16.030480189Z   File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+2026-01-23T21:59:16.030482260Z   File "/app/searchboost_src/worker.py", line 4, in <module>
+2026-01-23T21:59:16.030612021Z     from searchboost_src.service import SearchBoostService
+2026-01-23T21:59:16.030618537Z   File "/app/searchboost_src/service.py", line 10, in <module>
+2026-01-23T21:59:16.030621666Z     from searchboost_src.models import SearchResult
+2026-01-23T21:59:16.030623940Z   File "/app/searchboost_src/models.py", line 3, in <module>
+2026-01-23T21:59:16.030635536Z     from searchboost_src.database import Base
+2026-01-23T21:59:16.030638012Z   File "/app/searchboost_src/database.py", line 3, in <module>
+2026-01-23T21:59:16.030800206Z     from searchboost_src.configurator import settings
+2026-01-23T21:59:16.030806584Z ImportError: cannot import name 'settings' from 'searchboost_src.configurator' (/app/searchboost_src/configurator.py)
+2026-01-23T21:59:20.361048229Z Traceback (most recent call last):
+2026-01-23T21:59:20.361078538Z   File "/usr/local/bin/arq", line 7, in <module>
+2026-01-23T21:59:20.361084775Z     sys.exit(cli())
+2026-01-23T21:59:20.361089616Z              ^^^^^
+2026-01-23T21:59:20.361094117Z   File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1485, in __call__
+2026-01-23T21:59:20.361342796Z     return self.main(*args, **kwargs)
+2026-01-23T21:59:20.361356450Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:20.361416737Z   File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1406, in main
+2026-01-23T21:59:20.361641914Z     rv = self.invoke(ctx)
+2026-01-23T21:59:20.361650199Z          ^^^^^^^^^^^^^^^^
+2026-01-23T21:59:20.361653907Z   File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1269, in invoke
+2026-01-23T21:59:20.361844088Z     return ctx.invoke(self.callback, **ctx.params)
+2026-01-23T21:59:20.361851099Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:20.361854006Z   File "/usr/local/lib/python3.11/site-packages/click/core.py", line 824, in invoke
+2026-01-23T21:59:20.362037840Z     return callback(*args, **kwargs)
+2026-01-23T21:59:20.362044454Z            ^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:20.362047096Z   File "/usr/local/lib/python3.11/site-packages/arq/cli.py", line 40, in cli
+2026-01-23T21:59:20.362094334Z     worker_settings_ = cast('WorkerSettingsType', import_string(worker_settings))
+2026-01-23T21:59:20.362191078Z                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:20.362226654Z   File "/usr/local/lib/python3.11/site-packages/arq/utils.py", line 146, in import_string
+2026-01-23T21:59:20.362430819Z     module = import_module(module_path)
+2026-01-23T21:59:20.362437245Z              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:20.362439632Z   File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+2026-01-23T21:59:20.362615096Z     return _bootstrap._gcd_import(name[level:], package, level)
+2026-01-23T21:59:20.362621645Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-23T21:59:20.362624542Z   File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+2026-01-23T21:59:20.362627070Z   File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+2026-01-23T21:59:20.362629505Z   File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+2026-01-23T21:59:20.362632053Z   File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+2026-01-23T21:59:20.362634223Z   File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+2026-01-23T21:59:20.362665859Z   File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+2026-01-23T21:59:20.362672550Z   File "/app/searchboost_src/worker.py", line 4, in <module>
+2026-01-23T21:59:20.362774251Z     from searchboost_src.service import SearchBoostService
+2026-01-23T21:59:20.362780715Z   File "/app/searchboost_src/service.py", line 10, in <module>
+2026-01-23T21:59:20.362783461Z     from searchboost_src.models import SearchResult
+2026-01-23T21:59:20.362785669Z   File "/app/searchboost_src/models.py", line 3, in <module>
+2026-01-23T21:59:20.362872562Z     from searchboost_src.database import Base
+2026-01-23T21:59:20.362923696Z   File "/app/searchboost_src/database.py", line 3, in <module>
+2026-01-23T21:59:20.362930519Z     from searchboost_src.configurator import settings
+2026-01-23T21:59:20.362933161Z ImportError: cannot import name 'settings' from 'searchboost_src.configurator' (/app/searchboost_src/configurator.py)

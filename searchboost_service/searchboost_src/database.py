@@ -1,11 +1,10 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
-from searchboost_src.configurator import settings
+from searchboost_src.configurator import PostgreSQLSettings
 
 Base = declarative_base()
 
-engine = create_async_engine(settings.pg_url, pool_size=10, max_overflow=20)
-
+engine = create_async_engine(PostgreSQLSettings.database_url(), pool_size=10, max_overflow=20)
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,
     class_=AsyncSession,
