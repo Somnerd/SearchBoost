@@ -10,14 +10,15 @@ from searchboost_src.logger import setup_logger
 from searchboost_src.models import SearchResult
 
 class SearchBoostService:
-    def __init__(self ,ai,search,redis,logger=None, args=None):
-        #self.logger = logger or setup_logger(info=False)
+    def __init__(self ,ai,search,redis,db,logger=None, args=None):
+        self.logger = logger or setup_logger(info=False)
         #self.session = session or AsyncSession = None
         self.args = args
 
         self.ai_config = ai
         self.search_config = search
         self.redis_config = redis
+        self.db_config = db
 
         self.cache = RedisManager(self.redis_config,self.logger)
 

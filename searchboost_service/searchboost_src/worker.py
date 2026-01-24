@@ -1,63 +1,76 @@
-import asyncio , logging
+import asyncio, logging
 from arq.connections import RedisSettings
-from searchboost_src.configurator import Configurator,get_configurator
+from searchboost_src.configurator import get_configurator
 from searchboost_src.service import SearchBoostService
 from searchboost_src.logger import setup_logger
+from searchboost_src.database import DatabaseManager
+from searchboost_src.service import PersistenceService
 
-async def startup(ctx):
+class Worker:
+    def __init__(self):
+        self.db_manager = None
+        self.settings_bundle = None
 
-    ctx['logger'] = setup_logger("INFO")
-    ctx['logger'].info("Worker starting up...")
-    ctx['config_manager'] = get_configurator(ctx['logger'])
-    ctx['logger'].info("Worker context initialized.")
-    await init_db()
+    async def _ensure_db_ready(self, db_settings, log):
+        if self.db_manager is None:
+            log.info("WORKER: Configuring Database Manager for the first time...")
+            self.db_manager = DatabaseManager(db_settings)
+            await self.db_manager.init_db()
+            log.info("WORKER: Database connection and schema verified.")
+        else:
+            log.info("WORKER: Database Manager already configured.")
 
-async def shutdown(ctx):
-    ctx['logger'].info("Worker shutting down...")
+    async def startup(self, ctx):
+        ctx['logger'] = setup_logger("INFO")
+        ctx['logger'].info("WORKER : Worker starting up...")
+        self.config_manager = get_configurator(ctx['logger'])
+        ctx['logger'].info("""WORKER : Configurator initialized.
+                            Ready to process tasks.""")
+        ctx['logger'].debug(f"WORKER : config_manager set : {self.config_manager}")
 
-async def run_task(ctx, query: str, args_namespace):
-    new_level = args_namespace.info.upper()
-    ctx['logger'].setLevel(new_level)
+    async def shutdown(self, ctx):
+        ctx['logger'].info("WORKER : Worker shutting down...")
 
-    ctx['logger'].info(f"WORKER : Task Received | Query: {query} | JobID: {ctx.get('job_id')}")
+    async def run_task(self, ctx, query: str, args_namespace):
+        log = ctx['logger']
 
-    async with AsyncSessionLocal() as session:
-        try:
-            ctx['logger'].info(f"WORKER : Initiating configs")
-            settings_bundle = await ctx['config_manager'].initialize(args_namespace)
+        self.settings_bundle = await self.config_manager.initialize(args_namespace)
+        await self._ensure_db_ready(self.settings_bundle['db'], log)
 
-            ctx['logger'].info(f"WORKER : Starting Service")
-            service = SearchBoostService(
-                **settings_bundle,
-                logger=ctx['logger'],
-                args=args_namespace
-            )
+        new_level = args_namespace.info.upper()
+        log.setLevel(new_level)
 
-            ctx['logger'].info(f"WORKER : Running Service")
-            result = await service.run()
+        log.info(f"WORKER : Task Received | Query: {query} | JobID: {ctx.get('job_id')}")
 
-            db_service = PersistenceService(session, logger=ctx['logger'])
-            await db_service.save_result(
-                job_id=ctx.get('job_id'),
-                query=query,
-                final_answer=result
-            )
+        async with self.db_manager.get_session() as session:
+            try:
+                service = SearchBoostService(
+                    **self.settings_bundle,
+                    logger=log,
+                    args=args_namespace
+                )
 
-            ctx['logger'].info(f"WORKER : Serving Results : {result}")
-            ctx['logger'].info(f"Task Successful | JobID: {ctx.get('job_id')}")
+                result = await service.run()
 
-            return result
+                db_service = PersistenceService(session, logger=log)
+                await db_service.save_result(
+                    job_id=ctx.get('job_id'),
+                    query=query,
+                    final_answer=result
+                )
 
-        except Exception as e:
-            ctx['logger'].error(f"Task Failed | JobID: {ctx.get('job_id')} | Error: {e}")
-            raise e
+                return result
+            except Exception as e:
+                log.error(f"Task Failed | Error: {e}")
+                raise e
+            finally:
+                log.setLevel(logging.INFO)
 
-        finally:
-            ctx['logger'].setLevel(logging.INFO)
+worker_logic = Worker()
 
 class WorkerSettings:
-    functions = [run_task]
-    on_startup = startup
-    on_shutdown = shutdown
+    functions = [worker_logic.run_task]
+    on_startup = worker_logic.startup
+    on_shutdown = worker_logic.shutdown
 
     redis_settings = get_configurator().redis.arq_settings

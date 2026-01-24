@@ -16,8 +16,6 @@ async def main():
     logger = setup_logger(args.info)
     logger.info("Starting SearchBoost Service...")
 
-    #config = get_configurator(logger=logger)
-
     try:
         logger.debug("MAIN : RUNNING SERVICE ")
 
@@ -26,14 +24,12 @@ async def main():
         bundle = await config.initialize(args)
         redis_pool = await create_pool(bundle['redis'].arq_settings)
 
-        job = await redis_pool.enqueue_job('run_task', args.query, args)
+        job = await redis_pool.enqueue_job('Worker.run_task', args.query, args)
         logger.info(f"Research job submitted! ID: {job.job_id}")
 
-
         try:
-            status = await job.status()
-
-            final_answer = await job.result()
+            logger.info("MAIN : Waiting for job to complete...")
+            final_answer = await job.result(timeout=60, poll_delay=5)
 
             separator = "=" * 50
             logger.info(f"""{separator}
@@ -41,7 +37,6 @@ async def main():
             {separator}""")
         except Exception as e:
             logger.error(f"MAIN: Error retrieving job result : {e}")
-        #await asyncio.sleep(1)
 
     except Exception as e:
         logger.error(f"MAIN : CRITICAL:{e}")
