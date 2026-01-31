@@ -1,0 +1,7 @@
+{
+    "host": "sb_db",
+    "port": 5432,
+    "user": "searchboost",
+    "password": "searchboost_pass",
+    "database": "searchboost_db"
+}

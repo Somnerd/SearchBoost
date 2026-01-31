@@ -1,4 +1,5 @@
 import json , logging , os , aiofiles
+from pathlib import Path
 from typing import Type, Dict, Any, TypeVar , Optional
 from pydantic import BaseModel , Field
 from pydantic_settings import BaseSettings , SettingsConfigDict
@@ -83,6 +84,20 @@ class Configurator(BaseSettings):
     def __init__(self, logger=None, **values):
         super().__init__(**values)
         self._logger = logger or logging.getLogger("logger")
+        self._is_docker = os.path.exists("/.dockerenv")
+        if self._is_docker:
+            self._logger.info("Configurator: 🐳 Docker environment detected.")
+        else:
+            self._logger.info("Configurator: 💻 Host machine (Local) environment detected.")
+
+        self._host = "127.0.0.1"
+
+        self._config_dir = self._find_config_dir()
+        if self._config_dir:
+            self._logger.info(f"Configurator: Using config directory at {self._config_dir}")
+        else:
+            self._logger.warning("Configurator: No config directory found; Falling back to defaults.")
+
 
     async def initialize(self, args) -> Dict:
         cli_data = vars(args) if args else {}
@@ -106,7 +121,7 @@ class Configurator(BaseSettings):
     async def get_settings(self, config_name: str, cli_overrides: dict = None) -> Any:
         model_cls = self._REGISTRY.get(config_name)
         if not model_cls:
-            raise ValueError(f"Unknown config: {config_name}")
+            raise ValueError(f"Configurator : Unknown config: {config_name}")
 
         prefix_map = {
             "local_ai": "AI",
@@ -132,13 +147,26 @@ class Configurator(BaseSettings):
              "db": "db"
              }
 
+        self._logger.debug(f"Configurator: Loading base settings for {config_name} from attribute {attr_map.get(config_name)}")
         env_instance = getattr(self, attr_map.get(config_name))
         base_data = env_instance.model_dump()
+        self._logger.debug(f"Configurator: Base data for {config_name} -> {base_data}")
+
+        json_data = await self._load_json_file(config_name)
+        self._logger.debug(f"Configurator: JSON data for {config_name} -> {json_data}")
 
         allowed_keys = model_cls.model_fields.keys()
         filtered_cli = {k: v for k, v in (cli_overrides or {}).items() if k in allowed_keys}
 
-        final_data = {**base_data, **manual_env_data, **filtered_cli}
+        final_data = {**base_data, **manual_env_data, **filtered_cli, **json_data}
+
+        if not self._is_docker:
+            current_host = final_data.get("host")
+            container_names = ["sb_redis", "sb_db", "sb_ollama"]
+
+            if current_host in container_names:
+                self._logger.debug(f"Configurator: Remapping {current_host} -> 127.0.0.1 for local host execution.")
+                final_data["host"] = self._host
 
         try:
             settings_obj = model_cls(**final_data)
@@ -149,7 +177,7 @@ class Configurator(BaseSettings):
             return model_cls()
 
     async def _load_json_file(self, filename: str) -> dict:
-        filepath = f"configs/{filename}.json"
+        filepath = f"{self._config_dir}/{filename}.json"
         try:
             if os.path.exists(filepath):
                 async with aiofiles.open(filepath, 'r') as f:
@@ -159,6 +187,31 @@ class Configurator(BaseSettings):
         except Exception as e:
             self._logger.warning(f"Config Loader: Error reading {filepath}: {e}")
             return {}
+
+    def _find_config_dir(self) -> Optional[Path]:
+        env_path = os.getenv("SEARCHBOOST_CONFIG_DIR")
+        if env_path:
+            path = Path(env_path)
+            if path.is_dir():
+                return path
+        try:
+            current_file = Path(__file__).resolve()
+            root_path = current_file.parent.parent.parent
+
+            targets = [
+                root_path / "configs",
+                Path.cwd() / "configs",
+                Path("/app/configs")
+            ]
+
+            for target in targets:
+                if target.is_dir():
+                    return target
+
+        except Exception as e:
+            self._logger.debug(f"Path discovery encountered an issue: {e}")
+
+        return None
 
 _instance = None
 

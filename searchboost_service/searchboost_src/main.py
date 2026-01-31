@@ -22,8 +22,17 @@ async def main():
         config = get_configurator(logger=logger)
 
         bundle = await config.initialize(args)
+        #logger.debug(f"""MAIN : Settings Bundle :
+        #AI Settings: {bundle['ai']}
+        #Search Settings: {bundle['search']}
+        #Redis Settings: {bundle['redis']}
+        #DB Settings: {bundle['db']}""")
+
+        logger.debug("MAIN : Creating Redis Connection Pool...")
+        logger.debug(f"MAIN : Redis Settings : {bundle['redis'].arq_settings}")
         redis_pool = await create_pool(bundle['redis'].arq_settings)
 
+        logger.debug("MAIN : Submitting research job to Redis...")
         job = await redis_pool.enqueue_job('Worker.run_task', args.query, args)
         logger.info(f"Research job submitted! ID: {job.job_id}")
 
