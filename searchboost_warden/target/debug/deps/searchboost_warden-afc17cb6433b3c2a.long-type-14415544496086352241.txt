@@ -1,0 +1,1 @@
+Config<failsafe::failure_policy::OrElse<SuccessRateOverTimeWindow<EqualJittered>, ConsecutiveFailures<EqualJittered>>, ()>

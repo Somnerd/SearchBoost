@@ -55,3 +55,5 @@ searchboost_src.zip
 .history
 .todo
 notes.text
+test.toml
+target/
