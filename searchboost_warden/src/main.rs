@@ -1,24 +1,30 @@
 use tokio::net::{TcpListener, TcpStream};
 use tokio::io::copy_bidirectional;
-// Note: we use Backoff and CircuitBreaker traits for the methods to be visible
-use failsafe::{Config, backoff, CircuitBreaker};
+use failsafe::{Config, CircuitBreaker, failure_policy, backoff};
 use std::sync::Arc;
 use tracing::{info, error};
+use std::time::Duration;
+
+// 1. THE WRAPPER: Instead of naming the complex library type,
+// we use 'impl CircuitBreaker' to hide it.
+struct Warden<C> {
+    breaker: C,
+}
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
     
-    // 1. Fixed Config: Use consecutive_failures backoff
-    // We also explicitly type the breaker so Arc knows what it's holding
+    // 2. Build the breaker normally
+    let retry_backoff = backoff::constant(Duration::from_secs(20));
+    let policy = failure_policy::consecutive_failures(5, retry_backoff);
     let breaker = Config::new()
-        .backoff(backoff::consecutive_failures(5))
-        .cooldown(std::time::Duration::from_secs(20))
+        .failure_policy(policy)
         .build();
 
-    // We wrap it in Arc for thread safety.
-    // We don't need to specify the full complex type if we use it correctly below.
-    let breaker = Arc::new(breaker);
+    // 3. Put it in our wrapper. Now the 'Arc' type is just 'Arc<Warden<...>>'
+    // Rust can infer this much more easily.
+    let warden = Arc::new(Warden { breaker });
 
     let domain_address = "0.0.0.0:8000";
     let redis_address = "sb_redis:6379";
@@ -28,17 +34,18 @@ async fn main() -> anyhow::Result<()> {
 
     loop {
         let (mut client_stream, addr) = listener.accept().await?;
-        let breaker_clone = Arc::clone(&breaker);
-
-        // Convert to String to move into the async block safely
+        let warden_clone = Arc::clone(&warden);
         let target = redis_address.to_string();
 
         tokio::spawn(async move {
-            // .call() requires the future to be returned.
-            // We use 'inner' to help the compiler infer the error type.
-            let result = breaker_clone.call(|| {
-                TcpStream::connect(target.clone())
-            }).await;
+            // 1. We perform the connection attempt FIRST
+            let connection_attempt = TcpStream::connect(&target).await;
+
+            // 2. We pass the RESULT of that attempt to the breaker
+            // This allows the breaker to record success/failure
+            let result = warden_clone.breaker.call(|| {
+                connection_attempt
+            }); // Note: No .await here because call() returns the Result directly
 
             match result {
                 Ok(mut redis_stream) => {
@@ -46,8 +53,7 @@ async fn main() -> anyhow::Result<()> {
                     let _ = copy_bidirectional(&mut client_stream, &mut redis_stream).await;
                 }
                 Err(e) => {
-                    // This error 'e' can be a circuit breaker error or a connection error
-                    error!("🔴 Request blocked: {:?}. Warden circuit may be OPEN.", e);
+                    error!("🔴 Warden Blocked Request for {}: {:?}", addr, e);
                 }
             }
         });
