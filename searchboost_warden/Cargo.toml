@@ -12,4 +12,4 @@ anyhow = "1.0" # For easy error handling
 
 [[bin]]
 name = "searchboost_warden"
-path = "main.rs"
+path = "src/main.rs"
