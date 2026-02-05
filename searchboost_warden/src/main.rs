@@ -1,20 +1,60 @@
+use bollard::Docker;
+use bollard::query_parameters::{LogsOptions};
+use futures_util::stream::StreamExt;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::io::copy_bidirectional;
 use failsafe::{Config, CircuitBreaker, failure_policy, backoff};
 use std::sync::Arc;
-use tracing::{info, error};
 use std::time::Duration;
-
+use tracing::{info, error};
 // 1. THE WRAPPER: Instead of naming the complex library type,
 // we use 'impl CircuitBreaker' to hide it.
 struct Warden<C> {
     breaker: C,
 }
 
+async fn start_log_observer(container_name: &str) -> anyhow::Result<()> {
+    let docker = Docker::connect_with_local_defaults()?;
+
+    // 1. Setup the Log File
+    let mut file = std::fs::OpenOptions::new()
+        .create(true).append(true).open("warden_observation.log")?;
+
+    // 2. Corrected LogsOptions syntax (No generics needed here)
+    let options = LogsOptions::<String> {
+        follow: true,
+        stdout: true,
+        stderr: true,
+        ..Default::default()
+    };
+
+    let mut stream = docker.logs(container_name, Some(options));
+
+    info!("👀 Observer Started for: {}", container_name);
+
+    while let Some(log_result) = stream.next().await {
+        match log_result {
+            Ok(log) => {
+                let log_text = format!("{}", log);
+
+                // 3. Highlight Alerts
+                if log_text.to_uppercase().contains("ERROR") || log_text.to_uppercase().contains("TIMEOUT") {
+                    println!("🚨 ALERT in {}: {}", container_name, log_text.trim());
+                    writeln!(file, "[ALERT] {}", log_text.trim())?;
+                } else {
+                    writeln!(file, "[INFO] {}", log_text.trim())?;
+                }
+            }
+            Err(e) => error!("Error reading logs: {}", e),
+        }
+    }
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
-    
+
     // 2. Build the breaker normally
     let retry_backoff = backoff::constant(Duration::from_secs(20));
     let policy = failure_policy::consecutive_failures(5, retry_backoff);
@@ -22,7 +62,14 @@ async fn main() -> anyhow::Result<()> {
         .failure_policy(policy)
         .build();
 
-    // 3. Put it in our wrapper. Now the 'Arc' type is just 'Arc<Warden<...>>'
+
+    tokio::spawn(async {
+        if let Err(e) = start_log_observer("sb_python_engine").await {
+            error!("Observer task failed : {}", e);
+        }
+    });
+
+        // 3. Put it in our wrapper. Now the 'Arc' type is just 'Arc<Warden<...>>'
     // Rust can infer this much more easily.
     let warden = Arc::new(Warden { breaker });
 
@@ -31,7 +78,7 @@ async fn main() -> anyhow::Result<()> {
 
     let listener = TcpListener::bind(domain_address).await?;
     info!("🛡️ Warden Active: Proxying {} -> {}", domain_address, redis_address);
-
+    info!("🛡️ Warden Active: Proxying traffic while observing logs...");
     loop {
         let (mut client_stream, addr) = listener.accept().await?;
         let warden_clone = Arc::clone(&warden);
