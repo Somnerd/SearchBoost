@@ -1,10 +1,24 @@
 services:
+
+  sb_warden:
+    build:
+      context: ./searchboost_warden
+      dockerfile : Dockerfile
+
+    container_name: sb_warden
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./logs:/logs
+    environment:
+      - RUST_LOG=info
+    depends_on:
+      - redis
+    restart: always
+
   worker:
-    build: .
+    build: ./searchboost_service
     container_name: sb_worker
     env_file: .env
-    #context: .
-    #dockerfile: Dockerfile
     environment:
       - SEARCHBOOST_REDIS_HOST=sb_redis
       - SEARCHBOOST_AI_HOST=sb_ollama
@@ -49,7 +63,7 @@ services:
     ports:
       - "${SEARXNG_PORT:-8080}:8080"
     volumes:
-      - ./searchboost_service/configs:/etc/searxng:ro
+      - ./configs:/etc/searxng:ro
     environment:
       - SEARXNG_BASE_URL=http://sb_searxng:${SEARXNG_PORT:-8080}/
       - SEARXNG_SETTINGS_PATH=/etc/searxng/searxng_settings.yml

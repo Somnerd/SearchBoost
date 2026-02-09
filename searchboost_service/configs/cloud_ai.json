@@ -1,7 +1,0 @@
-{
-    "model": "llama3.2",
-    "provider": "poe.com/api/",
-    "api": "",
-    "stream": false,
-    "role":"user"
-}

@@ -1,0 +1,5 @@
+services:
+  ai: "local_ai.json"
+  search: "web_search.json"
+  redis: "redis.json"
+  db: "db.json"

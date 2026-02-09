@@ -1,0 +1,15 @@
+# Core Worker & Communication
+arq>=0.25.0
+async-timeout>=5.0.1
+aiofiles>=23.2.1
+redis>=5.0.0
+pydantic>=2.7.0
+pydantic-settings>=2.1.0
+requests>=2.31.0
+httpx>=0.26.0
+sqlalchemy>=2.0.46
+asyncpg>=0.31.0
+
+# Services
+openai>=1.1.0
+ollama>=0.1.6

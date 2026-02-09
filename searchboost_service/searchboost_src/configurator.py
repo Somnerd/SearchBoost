@@ -86,9 +86,9 @@ class Configurator(BaseSettings):
         self._logger = logger or logging.getLogger("logger")
         self._is_docker = os.path.exists("/.dockerenv")
         if self._is_docker:
-            self._logger.info("Configurator: 🐳 Docker environment detected.")
+            self._logger.info("Configurator: Docker environment detected.")
         else:
-            self._logger.info("Configurator: 💻 Host machine (Local) environment detected.")
+            self._logger.info("Configurator: Host machine (Local) environment detected.")
 
         self._host = "127.0.0.1"
 
