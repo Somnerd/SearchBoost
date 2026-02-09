@@ -69,10 +69,10 @@ async fn main() -> anyhow::Result<()> {
 
     //TODO - Make this dynamic based on env vars or config files
 
-    let container_name = "sb_worker";
+    let service_container_name = "sb_worker";
 
     tokio::spawn(async {
-        if let Err(e) = start_log_observer("sb_worker").await {
+        if let Err(e) = start_log_observer(service_container_name).await {
             error!("Observer task failed : {}", e);
         }
     });
