@@ -62,13 +62,14 @@ The Warden monitors the health of the system. If the database or caching layer b
 ```bash
    git clone https://github.com/Somnerd/SearchBoost.git
 ```
-2. **Spin up the Infrastructure:**
+2. **Build the Infrastructure:**
+```Bash
+    docker-compose build --no-cache
+```
+
+3. **Spin up the Infrastructure:**
 ```Bash
     docker-compose up -d
-```
-3. ***Start the Warden (Rust Sidecar):***
-```Bash
-    cd searchboost_warden && cargo run
 ```
 4.  **Run the Search Pipeline:**
 ```Bash
