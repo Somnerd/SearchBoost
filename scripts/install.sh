@@ -5,19 +5,16 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-# --- 1. PRE-FLIGHT CHECKS ---
 setup_directories() {
     echo -e "${YELLOW}Setting up project structure...${NC}"
     mkdir -p configs searchboost_src container_configs
 
-    # Take ownership of container configs if they exist to prevent EACCES
     if [ -d "container_configs" ]; then
         sudo chown -R $(whoami):$(whoami) container_configs/
     fi
 }
 
 check_and_set_env() {
-    # If .env doesn't exist, create it with defaults
     if [ ! -f ".env" ]; then
         echo -e "${YELLOW}No .env found. Generating defaults...${NC}"
         cat <<EOT >> .env
@@ -28,11 +25,9 @@ REDIS_PORT=6379
 REDIS_PASSWORD=$(openssl rand -hex 12)
 EOT
     fi
-    # Export variables for use in this script
     export $(grep -v '^#' .env | xargs)
 }
 
-# --- 2. SERVICE ORCHESTRATION ---
 check_service() {
     local NAME=$1
     local CMD=$2
@@ -60,7 +55,6 @@ run_stack() {
     echo -e "${YELLOW}Launching Docker Stack...${NC}"
     docker compose up -d
     sleep 10
-    # Use our function for specific health checks
     check_service "Redis" "docker exec sb_redis redis-cli -a $REDIS_PASSWORD ping" "PONG"
     check_service "Ollama" "curl -s http://localhost:$OLLAMA_PORT/api/tags" "models"
     check_service "SearXNG" "curl -s http://localhost:$SEARXNG_PORT/status" "version"
@@ -75,22 +69,18 @@ setup_ollama_model() {
     fi
 }
 
-# --- 3. PYTHON ENVIRONMENT ---
 setup_python() {
     echo -e "${YELLOW}Preparing Python environment...${NC}"
     [ ! -d "venv" ] && python3 -m venv venv
     source venv/bin/activate
     pip install --upgrade pip
-    # Add 'redis' and 'pydantic-settings' to your requirements
     pip install ollama requests aiohttp pydantic pydantic-settings redis arq
 }
 
 scaffold_configs() {
-    # Add Redis config scaffold
     if [ ! -f "configs/redis.json" ]; then
         echo "{\"host\": \"localhost\", \"port\": $REDIS_PORT, \"password\": \"$REDIS_PASSWORD\"}" > configs/redis.json
     fi
-    # Ensure SearXNG Settings exist for the container mount
     if [ ! -f "configs/searxng_settings.yml" ]; then
         cat <<EOT >> configs/searxng_settings.yml
 use_default_settings: true
@@ -105,7 +95,6 @@ EOT
     fi
 }
 
-# --- MAIN EXECUTION ---
 clear
 echo -e "${GREEN}SearchBoost Orchestrator${NC}"
 setup_directories

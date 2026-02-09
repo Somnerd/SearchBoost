@@ -1,5 +1,3 @@
-# Makefile for SearchBoost
-
 .PHONY: build up down logs help
 
 build:
