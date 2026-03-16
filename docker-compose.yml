@@ -1,18 +1,22 @@
 services:
 
-  sb_warden:
+  warden:
     build:
       context: ./searchboost_warden
       dockerfile : Dockerfile
 
     container_name: sb_warden
     volumes:
+      - ./configs:/configs
       - /var/run/docker.sock:/var/run/docker.sock
       - ./logs:/logs
     environment:
+      - WARDEN_CONFIG_PATH=/configs/warden.ini
       - RUST_LOG=info
     depends_on:
       - redis
+    ports:
+      - "14141:14141"
     restart: always
 
   worker:

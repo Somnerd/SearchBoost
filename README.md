@@ -2,75 +2,68 @@
 
 **A distributed search architecture featuring a Rust-based reliability sidecar, LLM-driven semantic caching, and multi-engine aggregation.**
 
-SearchBoost isn't just a search tool; it's a resilience-first infrastructure project designed to handle the complexities of modern AI data pipelines. It decouples high-level search logic from low-level infrastructure concerns using the **Sidecar Pattern**.
+SearchBoost decouples high-level search logic from low-level infrastructure concerns using the **Warden Authority Sidecar Pattern**. It is designed to be "NetCafe-proof"—resilient to database failures, connection drops, and high concurrency.
 
 ---
 
 ## 🏗️ System Architecture
 
-The project implements a "Reliability Sidecar" model to manage communication between a Python-based intelligence layer and a diverse backend stack.
-
-
-
 ### Key Components:
-* **The Warden (Rust Sidecar):** A high-performance TCP proxy built with **Tokio**. It handles **Circuit Breaking** (via `failsafe`) to protect the backend from cascading failures.
-* **Search Intelligence (Python):** Orchestrates the search lifecycle, integrating **Ollama** for embeddings and **Searxng** for aggregated results.
-* **Semantic Cache (Redis):** Stores vector embeddings to provide instant hits for semantically similar queries, reducing LLM API costs and latency.
-* **Persistence Layer (PostgreSQL):** Serves as the source of truth for relational data and metadata.
+*   **The Warden (Rust Sidecar):** The system's "Source of Truth." It generates tracking IDs, manages Redis enqueuing, and handles **Circuit Breaking** to protect the backend.
+*   **The Orchestrator (Python):** The intelligence layer. It talks exclusively via HTTP to the Warden on the happy path, handling query optimization and result formatting.
+*   **The Worker (Python/Arq):** Asynchronous task processor that handles LLM embeddings and web engine scaling.
+*   **Infrastructure (Redis/Postgres/SearxNG):** The distributed storage and search engine backend.
+    *   **PostgreSQL Persistence**: Automatic long-term storage of LLM responses and system indexing metadata.
 
 ---
 
-## 🛡️ Resilience & Reliability (The Warden)
+## 🛡️ Reliability Features
 
-The Warden monitors the health of the system. If the database or caching layer becomes saturated or unresponsive:
-1.  **Detection:** Monitors consecutive connection failures.
-2.  **Tripping:** The circuit "opens," immediately rejecting requests to prevent resource exhaustion.
-3.  **Recovery:** Automatically enters a "half-open" state to test backend health before resuming full traffic.
-
-
+*   **Composite Key Locality**: Uses `{session}:uuid` formatting to ensure data stays close to the user in clustered environments.
+*   **Circuit Breaking**: Automatically trips when Redis or the Worker fails, routing traffic through an isolated **Fallback Handler**.
+*   **Log Observation**: The Warden observes Docker container health in real-time.
 
 ---
 
-## 🚀 Technical Roadmap
+## 🛠️ Project Structure
 
-- [ ] **Dynamic Configuration:** Implement JSON-based service discovery within the Warden for zero-downtime re-routing.
-- [ ] **Vector Similarity Logic:** Finalize the Cosine Similarity comparison within the Redis/Ollama semantic cache layer.
-- [ ] **Multi-Engine Aggregation:** Complete the Searxng bridge to merge external web results with internal database records.
-- [ ] **Chaos Engineering & Testing:**
-    - [ ] **Pytest Suite:** E2E testing for the search pipeline.
-    - [ ] **Failure Injection:** Automated scripts to drop database containers and verify Warden's circuit-breaking response.
-- [ ] **Observability:** Prometheus/Grafana integration to track latency overhead and circuit state transitions.
-
----
-
-## 🛠️ Stack
-
-| Layer | Technology |
-| :--- | :--- |
-| **Systems/Proxy** | Rust (Tokio, Failsafe) |
-| **Backend Logic** | Python 3.11+, AsyncIO |
-| **Search Engine** | RedisSearch, Searxng |
-| **Database** | PostgreSQL |
-| **Intelligence** | Ollama (LLM Embeddings) |
-| **Infrastructure** | Docker, Docker-Compose |
-
----
-
-## 🚦 Getting Started
-
-1. **Clone the Repo:**
 ```bash
-   git clone https://github.com/Somnerd/SearchBoost.git
+SearchBoost/
+├── configs/              # Unified INI/JSON configurations
+├── logs/                 # Aggregated log directory (Worker, Warden, DB)
+├── notes/                # Tech specs and Roadmap
+├── scripts/              # Dev utilities (log collectors, permission fixes)
+├── searchboost_service/  # Orchestrator & Client logic (Python)
+└── searchboost_warden/   # The Reliability Sidecar (Rust)
 ```
-2. **Spin up the Infrastructure:**
-```Bash
-    docker-compose up -d
-```
-3. ***Start the Warden (Rust Sidecar):***
-```Bash
-    cd searchboost_warden && cargo run
-```
-4.  **Run the Search Pipeline:**
-```Bash
-    cd searchboost_src && python main.py --query "architecture patterns"
-```
+
+---
+
+## 🚀 Getting Started
+
+1.  **Spin up the Infrastructure:**
+    ```bash
+    docker-compose up -d --build
+    ```
+2.  **Run a Search (Happy Path):**
+    ```bash
+    cd searchboost_service && python main.py --query "architecture patterns"
+    ```
+3.  **Collect Logs for Audit:**
+    ```bash
+    ./scripts/collect_logs.sh
+    ```
+
+---
+
+## 🚦 Technical Roadmap
+
+- [x] **Warden Authority**: Rust-side Job ID generation and enqueuing.
+- [x] **Infrastructure Decoupling**: Pure HTTP communication between Client and Sidecar.
+- [ ] **Exponential Backoff**: Jittered polling strategy for high-load scaling.
+- [ ] **Vector Similarity Logic**: Redis-based semantic caching for LLM responses.
+
+---
+
+### 💡 Licensing & Commercial
+Licensed under **AGPLv3**. For commercial licensing or proprietary integration, contact: `nikolasalexandrakis.work@gmail.com`.

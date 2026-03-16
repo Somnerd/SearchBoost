@@ -1,4 +1,4 @@
-FROM rust:1.84-slim AS builder
+FROM rust:1.93.1-slim AS builder
 
 RUN apt-get update && apt-get install -y \
     pkg-config \
@@ -14,9 +14,12 @@ FROM debian:bookworm-slim
 
 RUN apt-get update && apt-get install -y \
     ca-certificates \
+    libssl3 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /app/target/release/searchboost_warden /usr/local/bin/warden
+COPY --from=builder /app/target/release/sb_warden /usr/local/bin/warden
 
 RUN mkdir -p /logs
+
+WORKDIR /usr/local/bin
 CMD ["warden"]

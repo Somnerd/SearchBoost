@@ -1,3 +1,26 @@
+# -*- coding: utf-8 -*-
+# SearchBoost: AI-Powered Semantic Search & Reliability Engine
+# Copyright (C) 2026 Nikolaos Alexandrakis
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+#
+# ---------------------------------------------------------------------
+# COMMERCIAL USE NOTICE:
+# For licensing outside the scope of AGPLv3, contact: nikolasalexandrakis.work@gmail.com
+# ---------------------------------------------------------------------
+
+
 import json , logging , os , aiofiles
 from pathlib import Path
 from typing import Type, Dict, Any, TypeVar , Optional
@@ -57,19 +80,29 @@ class PostgreSQLSettings(BaseModel):
     def database_url(self) -> str:
         return f"postgresql+asyncpg://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
 
+class WardenSettings(BaseModel):
+    host: str = Field(default="sb_warden", description="Warden sidecar host")
+    port: int = Field(default=14141, description="Warden sidecar port")
+
+    @property
+    def base_url(self) -> str:
+        return f"http://{self.host}:{self.port}"
+
 class Configurator(BaseSettings):
     _REGISTRY: Dict[str, Type[BaseModel]] = {
         "local_ai": AISettings,
         "cloud_ai": CloudAISettings,
         "web_search": SearchSettings,
         "redis": RedisSettings,
-        "db": PostgreSQLSettings
+        "db": PostgreSQLSettings,
+        "warden": WardenSettings
     }
 
     ai: AISettings = Field(default_factory=AISettings)
     search: SearchSettings = Field(default_factory=SearchSettings)
     redis: RedisSettings = Field(default_factory=RedisSettings)
     db: PostgreSQLSettings = Field(default_factory=PostgreSQLSettings)
+    warden: WardenSettings = Field(default_factory=WardenSettings)
 
     model_config = SettingsConfigDict(
         env_prefix="SEARCHBOOST_",
@@ -110,12 +143,14 @@ class Configurator(BaseSettings):
         search_settings = await self.get_settings("web_search", cli_overrides=cli_data)
         redis_settings = await self.get_settings("redis", cli_overrides=cli_data)
         db_settings = await self.get_settings("db", cli_overrides=cli_data)
+        warden_settings = await self.get_settings("warden", cli_overrides=cli_data)
 
         return {
             "ai": ai_settings,
             "search": search_settings,
             "redis": redis_settings,
-            "db": db_settings
+            "db": db_settings,
+            "warden": warden_settings
         }
 
     async def get_settings(self, config_name: str, cli_overrides: dict = None) -> Any:
@@ -128,7 +163,8 @@ class Configurator(BaseSettings):
             "cloud_ai": "AI",
             "web_search": "SEARCH",
             "redis": "REDIS",
-            "db": "DB"
+            "db": "DB",
+            "warden": "WARDEN"
         }
         prefix = prefix_map.get(config_name)
 
@@ -144,11 +180,16 @@ class Configurator(BaseSettings):
              "cloud_ai": "ai",
              "web_search": "search",
              "redis": "redis",
-             "db": "db"
+             "db": "db",
+             "warden": "warden"
              }
 
-        self._logger.debug(f"Configurator: Loading base settings for {config_name} from attribute {attr_map.get(config_name)}")
-        env_instance = getattr(self, attr_map.get(config_name))
+        attr_name = attr_map.get(config_name)
+        if not attr_name:
+             raise ValueError(f"Configurator: No attribute mapping for {config_name}")
+
+        self._logger.debug(f"Configurator: Loading base settings for {config_name} from attribute {attr_name}")
+        env_instance = getattr(self, attr_name)
         base_data = env_instance.model_dump()
         self._logger.debug(f"Configurator: Base data for {config_name} -> {base_data}")
 
@@ -162,7 +203,7 @@ class Configurator(BaseSettings):
 
         if not self._is_docker:
             current_host = final_data.get("host")
-            container_names = ["sb_redis", "sb_db", "sb_ollama"]
+            container_names = ["sb_redis", "sb_db", "sb_ollama", "sb_warden", "sb_searxng"]
 
             if current_host in container_names:
                 self._logger.debug(f"Configurator: Remapping {current_host} -> 127.0.0.1 for local host execution.")
