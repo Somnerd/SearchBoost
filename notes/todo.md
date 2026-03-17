@@ -26,7 +26,7 @@
 *Goal: Harden the system for public/NetCafe environments.*
 
 * [x] **Health Check Endpoints**: Warden `/health` added.
-* [ ] **Warden Serialization Fix**: Make Rust relay produce pickle-compatible bytes to match Arq's default deserializer. (BLOCKER — Worker cannot process Warden-enqueued jobs until this is resolved.)
+* [x] **Warden Serialization Fix**: Make Rust relay produce pickle-compatible bytes to match Arq's default deserializer. (BLOCKER — Worker cannot process Warden-enqueued jobs until this is resolved.)
 * [ ] **Build Pipeline Optimization**:
   - [ ] Multi-Stage Dockerfile caching (separate dependency layer from source).
   - [ ] Dev-Mode toggle (Debug builds for local dev, Release for production).

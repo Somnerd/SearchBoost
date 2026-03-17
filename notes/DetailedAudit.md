@@ -25,7 +25,7 @@ The Warden is the gatekeeper of the system. It ensures that the Python client do
 ### Key Modules:
 *   **`relay.rs`**: The heart of the sidecar. 
     *   **Authority**: It generates the `session:uuid` composite key.
-    *   **Enqueuing**: Uses `ZADD` to push jobs into Redis in the format `arq` expects (including Unix timestamps as scores).
+    *   **Enqueuing**: Uses `ZADD` to push jobs into Redis in the format `arq` expects (including Unix timestamps as scores). It natively serializes job payloads into Python's `pickle` binary format using the `serde-pickle` crate for perfect cross-language compatibility.
     *   **Result Proxy**: Provides the `GET /results/:id` endpoint so the client never has to touch Redis directly.
 *   **`configurator.rs`**: Uses the `config` crate to merge `warden.ini` and environment variables.
 *   **`breaker.rs`**: Implements a **Circuit Breaker**. If Redis fails multiple times, the breaker "Opens," and the Warden returns `503 Service Unavailable` to the client.
