@@ -54,6 +54,7 @@ Thumbs.db
 searchboost_src.zip
 .history
 .todo
-notes.text
+*/notes/
 test.toml
-target/
+*/target/
+searchboost_warden/target/
