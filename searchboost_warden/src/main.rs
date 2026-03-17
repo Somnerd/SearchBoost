@@ -1,110 +1,75 @@
-use bollard::Docker;
-use bollard::query_parameters::{LogsOptions};
-use futures_util::stream::StreamExt;
-use tokio::net::{TcpListener, TcpStream};
-use tokio::io::copy_bidirectional;
-use failsafe::{Config, CircuitBreaker, failure_policy, backoff};
+/*
+ * SearchBoost: AI-Powered Semantic Search & Reliability Engine
+ * Copyright (C) 2026 Nikolaos Alexandrakis
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ *
+ * ---------------------------------------------------------------------
+ * PROPRIETARY / COMMERCIAL LICENSING:
+ * Use of this software in closed-source commercial applications or 
+ * proprietary stacks is NOT permitted under AGPLv3. For a commercial 
+ * license, please contact: nikolasalexandrakis.work@gmail.com
+ * ---------------------------------------------------------------------
+ */
+
+mod observer;
+mod relay;
+mod configurator;
+mod breaker;
+
 use std::sync::Arc;
-use std::time::Duration;
-use std::io::Write;
-use std::fs::OpenOptions;
 use tracing::{info, error};
+use configurator::Settings;
 
-struct Warden<C> {
-    breaker: C,
+pub struct Warden { 
+    pub breaker: breaker::WardenBreaker,
+    pub redis_client: redis::Client,
 }
 
-async fn start_log_observer(container_name: &str) -> anyhow::Result<()> {
-    let docker = Docker::connect_with_local_defaults()?;
-
-    let mut file = std::fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open("/logs/service_observation.log")?;
-
-    let mut errors_file = std::fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open("/logs/service_errors.log")?;
-
-    let options = LogsOptions{
-        follow: true,
-        stdout: true,
-        stderr: true,
-        ..Default::default()
-    };
-
-    let mut stream = docker.logs(container_name, Some(options));
-
-    info!("Observer Started for: {}", container_name);
-
-    while let Some(log_result) = stream.next().await {
-        match log_result {
-            Ok(log) => {
-                let log_text = format!("{}", log);
-
-                //TODO - Make this more robust with regex or structured log parsing and create dynamic log files per hour or day
-                if log_text.to_uppercase().contains("ERROR")|| log_text.to_uppercase().contains("WARNING") || log_text.to_uppercase().contains("DEBUG") {
-                    println!("ALERT in {}: {}", container_name, log_text.trim());
-                    writeln!(errors_file, "[ALERT] {}", log_text.trim())?;
-                }
-
-                writeln!(file, "{}", log_text.trim())?;
-            }
-            Err(e) => error!("Error reading logs: {}", e),
-        }
-    }
-    Ok(())
-}
-
-#[tokio::main]
+#[tokio::main] 
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
+    
+    let settings = Settings::load();
+    let redis_url = settings.get_redis_url();
+    
+    let redis_client = redis::Client::open(redis_url)
+        .expect("Invalid Redis URL in Config");
+        
+    let breaker = breaker::create_breaker(
+        settings.breaker.breaker_threshold, 
+        settings.breaker.breaker_retry_seconds
+    );
+    
+    let warden = Arc::new(Warden { 
+        breaker,
+        redis_client
+     });
 
-    let retry_backoff = backoff::constant(Duration::from_secs(20));
-    let policy = failure_policy::consecutive_failures(5, retry_backoff);
-    let breaker = Config::new()
-        .failure_policy(policy)
-        .build();
+    let obs_name = settings.observer.container_name.clone();
+    let obs_path = settings.observer.log_path.clone();
 
-    //TODO - Make this dynamic based on env vars or config files
-
-    let service_container_name = "sb_worker";
-
-    tokio::spawn(async {
-        if let Err(e) = start_log_observer(service_container_name).await {
-            error!("Observer task failed : {}", e);
+    tokio::spawn(async move {
+        info!("Warden: Attempting to connect to Docker for container: {}", obs_name);
+        if let Err(e) = observer::start_log_observer(&obs_name, &obs_path).await {
+            error!("Observer failed: {}", e);
+            info!("Are you running outside Docker?");
         }
     });
 
-    let warden = Arc::new(Warden { breaker });
+    info!("Warden Unified Entry Point Active on :{}", settings.network.relay_port);
+    relay::start_relay(settings.network.relay_port, warden).await;
 
-    let domain_address = "0.0.0.0:8000";
-    let redis_address = "sb_redis:6379";
-
-    let listener = TcpListener::bind(domain_address).await?;
-    info!("Warden Active: Proxying {} -> {}", domain_address, redis_address);
-    info!("Warden Active: Proxying traffic while observing logs...");
-    loop {
-        let (mut client_stream, addr) = listener.accept().await?;
-        let warden_clone = Arc::clone(&warden);
-        let target = redis_address.to_string();
-
-        tokio::spawn(async move {
-            let connection_attempt = TcpStream::connect(&target).await;
-            let result = warden_clone.breaker.call(|| {
-                connection_attempt
-            });
-
-            match result {
-                Ok(mut redis_stream) => {
-                    info!("Connection established for {}", addr);
-                    let _ = copy_bidirectional(&mut client_stream, &mut redis_stream).await;
-                }
-                Err(e) => {
-                    error!("Warden Blocked Request for {}: {:?}", addr, e);
-                }
-            }
-        });
-    }
+    Ok(())
 }

@@ -1,0 +1,42 @@
+{
+    "web_search" : {
+        "format": "json",
+        "search_engine": "searxng",
+        "num_results": 5,
+        "region": "us",
+        "language": "en-US",
+        "safe_search": "1",
+        "host": "sb_searxng",
+        "port": 8080
+    },
+    "redis" : {
+        "host": "sb_redis",
+        "port": 6379,
+        "password": "searchboost_pass",
+        "db": 0,
+        "decode_responses": true,
+        "conn_timeout": 5,
+        "retry_on_timeout": true
+    },
+    "local_ai" : {
+        "model": "llama3.2",
+        "host": "sb_ollama",
+        "port": 11434,
+        "stream": false,
+        "role":"user"
+    },
+    "db" :  {
+        "host": "sb_db",
+        "port": 5432,
+        "user": "searchboost",
+        "password": "searchboost_pass",
+        "database": "searchboost_db"
+    },
+    "cloud_ai" : {
+        "model": "llama3.2",
+        "provider": "poe.com/api/",
+        "api": "",
+        "stream": false,
+        "role":"user"
+    } 
+}
