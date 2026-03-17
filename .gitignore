@@ -23,6 +23,11 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+# --- Rust Specific ---
+**/target/
+**/*.rs.bk
+**/*.rs.bk2
+
 # --- Environments (The venv) ---
 .venv/
 venv/
@@ -30,6 +35,7 @@ ENV/
 env.bak/
 venv.bak/
 .env
+/logs
 
 # --- SearchBoost Specific Logs & Data ---
 *.log
@@ -54,7 +60,11 @@ Thumbs.db
 searchboost_src.zip
 .history
 .todo
+<<<<<<< HEAD
 */notes/
 test.toml
 */target/
 searchboost_warden/target/
+=======
+notes.text
+>>>>>>> main

@@ -28,6 +28,7 @@ SearchBoost decouples high-level search logic from low-level infrastructure conc
 ## 🛠️ Project Structure
 
 ```bash
+<<<<<<< HEAD
 SearchBoost/
 ├── configs/              # Unified INI/JSON configurations
 ├── logs/                 # Aggregated log directory (Worker, Warden, DB)
@@ -35,6 +36,22 @@ SearchBoost/
 ├── scripts/              # Dev utilities (log collectors, permission fixes)
 ├── searchboost_service/  # Orchestrator & Client logic (Python)
 └── searchboost_warden/   # The Reliability Sidecar (Rust)
+=======
+   git clone https://github.com/Somnerd/SearchBoost.git
+```
+2. **Build the Infrastructure:**
+```Bash
+    docker-compose build --no-cache
+```
+
+3. **Spin up the Infrastructure:**
+```Bash
+    docker-compose up -d
+```
+4.  **Run the Search Pipeline:**
+```Bash
+    cd searchboost_src && python main.py --query "architecture patterns"
+>>>>>>> main
 ```
 
 ---
