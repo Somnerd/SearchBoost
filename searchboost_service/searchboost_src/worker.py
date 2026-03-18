@@ -56,6 +56,8 @@ class Worker:
 
     async def run_task(self, ctx, query: str, args_namespace):
         log = ctx.get('logger', logging.getLogger("sb_worker"))
+        
+        log.info(f"WORKER : RAW PAYLOAD RECEIVED -> query='{query}', args_namespace={args_namespace}")
 
         if isinstance(args_namespace, dict):
             from argparse import Namespace

@@ -93,16 +93,21 @@ async fn handle_enqueue(
             let enqueue_time_ms = now.as_millis() as u64;
             let score = enqueue_time_ms as f64;
 
-            let job_data = serde_json::json!({
-                "t": 1,
-                "f": "Worker.run_task", 
-                "a": [
-                    payload.query, 
-                    payload.options.unwrap_or_default()
-                ],
-                "k": {},
-                "et": enqueue_time_ms
-            });
+            let args_tuple = (
+                payload.query, 
+                payload.options.unwrap_or_default()
+            );
+
+            let kwargs: std::collections::HashMap<String, serde_json::Value> = std::collections::HashMap::new();
+
+            // Arq expects a strict 5-element tuple: (job_try, fn_name, args, kwargs, enqueue_time)
+            let job_data = (
+                1,
+                "Worker.run_task",
+                args_tuple,
+                kwargs,
+                enqueue_time_ms
+            );
 
             // Serialize as pickle bytes to match Arq's default deserializer (pickle.loads)
             let pickled = serde_pickle::to_vec(&job_data, serde_pickle::ser::SerOptions::new())
