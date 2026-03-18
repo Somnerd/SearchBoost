@@ -21,7 +21,7 @@
 # ---------------------------------------------------------------------
 
 import asyncio
-import requests
+import httpx
 import searchboost_src.logger
 
 class WebSearch:
@@ -47,9 +47,11 @@ class WebSearch:
 
         try:
             self.logger.debug(f"Web Search : params {self.params} ")
-            response = requests.get(f"{self.host}/search", params=self.params, timeout=10)
-            response.raise_for_status()
-            data = response.json()
+            async with httpx.AsyncClient() as client:
+                response = await client.get(f"{self.host}/search", params=self.params, timeout=10.0)
+                response.raise_for_status()
+                data = response.json()
+                
             results = data.get("results", [])
             normalized_context = []
 
@@ -63,8 +65,11 @@ class WebSearch:
             self.logger.debug(f"Web Search : Results {normalized_context}")
             return "\n---\n".join(normalized_context) if normalized_context else "No results found."
 
+        except httpx.TimeoutException as e:
+            self.logger.warning(f"SearXNG Error: Request Timed Out ({self.host})")
+            return "Web search timed out. Could not fetch results."
         except Exception as e:
             self.logger.error(f"SearXNG Error: {e}")
-            if 'ConnectionError' in str(e):
+            if 'ConnectionError' in str(e) or 'ConnectError' in str(e):
                 return f"Could not connect to {self.host}. Please ensure the SearXNG instance is running."
             return str(e)

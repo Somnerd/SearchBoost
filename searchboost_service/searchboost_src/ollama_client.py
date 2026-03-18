@@ -45,7 +45,8 @@ class OllamaClient:
     async def query_ollama(self):
         try:
             self.logger.debug(f"""OLLAMA  CLIENT: User Prompt :{self.ChatDetails.prompt}""")
-            response = await self.client.chat(
+            
+            chat_coroutine = self.client.chat(
                 model=self.ChatDetails.config.model,
                 messages=[
                     {
@@ -58,11 +59,18 @@ class OllamaClient:
                     }
                 ]
             )
+            
+            # Applying strict 15.0 second timeout to prevent the worker from hanging internally
+            response = await asyncio.wait_for(chat_coroutine, timeout=15.0)
+            
             self.logger.debug(f"""OLLAMA CLIENT :
                                     Ollama Response:
                                         {response}
                                         """)
             return response['message']['content']
+        except asyncio.TimeoutError:
+            self.logger.warning(f"OLLAMA CLIENT : Timeout! The local LLM model failed to respond within 15 seconds.")
+            return "Error: The AI model took too long to respond (timeout after 15s). Please try again later."
         except Exception as e:
             self.logger.error(f"OLLAMA CLIENT : Error querying Ollama API: {e}")
             return "Error: Unable to connect to the LLM."
