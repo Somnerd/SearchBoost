@@ -23,6 +23,7 @@
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
+from sqlalchemy import select
 from searchboost_src.configurator import PostgreSQLSettings
 
 Base = declarative_base()
@@ -48,3 +49,48 @@ class DatabaseManager:
 
     def get_session(self) -> AsyncSession:
         return self.session_factory()
+
+
+class HistoryService:
+    """Loads and saves multi-turn conversation history from PostgreSQL."""
+
+    def __init__(self, session: AsyncSession, logger=None):
+        self.session = session
+        self.logger = logger
+
+    async def load_history(self, session_id: str, limit: int = 10) -> list[dict]:
+        """
+        Fetch the last `limit` turns for a session_id, returned oldest-first
+        so Ollama reads the conversation in chronological order.
+        """
+        from searchboost_src.models import ConversationTurn
+        try:
+            result = await self.session.execute(
+                select(ConversationTurn)
+                .where(ConversationTurn.session_id == session_id)
+                .order_by(ConversationTurn.created_at.desc())
+                .limit(limit)
+            )
+            turns = result.scalars().all()
+            # Reverse so the oldest turn comes first (chronological order for Ollama)
+            history = [{"role": t.role, "content": t.content} for t in reversed(turns)]
+            if self.logger:
+                self.logger.info(f"HistoryService: Loaded {len(history)} prior turns for session '{session_id}'")
+            return history
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"HistoryService: Failed to load history for '{session_id}': {e}")
+            return []
+
+    async def save_turn(self, session_id: str, role: str, content: str):
+        """Persist a single conversation turn (user or assistant)."""
+        from searchboost_src.models import ConversationTurn
+        try:
+            turn = ConversationTurn(session_id=session_id, role=role, content=content)
+            self.session.add(turn)
+            await self.session.commit()
+            if self.logger:
+                self.logger.debug(f"HistoryService: Saved '{role}' turn for session '{session_id}'")
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"HistoryService: Failed to save turn for '{session_id}': {e}")

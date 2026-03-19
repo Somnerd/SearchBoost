@@ -31,24 +31,25 @@ from searchboost_src.web_search import WebSearch
 from searchboost_src.redis_manager import RedisManager
 from searchboost_src.logger import setup_logger
 from searchboost_src.models import SearchResult
+from searchboost_src.database import HistoryService
 
 class SearchBoostService:
-    def __init__(self ,ai,search,redis,db,logger=None, args=None):
+    def __init__(self, ai, search, redis, db, logger=None, args=None, session_id=None):
         self.logger = logger or setup_logger(info=False)
-        #self.session = session or AsyncSession = None
         self.args = args
+        self.session_id = session_id  # e.g. "SB-SESSION-guest", used for history isolation
 
         self.ai_config = ai
         self.search_config = search
         self.redis_config = redis
         self.db_config = db
 
-        self.cache = RedisManager(self.redis_config,self.logger)
+        self.cache = RedisManager(self.redis_config, self.logger)
 
         self.chatdetails = ChatDetails(config=self.ai_config,
                                         prompt=self.args.query)
-        self.web_search_instance = WebSearch(query = self.args.query,
-                                            config = self.search_config,
+        self.web_search_instance = WebSearch(query=self.args.query,
+                                            config=self.search_config,
                                             logger=self.logger)
 
     async def debug_logs(self):
@@ -81,7 +82,7 @@ class SearchBoostService:
         except Exception as e:
             self.logger.error(f"SearchBoostService :  Debug LOGS Error: {e}")
 
-    async def run(self):
+    async def run(self, db_session: AsyncSession = None):
 
         self.logger.debug("SearchBoostService : Debug logging enabled.")
         await self.debug_logs()
@@ -99,6 +100,14 @@ class SearchBoostService:
 
             self.logger.info("--- CACHE MISS: Executing Research Loop ---")
 
+            # Load prior conversation history for this session
+            history_svc = None
+            if db_session and self.session_id:
+                history_svc = HistoryService(db_session, self.logger)
+                self.chatdetails.history = await history_svc.load_history(self.session_id)
+                # Save the current user turn immediately
+                await history_svc.save_turn(self.session_id, "user", self.args.query)
+
             self.logger.debug("SearchBoostService : Optimizing query...")
 
             self.ai_handler = AIHandler(self.logger, reason="optimization")
@@ -113,12 +122,15 @@ class SearchBoostService:
             self.logger.debug("SearchBoostService : Querying LLM with web search context...")
 
             self.ai_handler = AIHandler(self.logger, reason="research")
-
             final_response = await self.ai_handler.query_LLM(self.chatdetails)
+
+            # Save the assistant's response to history
+            if history_svc and self.session_id:
+                await history_svc.save_turn(self.session_id, "assistant", final_response)
+
             await self.cache.cache_response(self.args.query, final_response)
             return final_response
 
-            self.logger.info(f"SearchBoostService : Final Response :\n---\n{final_response}")
         except Exception as e:
             self.logger.error(f"SearchBoostService : CRITICAL Runtime Error: {e}")
 

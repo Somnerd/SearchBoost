@@ -46,31 +46,37 @@ class OllamaClient:
         try:
             self.logger.debug(f"""OLLAMA  CLIENT: User Prompt :{self.ChatDetails.prompt}""")
             
+            # Build a full multi-turn message array:
+            #   [system] + [prior history turns...] + [current user message]
+            messages = [{"role": "system", "content": self.ChatDetails.system_prompt}]
+
+            history = getattr(self.ChatDetails, 'history', [])
+            if history:
+                self.logger.info(f"OLLAMA CLIENT: Injecting {len(history)} prior conversation turns into context.")
+                messages.extend(history)
+            
+            messages.append({"role": self.ChatDetails.config.role, "content": self.ChatDetails.prompt})
+
             chat_coroutine = self.client.chat(
                 model=self.ChatDetails.config.model,
-                messages=[
-                    {
-                    "role": "system",
-                    "content": self.ChatDetails.system_prompt
-                    },
-                    {
-                    "role": self.ChatDetails.config.role,
-                    "content": self.ChatDetails.prompt
-                    }
-                ]
+                messages=messages
             )
             
-            # Applying strict 15.0 second timeout to prevent the worker from hanging internally
-            response = await asyncio.wait_for(chat_coroutine, timeout=15.0)
+            # Accommodating slow CPU inference with a configurable upper bound (default: 180s)
+            timeout_limit = getattr(self.ChatDetails.config, 'timeout', 180.0)
+            self.logger.info(f"OLLAMA CLIENT: Sending chat request to {self.host} (Timeout: {timeout_limit}s)")
             
+            response = await asyncio.wait_for(chat_coroutine, timeout=timeout_limit)
+            
+            self.logger.info("OLLAMA CLIENT: Successfully received response from LLM.")
             self.logger.debug(f"""OLLAMA CLIENT :
                                     Ollama Response:
                                         {response}
                                         """)
             return response['message']['content']
         except asyncio.TimeoutError:
-            self.logger.warning(f"OLLAMA CLIENT : Timeout! The local LLM model failed to respond within 15 seconds.")
-            return "Error: The AI model took too long to respond (timeout after 15s). Please try again later."
+            self.logger.error(f"OLLAMA CLIENT: Timeout! The local LLM model failed to respond within {timeout_limit} seconds.")
+            return f"Error: The AI model took too long to respond (timeout after {timeout_limit}s). Please try again later."
         except Exception as e:
             self.logger.error(f"OLLAMA CLIENT : Error querying Ollama API: {e}")
             return "Error: Unable to connect to the LLM."
