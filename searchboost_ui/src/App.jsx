@@ -7,9 +7,7 @@ import NavBar from './components/NavBar';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Search from './pages/Search';
-
-// Temporary placeholders until pages are built in plan 2.7
-const AdminPage = () => <div className="page-enter" style={{ padding: '2rem', textAlign: 'center' }}>Admin Page (Coming soon)</div>;
+import Admin from './pages/Admin';
 
 function App() {
   return (
@@ -28,7 +26,7 @@ function App() {
           </Route>
           
           <Route element={<AdminRoute />}>
-            <Route path="/admin" element={<AdminPage />} />
+            <Route path="/admin" element={<Admin />} />
           </Route>
         </Routes>
       </BrowserRouter>
