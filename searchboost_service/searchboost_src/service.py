@@ -32,10 +32,12 @@ from searchboost_src.redis_manager import RedisManager
 from searchboost_src.logger import setup_logger
 from searchboost_src.models import SearchResult
 from searchboost_src.database import HistoryService
+from searchboost_src.pii_detector import PIIDetector
 
 class SearchBoostService:
     def __init__(self, ai, search, redis, db, logger=None, args=None, session_id=None):
         self.logger = logger or setup_logger(info=False)
+        #self.session = session or AsyncSession = None
         self.args = args
         self.session_id = session_id  # e.g. "SB-SESSION-guest", used for history isolation
 
@@ -110,8 +112,22 @@ class SearchBoostService:
 
             self.logger.debug("SearchBoostService : Optimizing query...")
 
+            # Check the ORIGINAL query for PII before even calling the optimizer.
+            # If the user included sensitive data, we flag it now so no LLM output
+            # derived from it will ever be written to the shared cache.
+            pii_detector = PIIDetector(logger=self.logger)
+            original_query_pii = pii_detector.scan(self.args.query)
+
             self.ai_handler = AIHandler(self.logger, reason="optimization")
             optimized_query = await self.ai_handler.query_LLM(self.chatdetails)
+
+            # Second PII scan on the optimizer's output — LLMs can echo PII
+            # back verbatim (e.g. "4111-1111-1111-1111 credit card validation").
+            optimized_query_pii = pii_detector.scan(optimized_query)
+
+            # A query is cache-eligible ONLY if neither the original nor the
+            # optimizer output triggered any PII pattern.
+            cache_eligible = not original_query_pii and not optimized_query_pii
 
             self.logger.debug(f"SearchBoostService : Optimized Query: {optimized_query}")
 
@@ -128,7 +144,20 @@ class SearchBoostService:
             if history_svc and self.session_id:
                 await history_svc.save_turn(self.session_id, "assistant", final_response)
 
-            await self.cache.cache_response(self.args.query, final_response)
+            # Cache the OPTIMIZED QUERY KEYWORDS (not the full answer).
+            # Keywords are lean, impersonal, and safe to share across users.
+            # We use the original query as the cache lookup key so future users
+            # with the same phrasing get a cache hit immediately.
+            if cache_eligible:
+                self.logger.debug(
+                    f"SearchBoostService : Caching optimized keywords for: '{self.args.query}'"
+                )
+                await self.cache.cache_response(self.args.query, optimized_query)
+            else:
+                self.logger.warning(
+                    "SearchBoostService : Cache write SKIPPED — PII detected in query or optimizer output."
+                )
+
             return final_response
 
         except Exception as e:
