@@ -60,11 +60,14 @@ Thumbs.db
 searchboost_src.zip
 .history
 .todo
-<<<<<<< HEAD
 */notes/
 test.toml
 */target/
 searchboost_warden/target/
-=======
-notes.text
->>>>>>> main
+.agent/
+.gemini/
+.cursor/
+.gsd/
+.claude/
+.anthropic/
+.codex/
