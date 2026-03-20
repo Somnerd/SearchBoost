@@ -170,7 +170,8 @@ async fn handle_get_result(
                 }
             }
         },
-        Err(_) => {
+        Err(e) => {
+            tracing::error!("RELAY: Redis connection failed on result fetch: {}", e);
             warden.breaker.on_error();
             (StatusCode::SERVICE_UNAVAILABLE, "Redis Connection Failed").into_response()
         }

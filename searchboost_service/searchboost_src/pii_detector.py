@@ -44,13 +44,9 @@ class PIIDetectionResult:
 # ---------------------------------------------------------------------------
 _PII_PATTERNS: list[tuple[str, re.Pattern]] = [
     (
-        "credit_card",
-        # Visa, Mastercard, Amex, etc. — with or without dashes/spaces
-        re.compile(r"\b(?:\d{4}[- ]?){3}\d{4}\b")
-    ),
-    (
-        "debit_card",
-        # Visa, Mastercard, Amex, etc. — with or without dashes/spaces
+        "payment_card",
+        # Covers credit AND debit cards: Visa, Mastercard, Amex, etc.
+        # Matches 16-digit groups with optional dashes or spaces.
         re.compile(r"\b(?:\d{4}[- ]?){3}\d{4}\b")
     ),
     (
