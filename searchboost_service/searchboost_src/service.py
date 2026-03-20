@@ -144,18 +144,20 @@ class SearchBoostService:
             if history_svc and self.session_id:
                 await history_svc.save_turn(self.session_id, "assistant", final_response)
 
-            # Cache the OPTIMIZED QUERY KEYWORDS (not the full answer).
-            # Keywords are lean, impersonal, and safe to share across users.
-            # We use the original query as the cache lookup key so future users
-            # with the same phrasing get a cache hit immediately.
-            if cache_eligible:
+            # PII double-gate before writing to the shared query cache:
+            # Scan 1: original query (contains PII in the question itself?)
+            # Scan 2: final answer (does the LLM's response contain echoed PII?)
+            # If either triggers, skip caching entirely — the session is treated as private.
+            final_response_pii = pii_detector.scan(final_response)
+
+            if cache_eligible and not final_response_pii:
                 self.logger.debug(
-                    f"SearchBoostService : Caching optimized keywords for: '{self.args.query}'"
+                    f"SearchBoostService : Caching final response for: '{self.args.query}'"
                 )
-                await self.cache.cache_response(self.args.query, optimized_query)
+                await self.cache.cache_response(self.args.query, final_response)
             else:
                 self.logger.warning(
-                    "SearchBoostService : Cache write SKIPPED — PII detected in query or optimizer output."
+                    "SearchBoostService : Cache write SKIPPED — PII detected in query, optimizer output, or final response."
                 )
 
             return final_response
