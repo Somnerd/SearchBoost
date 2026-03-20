@@ -20,7 +20,7 @@
 # For licensing outside the scope of AGPLv3, contact: nikolasalexandrakis.work@gmail.com
 # ---------------------------------------------------------------------
 
-from sqlalchemy import Column, String, Text, DateTime
+from sqlalchemy import Column, String, Text, DateTime, Integer
 from datetime import datetime
 from searchboost_src.database import Base
 
@@ -30,4 +30,13 @@ class SearchResult(Base):
     job_id = Column(String, primary_key=True)
     query = Column(String, nullable=False)
     final_answer = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class ConversationTurn(Base):
+    __tablename__ = "conversation_turns"
+
+    id         = Column(Integer, primary_key=True, autoincrement=True)
+    session_id = Column(String, nullable=False, index=True)  # e.g. "SB-SESSION-guest"
+    role       = Column(String, nullable=False)               # "user" or "assistant"
+    content    = Column(Text,   nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)

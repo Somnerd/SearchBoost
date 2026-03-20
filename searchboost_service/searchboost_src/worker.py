@@ -56,6 +56,8 @@ class Worker:
 
     async def run_task(self, ctx, query: str, args_namespace):
         log = ctx.get('logger', logging.getLogger("sb_worker"))
+        
+        log.info(f"WORKER : RAW PAYLOAD RECEIVED -> query='{query}', args_namespace={args_namespace}")
 
         if isinstance(args_namespace, dict):
             from argparse import Namespace
@@ -72,13 +74,19 @@ class Worker:
         async with self.db_manager.get_session() as session:
             try:
                 service_keys = {k: v for k, v in self.settings_bundle.items() if k != 'warden'}
+
+                # Extract the session identity from the job_id: "SB-SESSION-guest:uuid" → "SB-SESSION-guest"
+                session_id = ctx.get('job_id', '').rsplit(':', 1)[0] or None
+                log.info(f"WORKER : Session ID resolved as: '{session_id}'")
+
                 service = SearchBoostService(
                     **service_keys,
                     logger=log,
-                    args=args_namespace
+                    args=args_namespace,
+                    session_id=session_id
                 )
 
-                result = await service.run()
+                result = await service.run(db_session=session)
 
                 db_service = PersistenceService(session, logger=log)
                 await db_service.save_result(
@@ -86,6 +94,10 @@ class Worker:
                     query=query,
                     final_answer=result
                 )
+
+                redis_pool = ctx.get('redis')
+                if redis_pool:
+                    await redis_pool.setex(name=f"sb:result:{ctx.get('job_id')}", time=86400, value=result)
 
                 return result
             except Exception as e:

@@ -1,24 +1,70 @@
-# 🎯 SearchBoost Priority To-Do List
+# 🎯 SearchBoost: Master Engineering Roadmap (2026)
 
-## 🔴 HIGH PRIORITY: BUILD SYSTEM OPTIMIZATION (Monday Kick-off)
-*The 10-minute build cycle is currently our biggest blocker. We must solve this before continuing feature work.*
-
-1.  **Multi-Stage Dockerfile Caching**: Refactor `searchboost_warden/Dockerfile` to cache dependencies separately from source code. (Target: < 2m rebuilds).
-2.  **Dev-Mode Toggle**: Update `docker-compose.yml` to support standard `cargo build` (Debug) instead of `--release` for local development cycles.
-3.  **Incremental Build Volumes**: Implement persistent volume mounting for the `target` directory to preserve compilation artifacts across container restarts.
-4.  **Linker Upgrade**: Switch to the `mold` or `lld` linker inside the build stage to eliminate linking bottlenecks.
-
-## 🟡 STABILIZATION & QUALITY
-5.  **Test Suite Foundation**:
-    - [ ] Create Redis mock for Warden unit tests.
-    - [ ] Implement query payload validation tests for the Worker.
-    - [ ] Build a "Sovereign Handshake" integration test script.
-6.  **Engineering Manual Compliance**: Review all modules for "Showcase Standard" (CV-grade) quality and documentation.
-
-## 🟢 FEATURE ROADMAP (On Hold until Optimization & Stabilization)
-7.  **AI Orchestration Enhancements**: (Refining prompts and completion logic).
-8.  **Redis Sharding Visualizer**: (Internal tool to verify session-based sharding).
-9.  **Reddit Showcase Prep**: (Final cleanup for public announcement).
+This master roadmap consolidates all architecture phases, stabilizing tasks, and the newest feature mandates (UI and Governor) into a single path forward.
 
 ---
-*Created on 2026-03-15. Dedicated to the "None-of-the-above" promise of speed and stability.*
+
+## 🔴 HIGH PRIORITY: Current Objectives (Phase 2 & UI)
+
+* [ ] **Governor Implementation**: Add the `governor` and `tower-governor` crates to the Rust Warden to implement strict GCRA rate limiting on the `/enqueue` endpoint, protecting the downstream AI services.
+* [ ] **Web UI & Containerization**: Build a modern, stunning frontend dashboard (e.g. Next.js/Vite) to interact with the Warden's relay API. Write a `Dockerfile` for it and add it to the stack.
+
+## 🟠 MEDIUM PRIORITY: Build & Environment Stability
+
+*The 10-minute build cycle is currently the primary blocker for feature velocity.*
+
+* [ ] **Docker Cache Optimization**: Refactor `searchboost_warden/Dockerfile` to cache dependencies separately from source (Target: < 2m rebuilds) and implement incremental build volumes (`target/`).
+* [ ] **Dev-Mode Toggle**: Update `docker-compose.yml` to support standard `cargo build` (Debug) instead of `--release` for faster local cycles.
+* [ ] **Configurator Generalization**:
+  * [ ] **Unified Settings**: Move to a master `settings.yaml` shared across Rust and Python.
+  * [ ] **Pathing Fix**: Implement absolute pathing in `configurator.py` and Warden to ensure settings are picked up regardless of container working directory.
+
+---
+
+## ✅ Phase 1 & 2: Infrastructure & Abstraction (COMPLETED)
+* [X] Fix Network Bindings, Correct Redis Authentication, Visibility Fix, Log Observation.
+* [X] Warden Result Polling, Orchestrator Redis Purge, Warden ID Authority.
+* [X] Health Check Endpoints (`/health`).
+* [X] **Warden Serialization Fix**: Modified Rust relay to produce perfect Tuple pickle bytes to match Arq's default deserializer. (Completed Phase 1 Fixes).
+
+---
+
+## 🏗️ Phase 3: Resilience & Production Hardening
+
+* [ ] **Exponential Backoff**: Replace static polling with jittered backoff logic in `main.py`.
+* [ ] **Request Validation**: Implement strict Pydantic/Rust schema validation for payloads.
+* [ ] **Worker Scaling**: Test horizontal scaling of workers with the new Composite Key locality.
+* [ ] **Log Rotation**: Ensure `collect_logs.sh` handles log purging and archive management.
+* [ ] **Sovereign Handshake**: Finalize the logic where Warden has 100% authority over ID generation and enqueuing.
+* [ ] **Health & Observation**:
+  * [ ] Integrate **Grafana & Prometheus** for real-time circuit breaker and latency monitoring.
+
+---
+
+## 🚀 Phase 4: Strategy & Architecture Finalization
+
+* [ ] **Folder Separation**: Physical split into `searchboost_client/` and `searchboost_worker/`.
+* [ ] **Refine "Self-Hosted" Config**: Ensure the INI/JSON system remains "Enthusiast-Friendly" while supporting enterprise features.
+* [ ] **Documentation**: Complete the `SystemDesign.md` and `README.md` reflecting the new "Authority" model.
+* [ ] **Test Suite Foundation**:
+  * [ ] Create Redis mock for Warden unit tests.
+  * [ ] Build a "Sovereign Handshake" integration test script.
+  * [ ] Payload injection tests for the Worker.
+
+---
+
+## 🔮 Phase 5: IO Normalization & Generalization (Post-MVP)
+
+*Goal: Replace pickle-based serialization with a standardized, language-agnostic format across the entire service module.*
+
+* [ ] **Normalized IO Handshake**: Define a strictly versioned schema (JSON/Protobuf) for Warden ↔ Service comms.
+* [ ] **Translation Adapter**: Implement an adapter in front of the Worker to map standard IO to `arq` inputs.
+* [ ] **User Auth Microservice**: Build standalone Auth service & implement JWT propagation from UI → Warden → Worker for multi-tenant isolation.
+* [ ] **Update Warden Relay**: Remove pickle dependency and use normalized format.
+
+---
+
+## 🟢 FEATURE ROADMAP: Intelligence Additions
+* [ ] **Semantic Caching**: Optimize Ollama for semantic similarity checks to skip redundant web searches.
+* [ ] **Postgres Search**: Implement full-text search and `pgvector` indexing on the local DB.
+* [ ] **SearxNG Local Plugin**: Custom plugin to index and search local project files.
