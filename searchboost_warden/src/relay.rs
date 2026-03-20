@@ -39,6 +39,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 pub struct SearchRequest {
     pub query: String,
     pub session_id: String,
+    pub uuid: Option<String>, 
     pub options: Option<HashMap<String, serde_json::Value>>,
 }
 
@@ -46,17 +47,30 @@ struct AppState {
     redis_client: redis::Client,
 }
 
+use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
+
 pub async fn start_relay(port: u16, warden: Arc<Warden>) {
+    // Configure rate limiting: 10 requests per second, with a burst fallback of 20
+    // Maps natively using IP resolution
+    let governor_conf = Arc::new(
+        GovernorConfigBuilder::default()
+            .per_second(10)
+            .burst_size(20)
+            .finish()
+            .expect("Warden: Failed to initialize Governor Rate Limiter"),
+    );
+
     let app = Router::new()
         .route("/health", get(handle_health))
         .route("/enqueue", post(handle_enqueue))
         .route("/results/:job_id", get(handle_get_result))
+        .layer(GovernorLayer { config: governor_conf })
         .with_state(warden);
 
     let addr = format!("{ip}:{port}", ip="0.0.0.0", port=port);
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
-    tracing::info!("Relay Module listening on {address}", address=addr);
-    axum::serve(listener, app).await.unwrap();
+    tracing::info!("Relay Module listening on {address} [Governor Rate Limited]", address=addr);
+    axum::serve(listener, app.into_make_service_with_connect_info::<std::net::SocketAddr>()).await.unwrap();
 }
 
 async fn handle_enqueue(
@@ -68,7 +82,8 @@ async fn handle_enqueue(
             return (StatusCode::SERVICE_UNAVAILABLE, "Circuit Breaker is OPEN").into_response();
         }
 
-    let job_id = format!("{}:{}", payload.session_id, uuid::Uuid::new_v4());
+    let client_uuid = payload.uuid.unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
+    let job_id = format!("{}:{}", payload.session_id, client_uuid);
 
     tracing::info!(
         "Relaying query for:
@@ -140,7 +155,7 @@ async fn handle_get_result(
     State(warden): State<Arc<Warden>>,
     Path(job_id): Path<String>,
 ) -> impl IntoResponse {
-    let result_key = format!("arq:result:{}", job_id);
+    let result_key = format!("sb:result:{}", job_id);
 
     match warden.redis_client.get_async_connection().await {
         Ok(mut conn) => {

@@ -49,7 +49,12 @@ _PII_PATTERNS: list[tuple[str, re.Pattern]] = [
         re.compile(r"\b(?:\d{4}[- ]?){3}\d{4}\b")
     ),
     (
-        "ssn_us",
+        "debit_card",
+        # Visa, Mastercard, Amex, etc. — with or without dashes/spaces
+        re.compile(r"\b(?:\d{4}[- ]?){3}\d{4}\b")
+    ),
+    (
+        "ssn",
         # US Social Security Number: 123-45-6789
         re.compile(r"\b\d{3}-\d{2}-\d{4}\b")
     ),
@@ -73,7 +78,7 @@ _PII_PATTERNS: list[tuple[str, re.Pattern]] = [
         re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")
     ),
     (
-        "passport_us",
+        "passport",
         # US passport numbers: 1-2 letters followed by 7 digits
         re.compile(r"\b[A-Z]{1,2}\d{7}\b")
     ),
