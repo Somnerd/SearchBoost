@@ -14,10 +14,10 @@ app.use(cors({
 
 const migrateDb = require('./db/migrate');
 
-// Route mounting will go here
-// app.use('/api/auth', require('./routes/auth'));
-// app.use('/api/search', require('./routes/search'));
-// app.use('/api/admin', require('./routes/admin'));
+// Route mounting
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/search', require('./routes/search'));
+app.use('/api/admin', require('./routes/admin'));
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
