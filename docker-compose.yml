@@ -85,6 +85,39 @@ services:
         - "${POSTGRES_PORT:-5432}:5432"
       volumes:
         - postgres_data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: ./searchboost_api
+      dockerfile: Dockerfile
+    container_name: sb_api
+    restart: always
+    environment:
+      - PORT=3001
+      - DB_HOST=sb_db
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-searchboost}
+      - DB_PASSWORD=${DB_PASSWORD:-searchboost_pass}
+      - DB_NAME=${DB_NAME:-searchboost_db}
+      - JWT_SECRET=${JWT_SECRET:-983abd832812cd9382173abcd8ef0123}
+      - WARDEN_URL=http://sb_warden:14141
+    depends_on:
+      - db
+      - warden
+    ports:
+      - "3001:3001"
+
+  ui:
+    build:
+      context: ./searchboost_ui
+      dockerfile: Dockerfile
+    container_name: sb_ui
+    restart: always
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+
 volumes:
   ollama_data:
   redis_data:
