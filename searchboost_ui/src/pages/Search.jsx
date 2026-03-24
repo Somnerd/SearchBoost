@@ -13,10 +13,20 @@ export default function Search() {
   const pollIntervalRef = useRef(null);
 
   useEffect(() => {
+    fetchHistory();
     return () => {
       if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
     };
   }, []);
+
+  const fetchHistory = async () => {
+    try {
+      const res = await client.get('/search/history');
+      setConversationHistory(res.data);
+    } catch (err) {
+      console.error('Failed to fetch history:', err);
+    }
+  };
 
   const handleSearch = async (query) => {
     setLoading(true);
@@ -52,8 +62,13 @@ export default function Search() {
             setLoading(false);
           }
         } catch (pollErr) {
-          // If 404, might just mean still processing or not found, we keep polling? Wait, Warden result 500 etc
-           // If it is 503, warden is down
+          // If 429 (Rate Limited), Warden is throttling us. Don't stop polling!
+          if (pollErr.response?.status === 429) {
+            console.warn('Warden rate limit hit, retrying in next tick...');
+            return;
+          }
+
+          // For all other errors (5xx, network, etc.), stop polling and show error
           clearInterval(pollIntervalRef.current);
           if (pollErr.response) {
              setError(pollErr.response.data.error || 'Could not fetch result');

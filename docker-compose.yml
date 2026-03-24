@@ -94,13 +94,13 @@ services:
     restart: always
     environment:
       - PORT=3001
-      - DB_HOST=sb_db
+      - DB_HOST=db
       - DB_PORT=5432
       - DB_USER=${DB_USER:-searchboost}
       - DB_PASSWORD=${DB_PASSWORD:-searchboost_pass}
       - DB_NAME=${DB_NAME:-searchboost_db}
       - JWT_SECRET=${JWT_SECRET:-983abd832812cd9382173abcd8ef0123}
-      - WARDEN_URL=http://sb_warden:14141
+      - WARDEN_URL=http://warden:14141
     depends_on:
       - db
       - warden

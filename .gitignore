@@ -71,3 +71,9 @@ searchboost_warden/target/
 .claude/
 .anthropic/
 .codex/
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+.env*
+! .env.example

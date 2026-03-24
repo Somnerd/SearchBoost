@@ -1,6 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const { verifyToken } = require('../middleware/auth');
+const { getHistory } = require('../db/history');
 
 const router = express.Router();
 
@@ -10,7 +11,7 @@ router.post('/enqueue', verifyToken, async (req, res, next) => {
     if (!query) return res.status(400).json({ error: 'query is required' });
 
     const session_id = `SB-SESSION-${req.user.username}`;
-    
+
     const response = await axios.post(`${process.env.WARDEN_URL}/enqueue`, {
       query,
       session_id,
@@ -38,6 +39,15 @@ router.get('/result/:job_id', verifyToken, async (req, res, next) => {
     } else {
       res.status(503).json({ error: 'Could not reach Warden', details: error.message });
     }
+  }
+});
+
+router.get('/history', verifyToken, async (req, res, next) => {
+  try {
+    const history = await getHistory(req.user.username);
+    res.json(history);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to retrieve history' });
   }
 });
 

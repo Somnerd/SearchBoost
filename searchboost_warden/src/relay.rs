@@ -54,8 +54,8 @@ pub async fn start_relay(port: u16, warden: Arc<Warden>) {
     // Maps natively using IP resolution
     let governor_conf = Arc::new(
         GovernorConfigBuilder::default()
-            .per_second(10)
-            .burst_size(20)
+            .per_second(25)
+            .burst_size(100)
             .finish()
             .expect("Warden: Failed to initialize Governor Rate Limiter"),
     );

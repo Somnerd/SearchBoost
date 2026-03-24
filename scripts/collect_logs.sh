@@ -13,7 +13,7 @@ mkdir -p "$LOG_DIR"
 echo "🚀 Starting log collection for SearchBoost services..."
 echo "📅 Timestamp: $TIMESTAMP"
 
-CONTAINERS=("sb_worker" "sb_warden" "sb_db" "sb_redis" "sb_searxng" "sb_ollama")
+CONTAINERS=("sb_worker" "sb_warden" "sb_db" "sb_redis" "sb_searxng" "sb_ollama" "sb_api" "sb_ui")
 
 for container in "${CONTAINERS[@]}"; do
     if docker ps -a --format '{{.Names}}' | grep -q "^${container}$"; then
