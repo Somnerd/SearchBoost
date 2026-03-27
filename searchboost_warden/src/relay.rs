@@ -50,7 +50,7 @@ struct AppState {
 use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
 
 pub async fn start_relay(port: u16, warden: Arc<Warden>) {
-    // Configure rate limiting: 10 requests per second, with a burst fallback of 20
+    // Configure rate limiting: 25 requests per second, with a burst fallback of 100
     // Maps natively using IP resolution
     let governor_conf = Arc::new(
         GovernorConfigBuilder::default()

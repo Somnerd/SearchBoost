@@ -60,3 +60,17 @@
 
 **Verification**:
 - TBD
+
+---
+
+## Phase 6: CodeRabbit Security & Stability Sweep
+**Status**: 🏃 In Progress
+**Branch**: dev-web-ui
+**Objective**: Rapidly patch all Critical IDOR, Docker escalation routines, Hardcoded JWT falls, PostgreSQL LIKE loopholes, and Cache state-bypasses surfaced by CodeRabbit.
+**Depends on**: Phase 5
+
+**Plans**:
+- [ ] 6.1 Configuration & Licensing               [Wave 1]
+- [ ] 6.2 Hardcoded Secrets & ENV Handlers        [Wave 1]
+- [ ] 6.3 Docker Non-Root Identity Fixes          [Wave 2]
+- [ ] 6.4 Core Logic Security & Cache Bypass      [Wave 3]

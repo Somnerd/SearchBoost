@@ -203,7 +203,7 @@ class Configurator(BaseSettings):
 
         if not self._is_docker:
             current_host = final_data.get("host")
-            container_names = ["sb_redis", "sb_db", "sb_ollama", "sb_warden", "sb_searxng"]
+            container_names = ["sb_redis", "sb_db", "sb_ollama", "sb_warden", "sb-searxng"]
 
             if current_host in container_names:
                 self._logger.debug(f"Configurator: Remapping {current_host} -> 127.0.0.1 for local host execution.")
