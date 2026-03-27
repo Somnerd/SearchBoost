@@ -16,13 +16,18 @@ setup_directories() {
 
 check_and_set_env() {
     if [ ! -f ".env" ]; then
-        echo -e "${YELLOW}No .env found. Generating defaults...${NC}"
+        echo -e "${YELLOW}No .env found. Generating secure defaults...${NC}"
         cat <<EOT >> .env
 OLLAMA_PORT=11434
 OLLAMA_MODEL=llama3.2
 SEARXNG_PORT=8080
 REDIS_PORT=6379
-REDIS_PASSWORD=$(openssl rand -hex 12)
+DB_USER=searchboost
+DB_NAME=searchboost_db
+DB_PASSWORD=$(openssl rand -hex 16)
+REDIS_PASSWORD=$(openssl rand -hex 16)
+JWT_SECRET=$(openssl rand -hex 32)
+JWT_EXPIRES_IN=24h
 EOT
     fi
     export $(grep -v '^#' .env | xargs)

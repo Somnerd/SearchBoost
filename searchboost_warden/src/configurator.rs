@@ -79,7 +79,17 @@ impl Settings {
             .build()
             .expect("Warden Error: Could not find config file");
 
-        settings.try_deserialize().expect("Warden Error: Config file format is invalid")
+        let mut settings: Self = settings.try_deserialize()
+            .expect("Warden Error: Config file format is invalid");
+
+        // Explicit environment overrides for shared secrets
+        if let Ok(pass) = env::var("REDIS_PASSWORD") {
+            if !pass.is_empty() {
+                settings.redis.password = Some(pass);
+            }
+        }
+
+        settings
     }
 
     pub fn get_redis_url(&self) -> String {

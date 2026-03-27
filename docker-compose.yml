@@ -15,6 +15,7 @@ services:
     environment:
       - MASTER_CONFIG_PATH=/configs/master_settings.yml
       - WARDEN_CONFIG_PATH=/configs/warden.yml
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
       - RUST_LOG=info
     depends_on:
       - redis
@@ -31,7 +32,7 @@ services:
       - SEARCHBOOST_AI_HOST=sb_ollama
       - SEARCHBOOST_SEARCH_HOST=sb-searxng
       - PYTHONBUFFERED=1
-      - SEARCHBOOST_REDIS_PASSWORD=${REDIS_PASSWORD:-searchboost_pass}
+      - SEARCHBOOST_REDIS_PASSWORD=${REDIS_PASSWORD}
       - PYTHONPATH=/app
     command : arq searchboost_src.worker.WorkerSettings
     volumes:
