@@ -6,7 +6,7 @@ const pool = require('./pool');
  */
 async function getSessions(username) {
   const escapedUsername = username.replace(/[\\%_]/g, '\\$&');
-  const prefix = `SB-SESSION-${escapedUsername}%`;
+  const prefix = `SB-SESSION:${escapedUsername}:%`;
   try {
     const result = await pool.query(
       `SELECT session_id, MAX(created_at) as last_activity
@@ -18,8 +18,9 @@ async function getSessions(username) {
     );
 
     return result.rows.map(r => {
-      let threadId = r.session_id.replace(`SB-SESSION-${username}-`, '');
-      if (threadId === r.session_id) threadId = 'default';
+      // session_id: SB-SESSION:username:thread_id
+      const parts = r.session_id.split(':');
+      const threadId = parts[2] || 'default';
       return {
         thread_id: threadId,
         session_id: r.session_id,

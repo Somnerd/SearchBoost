@@ -66,15 +66,15 @@ pub struct Settings {
 
 impl Settings {
     pub fn load() -> Self {
-        let master_path = env::var("MASTER_CONFIG_PATH")
-            .unwrap_or_else(|_| "../configs/master_settings.yml".to_string());
+        let master_env = env::var("MASTER_CONFIG_PATH");
+        let master_path = master_env.clone().unwrap_or_else(|_| "../configs/master_settings.yml".to_string());
             
-        let discrete_path = env::var("WARDEN_CONFIG_PATH")
-            .unwrap_or_else(|_| "../configs/warden.yml".to_string());
+        let discrete_env = env::var("WARDEN_CONFIG_PATH");
+        let discrete_path = discrete_env.clone().unwrap_or_else(|_| "../configs/warden.yml".to_string());
 
         let settings = Config::builder()
-            .add_source(File::new(&master_path, FileFormat::Yaml).required(false))
-            .add_source(File::new(&discrete_path, FileFormat::Yaml).required(false))
+            .add_source(File::new(&master_path, FileFormat::Yaml).required(master_env.is_ok()))
+            .add_source(File::new(&discrete_path, FileFormat::Yaml).required(discrete_env.is_ok()))
             .add_source(config::Environment::with_prefix("WARDEN").separator("__"))
             .build()
             .expect("Warden Error: Could not find config file");

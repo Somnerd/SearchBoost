@@ -2,19 +2,22 @@
 **Target Environment:** `dev-web-ui` (Phase 5 & Semantic Caching)
 
 ## Test 1: UI Session Multi-Thread Isolation 
-**Method:** Browser UI (`http://35.204.126.60`)
+**Method:** Browser UI (`http://${SB_INSTANCE_IP}`)
 **Objective:** Confirm that the React component spawns clear isolated `thread_id` records in PostgreSQL and visually renders them simultaneously.
 **Steps:**
 1. Login to the application.
 2. Search "test query 1". Verify sidebar parses session ID.
 3. Click '+ New Chat'.
 4. Search "test query 2". Verify second session appears independent of the first main view.
+**Expected:** The UI sidebar must list two distinct session IDs. Both threads must persist independent conversation states upon page refreshes.
 
 ## Test 2: PII-Safe Semantic Caching (Hard Gate)
 **Method:** Terminal (`curl` / `redis-cli`)
 **Objective:** Confirm that sensitive inputs (e.g. Credit Cards) are actively rejected by the `PIIDetector` and NEVER written to the Redis cache.
 **Steps:**
 1. Clear the Redis cache (`FLUSHALL`).
+   > [!WARNING]
+   > `FLUSHALL` is destructive and wipes ALL keys from the Redis instance. Use ONLY in development environments.
 2. Enqueue a search containing fake PII: "My credit card is 4111-1111-1111-1111, when does the world series start in 2024?".
 3. Wait for the pipeline to complete.
 4. Check Redis keys.

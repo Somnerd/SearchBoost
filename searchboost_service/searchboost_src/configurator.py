@@ -199,7 +199,8 @@ class Configurator(BaseSettings):
         allowed_keys = model_cls.model_fields.keys()
         filtered_cli = {k: v for k, v in (cli_overrides or {}).items() if k in allowed_keys}
 
-        final_data = {**base_data, **manual_env_data, **filtered_cli, **yaml_data}
+        # Precedence: CLI > Manual Env > YAML > Default Base
+        final_data = {**base_data, **yaml_data, **manual_env_data, **filtered_cli}
 
         if not self._is_docker:
             current_host = final_data.get("host")
@@ -222,12 +223,19 @@ class Configurator(BaseSettings):
         discrete_filepath = f"{self._config_dir}/worker.yml"
         data = {}
 
+        def deep_merge(target, source):
+            for key, val in source.items():
+                if key in target and isinstance(target[key], dict) and isinstance(val, dict):
+                    deep_merge(target[key], val)
+                else:
+                    target[key] = val
+
         try:
             if os.path.exists(master_filepath):
                 async with aiofiles.open(master_filepath, 'r') as f:
                     content = await f.read()
                     master_data = yaml.safe_load(content) or {}
-                    data.update(master_data)
+                    deep_merge(data, master_data)
         except Exception as e:
             self._logger.warning(f"Config Loader: Error reading {master_filepath}: {e}")
 
@@ -236,11 +244,7 @@ class Configurator(BaseSettings):
                 async with aiofiles.open(discrete_filepath, 'r') as f:
                     content = await f.read()
                     discrete_data = yaml.safe_load(content) or {}
-                    for key, val in discrete_data.items():
-                        if isinstance(val, dict) and isinstance(data.get(key), dict):
-                            data[key].update(val)
-                        else:
-                            data[key] = val
+                    deep_merge(data, discrete_data)
         except Exception as e:
             self._logger.warning(f"Config Loader: Error reading {discrete_filepath}: {e}")
 

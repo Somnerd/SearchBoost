@@ -10,8 +10,8 @@ router.post('/enqueue', verifyToken, async (req, res, next) => {
     const { query, options } = req.body;
     if (!query) return res.status(400).json({ error: 'query is required' });
 
-    const thread_id = req.body.thread_id && req.body.thread_id !== 'default' ? `-${req.body.thread_id}` : '';
-    const session_id = `SB-SESSION-${req.user.username}${thread_id}`;
+    const thread_id = req.body.thread_id && req.body.thread_id !== 'default' ? req.body.thread_id : 'default';
+    const session_id = `SB-SESSION:${req.user.username}:${thread_id}`;
 
     const response = await axios.post(`${process.env.WARDEN_URL}/enqueue`, {
       query,
@@ -33,8 +33,9 @@ router.get('/result/:job_id', verifyToken, async (req, res, next) => {
   try {
     const { job_id } = req.params;
 
-    const sessionMatch = job_id.match(/^(SB-SESSION-[^:]+)/);
-    if (!sessionMatch || !sessionMatch[1].startsWith(`SB-SESSION-${req.user.username}`)) {
+    // job_id format: SB-SESSION:username:thread:uuid
+    const parts = job_id.split(':');
+    if (parts.length < 4 || parts[0] !== 'SB-SESSION' || parts[1] !== req.user.username) {
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
@@ -61,8 +62,8 @@ router.get('/sessions', verifyToken, async (req, res, next) => {
 router.get(['/history', '/history/:thread_id'], verifyToken, async (req, res, next) => {
   try {
     const threadParam = req.params.thread_id;
-    const thread_id = threadParam && threadParam !== 'default' ? `-${threadParam}` : '';
-    const session_id = `SB-SESSION-${req.user.username}${thread_id}`;
+    const thread_id = threadParam && threadParam !== 'default' ? threadParam : 'default';
+    const session_id = `SB-SESSION:${req.user.username}:${thread_id}`;
     
     const history = await getHistory(session_id);
     res.json(history);

@@ -30,6 +30,7 @@ JWT_SECRET=$(openssl rand -hex 32)
 JWT_EXPIRES_IN=24h
 EOT
     fi
+    chmod 600 .env
     export $(grep -v '^#' .env | xargs)
 }
 

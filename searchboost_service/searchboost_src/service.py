@@ -91,20 +91,25 @@ class SearchBoostService:
             self.logger.info("SearchBoostService : Running service...")
             self.logger.info("SearchBoostService : Connecting to Redis")
 
-            await self.cache.connect()
-            cached_result = await self.cache.get_cached_response(self.args.query)
-            if cached_result:
-                self.logger.info("--- CACHE HIT ---")
-                print(f"\nFinal Response (Cached):\n{cached_result}")
-                return cached_result
-
-            self.logger.info("--- CACHE MISS: Executing Research Loop ---")
-
             # Load prior conversation history for this session
             history_svc = None
             if db_session and self.session_id:
                 history_svc = HistoryService(db_session, self.logger)
                 self.chatdetails.history = await history_svc.load_history(self.session_id)
+
+            await self.cache.connect()
+            cached_result = await self.cache.get_cached_response(self.args.query)
+            if cached_result:
+                self.logger.info("--- CACHE HIT ---")
+                if history_svc and self.session_id:
+                    await history_svc.save_turn(self.session_id, "user", self.args.query)
+                    await history_svc.save_turn(self.session_id, "assistant", cached_result)
+                print(f"\nFinal Response (Cached):\n{cached_result}")
+                return cached_result
+
+            self.logger.info("--- CACHE MISS: Executing Research Loop ---")
+
+            if history_svc and self.session_id:
                 # Save the current user turn immediately
                 await history_svc.save_turn(self.session_id, "user", self.args.query)
 
