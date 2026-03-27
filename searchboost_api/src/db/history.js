@@ -5,12 +5,13 @@ const pool = require('./pool');
  * the query-result pairs.
  */
 async function getSessions(username) {
-  const prefix = `SB-SESSION-${username}%`;
+  const escapedUsername = username.replace(/[\\%_]/g, '\\$&');
+  const prefix = `SB-SESSION-${escapedUsername}%`;
   try {
     const result = await pool.query(
       `SELECT session_id, MAX(created_at) as last_activity
        FROM conversation_turns
-       WHERE session_id LIKE $1
+       WHERE session_id LIKE $1 ESCAPE '\\'
        GROUP BY session_id
        ORDER BY last_activity DESC`, 
        [prefix]

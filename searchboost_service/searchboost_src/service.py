@@ -123,6 +123,8 @@ class SearchBoostService:
             post_opt_cache = await self.cache.get_cached_response(optimized_query)
             if post_opt_cache:
                 self.logger.info("--- CACHE HIT (POST-OPTIMIZATION) ---")
+                if history_svc and self.session_id:
+                    await history_svc.save_turn(self.session_id, "assistant", post_opt_cache)
                 print(f"\nFinal Response (Cached via Optimized Query):\n{post_opt_cache}")
                 return post_opt_cache
 

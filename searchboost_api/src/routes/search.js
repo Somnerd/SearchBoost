@@ -32,6 +32,12 @@ router.post('/enqueue', verifyToken, async (req, res, next) => {
 router.get('/result/:job_id', verifyToken, async (req, res, next) => {
   try {
     const { job_id } = req.params;
+
+    const sessionMatch = job_id.match(/^(SB-SESSION-[^:]+)/);
+    if (!sessionMatch || !sessionMatch[1].startsWith(`SB-SESSION-${req.user.username}`)) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
     const response = await axios.get(`${process.env.WARDEN_URL}/results/${job_id}`);
     res.status(response.status).json(response.data);
   } catch (error) {
