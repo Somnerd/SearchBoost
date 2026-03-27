@@ -9,6 +9,12 @@ This master roadmap consolidates all architecture phases, stabilizing tasks, and
 * [ ] **Governor Implementation**: Add the `governor` and `tower-governor` crates to the Rust Warden to implement strict GCRA rate limiting on the `/enqueue` endpoint, protecting the downstream AI services.
 * [ ] **Web UI & Containerization**: Build a modern, stunning frontend dashboard (e.g. Next.js/Vite) to interact with the Warden's relay API. Write a `Dockerfile` for it and add it to the stack.
 
+## 🐛 BUGS & OVERSIGHTS (KNOWN)
+* [ ] **Cache Post-Optimization**: Perform semantic cache checks *after* query optimization, as different inputs may lead to the same optimized search string.
+* [ ] **Entropy/TTL for Time-Sensitive Queries**: Implement context-aware validation or shorter TTLs for caching time-sensitive answers (e.g., current time/date).
+* [ ] **Warden Observation Timestamps**: Fix `sb_warden` observation logic to ensure container logs are captured with accurate timestamps.
+* [ ] **(UI) Session Isolation**: Resolve the bug where chat history includes all previous user messages instead of creating isolated user sessions.
+
 ## 🟠 MEDIUM PRIORITY: Build & Environment Stability
 
 *The 10-minute build cycle is currently the primary blocker for feature velocity.*
@@ -26,6 +32,10 @@ This master roadmap consolidates all architecture phases, stabilizing tasks, and
 * [X] Warden Result Polling, Orchestrator Redis Purge, Warden ID Authority.
 * [X] Health Check Endpoints (`/health`).
 * [X] **Warden Serialization Fix**: Modified Rust relay to produce perfect Tuple pickle bytes to match Arq's default deserializer. (Completed Phase 1 Fixes).
+
+## 🩹 MAINTENANCE & BUG FIXES (RECENT)
+* [X] **RFC Compliance (SearXNG)**: Renamed `sb_searxng` to `sb-searxng` to address 400 Bad Request errors caused by underscores in Host headers with the Granian server.
+* [X] **Model Updates**: Pulled and configured `llama3.2` image in the `sb_ollama` container for current research tasks.
 
 ---
 

@@ -48,8 +48,8 @@ async fn main() -> anyhow::Result<()> {
         .expect("Invalid Redis URL in Config");
         
     let breaker = breaker::create_breaker(
-        settings.breaker.breaker_threshold, 
-        settings.breaker.breaker_retry_seconds
+        settings.warden.breaker.breaker_threshold, 
+        settings.warden.breaker.breaker_retry_seconds
     );
     
     let warden = Arc::new(Warden { 
@@ -57,8 +57,8 @@ async fn main() -> anyhow::Result<()> {
         redis_client
      });
 
-    let obs_name = settings.observer.container_name.clone();
-    let obs_path = settings.observer.log_path.clone();
+    let obs_name = settings.warden.observer.container_name.clone();
+    let obs_path = settings.warden.observer.log_path.clone();
 
     tokio::spawn(async move {
         info!("Warden: Attempting to connect to Docker for container: {}", obs_name);
@@ -68,8 +68,8 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
-    info!("Warden Unified Entry Point Active on :{}", settings.network.relay_port);
-    relay::start_relay(settings.network.relay_port, warden).await;
+    info!("Warden Unified Entry Point Active on :{}", settings.warden.network.relay_port);
+    relay::start_relay(settings.warden.network.relay_port, warden).await;
 
     Ok(())
 }

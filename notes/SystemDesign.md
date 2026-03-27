@@ -26,7 +26,7 @@ We use a "Pragmatic Professional" configuration system designed for both self-ho
 
 *   **`.env`**: Global environment overrides (e.g., `SEARCHBOOST_WARDEN_PORT`).
 *   **`warden.ini`**: Hierarchical configuration for the Rust sidecar (Network, Redis, Observer, Breaker).
-*   **`service_settings.json`**: Dynamic overrides for AI strategies and engine URLs.
+*   **`service_settings.json`**: Dynamic overrides for AI strategies and engine URLs (e.g., `sb-searxng`).
 
 ### 4. Resilience Patterns
 *   **Circuit Breaker**: The `failsafe` library in Rust monitors Redis connectivity. If three failures occur, the circuit opens, immediately notifying the client (503) to switch to Fallback mode.

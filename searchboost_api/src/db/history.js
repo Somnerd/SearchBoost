@@ -4,11 +4,35 @@ const pool = require('./pool');
  * Fetches the conversation history for a specific user and reconstructs 
  * the query-result pairs.
  */
-async function getHistory(username) {
-  const sessionId = `SB-SESSION-${username}`;
-  
+async function getSessions(username) {
+  const prefix = `SB-SESSION-${username}%`;
   try {
-    // Fetch all turns for this session, ordered by time
+    const result = await pool.query(
+      `SELECT session_id, MAX(created_at) as last_activity
+       FROM conversation_turns
+       WHERE session_id LIKE $1
+       GROUP BY session_id
+       ORDER BY last_activity DESC`, 
+       [prefix]
+    );
+
+    return result.rows.map(r => {
+      let threadId = r.session_id.replace(`SB-SESSION-${username}-`, '');
+      if (threadId === r.session_id) threadId = 'default';
+      return {
+        thread_id: threadId,
+        session_id: r.session_id,
+        last_activity: r.last_activity
+      };
+    });
+  } catch (err) {
+    console.error('getSessions Error:', err);
+    throw err;
+  }
+}
+
+async function getHistory(sessionId) {
+  try {
     const result = await pool.query(
       'SELECT role, content, created_at FROM conversation_turns WHERE session_id = $1 ORDER BY created_at ASC',
       [sessionId]
@@ -44,4 +68,4 @@ async function getHistory(username) {
   }
 }
 
-module.exports = { getHistory };
+module.exports = { getHistory, getSessions };

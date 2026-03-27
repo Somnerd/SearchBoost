@@ -119,6 +119,13 @@ class SearchBoostService:
             self.ai_handler = AIHandler(self.logger, reason="optimization")
             optimized_query = await self.ai_handler.query_LLM(self.chatdetails)
 
+            self.logger.info(f"--- CHECKING POST-OPTIMIZATION CACHE for '{optimized_query}' ---")
+            post_opt_cache = await self.cache.get_cached_response(optimized_query)
+            if post_opt_cache:
+                self.logger.info("--- CACHE HIT (POST-OPTIMIZATION) ---")
+                print(f"\nFinal Response (Cached via Optimized Query):\n{post_opt_cache}")
+                return post_opt_cache
+
             # Second PII scan on the optimizer's output — LLMs can echo PII
             # back verbatim (e.g. "4111-1111-1111-1111 credit card validation").
             optimized_query_pii = pii_detector.scan(optimized_query)
@@ -150,9 +157,11 @@ class SearchBoostService:
 
             if cache_eligible and not final_response_pii:
                 self.logger.debug(
-                    f"SearchBoostService : Caching final response for: '{self.args.query}'"
+                    f"SearchBoostService : Caching final response for: '{self.args.query}' and optimized '{optimized_query}'"
                 )
                 await self.cache.cache_response(self.args.query, final_response)
+                if self.args.query != optimized_query:
+                    await self.cache.cache_response(optimized_query, final_response)
             else:
                 self.logger.warning(
                     "SearchBoostService : Cache write SKIPPED — PII detected in query, optimizer output, or final response."

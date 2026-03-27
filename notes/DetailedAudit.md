@@ -13,7 +13,7 @@ SearchBoost is divided into three primary "Actors" and a shared "Infrastructure"
 | **Warden** | Rust | Reliability Sidecar, ID Authority, Circuit Breaker | `main.rs`, `relay.rs` |
 | **Orchestrator** | Python | Client UI, Query Optimization, Routing | `main.py`, `configurator.py` |
 | **Worker** | Python | Fact-finding, LLM Research, Persistence | `worker.py`, `service.py` |
-| **Infrastructure** | Docker | Redis (Broker), Postgres (Memory), SearxNG | `docker-compose.yml` |
+| **Infrastructure** | Docker | Redis (Broker), Postgres (Memory), SearxNG | `docker-compose.yml` (e.g., `sb-searxng`) |
 
 ---
 

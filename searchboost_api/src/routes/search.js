@@ -1,7 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const { verifyToken } = require('../middleware/auth');
-const { getHistory } = require('../db/history');
+const { getHistory, getSessions } = require('../db/history');
 
 const router = express.Router();
 
@@ -10,7 +10,8 @@ router.post('/enqueue', verifyToken, async (req, res, next) => {
     const { query, options } = req.body;
     if (!query) return res.status(400).json({ error: 'query is required' });
 
-    const session_id = `SB-SESSION-${req.user.username}`;
+    const thread_id = req.body.thread_id && req.body.thread_id !== 'default' ? `-${req.body.thread_id}` : '';
+    const session_id = `SB-SESSION-${req.user.username}${thread_id}`;
 
     const response = await axios.post(`${process.env.WARDEN_URL}/enqueue`, {
       query,
@@ -42,9 +43,22 @@ router.get('/result/:job_id', verifyToken, async (req, res, next) => {
   }
 });
 
-router.get('/history', verifyToken, async (req, res, next) => {
+router.get('/sessions', verifyToken, async (req, res, next) => {
   try {
-    const history = await getHistory(req.user.username);
+    const sessions = await getSessions(req.user.username);
+    res.json(sessions);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to retrieve sessions' });
+  }
+});
+
+router.get(['/history', '/history/:thread_id'], verifyToken, async (req, res, next) => {
+  try {
+    const threadParam = req.params.thread_id;
+    const thread_id = threadParam && threadParam !== 'default' ? `-${threadParam}` : '';
+    const session_id = `SB-SESSION-${req.user.username}${thread_id}`;
+    
+    const history = await getHistory(session_id);
     res.json(history);
   } catch (err) {
     res.status(500).json({ error: 'Failed to retrieve history' });

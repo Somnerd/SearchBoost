@@ -10,18 +10,33 @@ export default function Search() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [conversationHistory, setConversationHistory] = useState([]);
+  const [sessions, setSessions] = useState([]);
+  const [currentThreadId, setCurrentThreadId] = useState(() => Date.now().toString());
   const pollIntervalRef = useRef(null);
 
   useEffect(() => {
-    fetchHistory();
+    fetchSessions();
+  }, []);
+
+  useEffect(() => {
+    fetchHistory(currentThreadId);
     return () => {
       if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
     };
-  }, []);
+  }, [currentThreadId]);
 
-  const fetchHistory = async () => {
+  const fetchSessions = async () => {
     try {
-      const res = await client.get('/search/history');
+      const res = await client.get('/search/sessions');
+      setSessions(res.data);
+    } catch (err) {
+      console.error('Failed to fetch sessions:', err);
+    }
+  };
+
+  const fetchHistory = async (threadId) => {
+    try {
+      const res = await client.get(`/search/history/${threadId}`);
       setConversationHistory(res.data);
     } catch (err) {
       console.error('Failed to fetch history:', err);
@@ -34,8 +49,16 @@ export default function Search() {
     setResult(null);
     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
 
+    // Optimistically push the chat into the sidebar instantly
+    setSessions(prev => {
+      if (!prev.find(s => s.thread_id === currentThreadId)) {
+        return [{ thread_id: currentThreadId, last_activity: new Date().toISOString() }, ...prev];
+      }
+      return prev;
+    });
+
     try {
-      const res = await client.post('/search/enqueue', { query });
+      const res = await client.post('/search/enqueue', { query, thread_id: currentThreadId });
       const jobId = res.data.id || res.data.job_id || res.data.job_id_used;
       
       let pollCount = 0;
@@ -55,6 +78,7 @@ export default function Search() {
             const answer = resultRes.data.result.answer || resultRes.data.result;
             setResult(answer);
             setConversationHistory(prev => [...prev, { query, result: answer }]);
+            fetchSessions();
             setLoading(false);
           } else if (resultRes.data.status === 'failed') {
             clearInterval(pollIntervalRef.current);
@@ -89,51 +113,82 @@ export default function Search() {
   };
 
   const clearHistory = () => {
+    setCurrentThreadId(Date.now().toString());
     setConversationHistory([]);
     setResult(null);
     setError(null);
   };
 
   return (
-    <div className="page-enter" style={{ padding: '2rem 1rem', maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-        <h1 style={{ fontSize: '2.5rem', margin: '0 0 0.5rem', fontWeight: '600' }}>Hello, {user?.username}</h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', margin: 0 }}>What do you want to know today?</p>
+    <div style={{ display: 'flex', width: '100%', maxWidth: '1400px', margin: '0 auto', minHeight: '85vh', gap: '2rem' }}>
+      
+      {/* SIDEBAR */}
+      <div style={{ width: '260px', borderRight: '1px solid rgba(255,255,255,0.05)', padding: '1rem 1rem 1rem 0', display: 'flex', flexDirection: 'column' }}>
+        <button 
+          onClick={clearHistory}
+          style={{ width: '100%', padding: '0.8rem', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', marginBottom: '1.5rem', fontWeight: 'bold', fontSize: '1rem', transition: 'filter 0.2s', ':hover': {filter: 'brightness(1.1)'} }}
+        >
+          + New Chat
+        </button>
+        <h4 style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '1rem' }}>Past Sessions</h4>
+        <div style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {sessions.map(s => (
+            <div 
+              key={s.thread_id} 
+              onClick={() => setCurrentThreadId(s.thread_id)}
+              style={{
+                padding: '0.75rem 1rem',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                background: currentThreadId === s.thread_id ? 'rgba(123, 97, 255, 0.15)' : 'transparent',
+                color: currentThreadId === s.thread_id ? 'var(--accent)' : 'var(--text-primary)',
+                borderLeft: currentThreadId === s.thread_id ? '3px solid var(--accent)' : '3px solid transparent',
+                transition: 'all 0.2s ease',
+                fontSize: '0.9rem',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis'
+              }}
+            >
+               {s.thread_id === 'default' ? 'Legacy Sandbox' : `Chat-${s.thread_id.substring(s.thread_id.length - 6)}`}
+            </div>
+          ))}
+        </div>
       </div>
 
-      {conversationHistory.length > 0 && (
-        <div style={{ maxWidth: '800px', margin: '0 auto 1.5rem', width: '100%' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h3 style={{ margin: 0, fontSize: '1rem', color: 'var(--text-muted)' }}>Session History</h3>
-            <button 
-              onClick={clearHistory}
-              style={{ background: 'transparent', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.9rem' }}
-            >
-              Start New Conversation
-            </button>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {conversationHistory.map((item, idx) => (
-              <div key={idx} className="glass-card" style={{ padding: '1rem' }}>
-                <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.5rem' }}>
-                  <span style={{ color: 'var(--accent)', fontWeight: 'bold' }}>Q:</span>
-                  <span style={{ color: 'var(--text-primary)' }}>{item.query}</span>
-                </div>
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                  <span style={{ color: 'var(--text-muted)', fontWeight: 'bold' }}>A:</span>
-                  <span style={{ color: 'var(--text-muted)' }}>
-                    {typeof item.result === 'string' ? item.result.substring(0, 100) + (item.result.length > 100 ? '...' : '') : '...'}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* MAIN CONTENT */}
+      <div className="page-enter" style={{ flex: 1, padding: '2rem 0', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+          <h1 style={{ fontSize: '2.5rem', margin: '0 0 0.5rem', fontWeight: '600' }}>Hello, {user?.username}</h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', margin: 0 }}>What do you want to know today?</p>
         </div>
-      )}
 
-      <SearchBar onSubmit={handleSearch} loading={loading} />
-      
-      <ResultDisplay result={result} loading={loading} error={error} />
+        {conversationHistory.length > 0 && (
+          <div style={{ maxWidth: '800px', margin: '0 auto 1.5rem', width: '100%' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {conversationHistory.map((item, idx) => (
+                <div key={idx} className="glass-card" style={{ padding: '1.5rem', borderRadius: '12px' }}>
+                  <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                    <span style={{ color: 'var(--accent)', fontWeight: 'bold' }}>Q:</span>
+                    <span style={{ color: 'var(--text-primary)', lineHeight: '1.5' }}>{item.query}</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '1rem' }}>
+                    <span style={{ color: 'var(--text-muted)', fontWeight: 'bold' }}>A:</span>
+                    <span style={{ color: 'var(--text-muted)', lineHeight: '1.6' }}>
+                      {typeof item.result === 'string' ? item.result : 'Response parsing error'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <SearchBar onSubmit={handleSearch} loading={loading} />
+        
+        {/* We clear the main result container if we have history flowing instead, or just keep it at bottom */}
+        <ResultDisplay result={result} loading={loading} error={error} />
+      </div>
     </div>
   );
 }
