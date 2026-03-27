@@ -10,7 +10,9 @@ COPY . .
 
 # Ensure we don't bring in dev .env by accident if it exists in context, 
 # although compose will override it.
-RUN rm -f .env
+RUN rm -f .env && chown -R node:node /app
+
+USER node
 
 EXPOSE 3001
 
