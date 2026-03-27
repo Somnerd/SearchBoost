@@ -102,7 +102,7 @@ services:
       - DB_USER=${DB_USER:-searchboost}
       - DB_PASSWORD=${DB_PASSWORD:-searchboost_pass}
       - DB_NAME=${DB_NAME:-searchboost_db}
-      - JWT_SECRET=${JWT_SECRET:-983abd832812cd9382173abcd8ef0123}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set}
       - WARDEN_URL=http://warden:14141
     depends_on:
       - db

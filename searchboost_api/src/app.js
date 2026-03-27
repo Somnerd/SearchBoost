@@ -33,6 +33,10 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3001;
 
 async function start() {
+  if (!process.env.JWT_SECRET) {
+    console.error('FATAL: JWT_SECRET environment variable is missing.');
+    process.exit(1);
+  }
   try {
     await migrateDb();
     app.listen(PORT, () => {
