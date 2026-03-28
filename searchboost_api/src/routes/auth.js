@@ -59,13 +59,21 @@ router.post('/login', async (req, res, next) => {
     };
 
     const expiresInString = process.env.JWT_EXPIRES_IN || '24h';
-    const matchTime = expiresInString.match(/^(\d+)([smhd])$/);
     let maxAge = 24 * 60 * 60 * 1000; // Default 24h
+
+    // Handle pure numbers (interpreted as seconds) or standard time strings (24h, 1d)
+    const matchTime = expiresInString.match(/^(\d+)([smhd])?$/);
     if (matchTime) {
       const val = parseInt(matchTime[1]);
       const unit = matchTime[2];
-      const multipliers = { s: 1000, m: 60 * 1000, h: 60 * 60 * 1000, d: 24 * 60 * 60 * 1000 };
-      maxAge = val * multipliers[unit];
+      
+      if (!unit) {
+        // Standard JWT 'expiresIn' as pure number is interpreted as seconds
+        maxAge = val * 1000;
+      } else {
+        const multipliers = { s: 1000, m: 60 * 1000, h: 60 * 60 * 1000, d: 24 * 60 * 60 * 1000 };
+        maxAge = val * multipliers[unit];
+      }
     }
 
     const token = jwt.sign(payload, process.env.JWT_SECRET, {

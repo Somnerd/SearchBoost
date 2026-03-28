@@ -51,11 +51,10 @@ SearchBoost is a decentralized, highly-resilient hybrid-AI search engine pipelin
 ## Data Flow
 1. User logs in safely via Node.js (`/api/auth/login`).
 2. Search triggers dispatch via `Axios` passing secure session cookies.
-3. Node bounds the request back to a Postgres session ID using `SB-SESSION:${username}:${thread_id}`.
-4. Node dispatches query formatted as Job ID `SB-SESSION:user:thread:uuid` to Rust `Warden`.
-5. Rust validates the `job_id` prefix matches the request's origin user.
-6. Python pulls task, aggregates SearXNG metadata, prompts Ollama, maps the result to Postgres, and updates the Job ID status to `complete` in Redis.
-7. React Client polls Warden via Node Proxy; Node validates result ownership before returning data.
+3. Node constructs a **session_id** prefix (`SB-SESSION:${username}:${thread_id}`) and dispatches the query to the Rust `Warden`.
+4. Warden generates a unique **job_id** by appending a UUID to the session prefix and enqueues the task in Redis.
+5. Python pulls task, aggregates SearXNG metadata, prompts Ollama, maps the result to Postgres, and updates the Job ID status to `complete` in Redis.
+6. React Client polls Warden via Node Proxy; Node validates result ownership before returning data.
 
 ## Integration Points
 | External Service | Type | Purpose |
@@ -72,4 +71,5 @@ SearchBoost is a decentralized, highly-resilient hybrid-AI search engine pipelin
 - **Configuration:** Hierarchical YAML fallback logic with recursive deep-merging.
 
 ## Technical Debt
-- [ ] *None Detected.* The repository possesses 0 unresolved TODO, FIXME, or HACK comments.
+- [ ] Implement robust error-recovery for PostgreSQL connection loss in Python Workers.
+- [ ] Add rate-limit metrics exposure (Prometheus) to the Warden sidecar.

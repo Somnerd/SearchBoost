@@ -61,6 +61,7 @@ pub struct Settings {
 
 impl Settings {
     pub fn load() -> Self {
+        // Bootstrap: Determine paths to master and discrete YAML configs via ENV
         let master_env = env::var("MASTER_CONFIG_PATH");
         let master_path = master_env.clone().unwrap_or_else(|_| "../configs/master_settings.yml".to_string());
             

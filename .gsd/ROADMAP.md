@@ -36,7 +36,7 @@
 
 **Plans**:
 - [ ] 7.1 **Production Proxy**: Deploy Nginx Reverse Proxy with SSL/ACME.
-- [ ] 7.2 **pgvector Migration**: Enable semantic history similarity search.
+- [ ] 7.2 **pgvector Migration**: Initialize `pgvector` in PostgreSQL for vector storage.
 - [ ] 7.3 **Worker Scaling**: Horizontal scaling with Redis task locality.
 - [ ] 7.4 **Dynamic LLM Selection**: Allow UI/Terminal overrides for Ollama model names (e.g., `mistral`, `llama3.2`).
 - [ ] 7.5 **Performance Benchmarks**: Document latencies under load.
@@ -51,3 +51,14 @@
 - [ ] 8.2 **Rust Logic Migration**: Port `PIIDetector` and "Fast-Path" (cache) logic into the Warden.
 - [ ] 8.3 **Telemetry & Dashboards**: Prometheus/Grafana integration for Warden Circuit Breakers.
 - [ ] 8.4 **UI Observability**: Real-time research progress tracking in React dashboard.
+
+---
+
+## Phase 9: Knowledge Ingestion & Hybrid RAG (MVP Hook)
+**Objective**: Combine local "Expert Knowledge" with "Global Web Research" for unprecedented answer quality.
+
+**Plans**:
+- [ ] 9.1 **Local Ingest Crawler**: Build a Python-based worker to scan and embed local files (PDF/MD/TXT) into `pgvector`.
+- [ ] 9.2 **Embedding Pipeline**: Integrate Ollama embeddings (e.g. `nomic-embed-text`) for local chunking.
+- [ ] 9.3 **Hybrid Search Logic**: Update SearchBoost loop to query **Local Vector Store + SearXNG** in parallel.
+- [ ] 9.4 **Context synthesis**: Prompt LLM to reconcile local "Truth" with Web "News".

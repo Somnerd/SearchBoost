@@ -10,7 +10,7 @@ participant "Ollama / LLM" as LLM
 participant "SearXNG" as SRX
 
 User -> UI : Enter Query
-UI -> API : POST /search/enqueue {query, thread_id}
+UI -> API : POST /api/search/enqueue {query, thread_id}
 API -> DB : Get Session History
 API -> WRD : POST /enqueue {query, session_id}
 WRD -> RD : Check Semantic Cache
@@ -38,7 +38,7 @@ else Cache Miss
     WKR -> RD : Cache Result (if PII-Safe)
     WKR -> RD : SET job_result:uuid
     
-    UI -> API : GET /search/result/:job_id
+    UI -> API : GET /api/search/result/:id
     API -> WRD : Proxy result check
     WRD -> RD : GET job_result:uuid
     RD --> WRD : Result Content
