@@ -10,7 +10,10 @@ router.post('/enqueue', verifyToken, async (req, res, next) => {
     const { query, options } = req.body;
     if (!query) return res.status(400).json({ error: 'query is required' });
 
-    const thread_id = req.body.thread_id && req.body.thread_id !== 'default' ? req.body.thread_id : 'default';
+    let thread_id = 'default';
+    if (typeof req.body.thread_id === 'string' && /^[a-zA-Z0-9_-]+$/.test(req.body.thread_id)) {
+      thread_id = req.body.thread_id;
+    }
 
     const response = await axios.post(`${process.env.WARDEN_URL}/enqueue`, {
       query,
@@ -21,11 +24,8 @@ router.post('/enqueue', verifyToken, async (req, res, next) => {
 
     res.status(response.status).json(response.data);
   } catch (error) {
-    if (error.response) {
-      res.status(error.response.status).json(error.response.data);
-    } else {
-      res.status(503).json({ error: 'Could not reach Warden', details: error.message });
-    }
+    // Mask raw Warden errors for security hardening
+    res.status(503).json({ error: 'Service Unavailable', details: 'The search proxy is currently unable to handle this request.' });
   }
 });
 
@@ -45,11 +45,8 @@ router.get('/result/:job_id', verifyToken, async (req, res, next) => {
     });
     res.status(response.status).json(response.data);
   } catch (error) {
-    if (error.response) {
-      res.status(error.response.status).json(error.response.data);
-    } else {
-      res.status(503).json({ error: 'Could not reach Warden', details: error.message });
-    }
+    // Mask raw Warden errors for security hardening
+    res.status(503).json({ error: 'Service Unavailable', details: 'The search proxy is currently unable to handle this request.' });
   }
 });
 
@@ -65,7 +62,10 @@ router.get('/sessions', verifyToken, async (req, res, next) => {
 router.get(['/history', '/history/:thread_id'], verifyToken, async (req, res, next) => {
   try {
     const threadParam = req.params.thread_id;
-    const thread_id = threadParam && threadParam !== 'default' ? threadParam : 'default';
+    let thread_id = 'default';
+    if (typeof threadParam === 'string' && /^[a-zA-Z0-9_-]+$/.test(threadParam)) {
+      thread_id = threadParam;
+    }
     const session_id = `SB-SESSION:${req.user.username}:${thread_id}`;
     
     const history = await getHistory(session_id);

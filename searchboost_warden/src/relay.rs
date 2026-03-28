@@ -120,8 +120,7 @@ async fn handle_enqueue(
                 "f": "Worker.run_task", 
                 "a": [
                     payload.query, 
-                    payload.options.unwrap_or_default(),
-                    job_id // Pass job_id for Worker traceability
+                    payload.options.unwrap_or_default()
                 ],
                 "k": {},
                 "et": enqueue_time_ms

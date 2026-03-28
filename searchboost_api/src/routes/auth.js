@@ -15,6 +15,9 @@ const router = express.Router();
 router.post('/register', async (req, res, next) => {
   try {
     const { username, password } = req.body;
+    if (typeof username !== 'string' || typeof password !== 'string') {
+      return res.status(400).json({ error: 'Username and password must be strings' });
+    }
     if (!username || !password) {
       return res.status(400).json({ error: 'Username and password are required' });
     }
@@ -44,12 +47,11 @@ router.post('/register', async (req, res, next) => {
 router.post('/login', async (req, res, next) => {
   try {
     const { username, password } = req.body;
+    if (typeof username !== 'string' || typeof password !== 'string') {
+      return res.status(400).json({ error: 'Username and password must be strings' });
+    }
     if (!username || !password) {
       return res.status(400).json({ error: 'Username and password are required' });
-    }
-
-    if (typeof username !== 'string' || typeof password !== 'string') {
-      return res.status(400).json({ error: 'Invalid input types' });
     }
 
     const user = await findByUsername(username);

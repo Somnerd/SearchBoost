@@ -34,4 +34,7 @@ COPY --from=builder /app/target/${BUILD_PROFILE}/sb_warden /usr/local/bin/warden
 RUN mkdir -p /logs
 
 WORKDIR /usr/local/bin
+HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:14141/health || exit 1
+
 CMD ["warden"]

@@ -29,6 +29,15 @@
 **Steps:**
 1. Clear existing semantic cache keys (`redis-cli KEYS "semantic_cache:*" | xargs redis-cli DEL`).
 2. Enqueue Request A: "can you tell me who the current president of france is right now"
-3. Wait for LLM optimization and response. Check Redis for keys.
+3.  Wait for LLM optimization and response. Check Redis for keys.
 4. Enqueue Request B: "who is president france"
-**Expected:** The system should instantly flag a post-optimization CACHE HIT on the second query without calling SearXNG again.
+**Expected:** The system should instantly flag a post-optimization CACHE HIT on the second query. Verify the hit via Warden logs (`Checking semantic cache... HIT`).
+
+## Test 4: Database History Persistence (Persistence Tier)
+**Method:** Terminal (`psql`)
+**Objective:** Confirm that threads and individual user messages are correctly mapped to the PostgreSQL `history` table with proper ownership.
+**Steps:**
+1. Identify the current user's session identifier (e.g., `SB-SESSION:username:default`).
+2. Run SQL query: `SELECT * FROM history WHERE session_id = 'YOUR_SESSION_ID';`.
+3. Verify that the `query` and `response` columns contain the expected text.
+**Expected:** The database should contain one row for each search interaction. `username` and `session_id` must match the active UI session.

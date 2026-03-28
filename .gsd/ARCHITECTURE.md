@@ -3,10 +3,10 @@
 > Updated to Phase 6: Post-Audit Security Hardening
 
 ## Overview
-SearchBoost is a decentralized, highly-resilient hybrid-AI search engine pipeline. It is architected as an asynchronous distributed system isolating user authorization (Node.js), high-throughput boundary ingress/caching (Rust), intensive LLM background execution (Python), and frontend client rendering (React). The system is **Secure-by-Default**, enforcing fail-closed configuration and unprivileged container execution.
+SearchBoost is a decentralized, resilient hybrid-AI search engine pipeline. It is architected as an asynchronous distributed system isolating user authorization (Node.js), performant boundary ingress/caching (Rust), resource-intensive background execution (Python), and frontend client rendering (React). The system is configured for security, enforcing fail-closed configuration and unprivileged container execution.
 
 ## System Diagram
-```
+```text
 [ User Browser (React Vite) ]
           │
       (HTTP / JWT / HttpOnly Cookie)
@@ -39,7 +39,7 @@ SearchBoost is a decentralized, highly-resilient hybrid-AI search engine pipelin
 - **Security:** Runs as non-root `node` user. Enforces strict `Fail-Closed` startup (crashes if JWT_SECRET is missing).
 
 ### Rust Warden Proxy
-- **Purpose:** Ingress Gateway serving high-speed Semantic Cache lookups. Runs strict `tower_governor` GCRA rate-limiting (25 req/s) and Circuit Breaking.
+- **Purpose:** Ingress Gateway serving high-performance Semantic Cache lookups. Runs strict `tower_governor` GCRA rate-limiting (25 req/s) and Circuit Breaking.
 - **Location:** `searchboost_warden/`
 - **Security:** Authenticates to Redis via environment secrets. Validates `job_id` segments to prevent IDOR traversal.
 
@@ -61,7 +61,7 @@ SearchBoost is a decentralized, highly-resilient hybrid-AI search engine pipelin
 |------------------|------|---------|
 | SearXNG | HTTP Engine | Open-Source Meta-Search proxy returning clean JSON bypassing bot-bans |
 | Ollama | REST API | Local execution environment parsing open-weights |
-| Redis | Memory DB | Semantic TTL Caching + High Speed Job Queue (Authenticated) |
+| Redis | Memory DB | Semantic TTL Caching + High-Speed Job Queue (Authenticated) |
 | PostgreSQL | Relational DB | ACID compliance over Account Usernames and Historical Chat states |
 
 ## Conventions
