@@ -16,6 +16,11 @@ services:
       - MASTER_CONFIG_PATH=/configs/master_settings.yml
       - WARDEN_CONFIG_PATH=/configs/warden.yml
       - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - DB_USER=${DB_USER:-searchboost}
+      - DB_PASSWORD=${DB_PASSWORD:-searchboost_pass}
+      - DB_NAME=${DB_NAME:-searchboost_db}
+      - DB_HOST=db
+      - DB_PORT=5432
       - RUST_LOG=info
     depends_on:
       - redis

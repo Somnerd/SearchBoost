@@ -29,7 +29,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use redis::AsyncCommands;
 use std::collections::HashMap;
-//use ax_extract = axum::extract::State;
+use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
 use crate::Warden;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -80,11 +80,11 @@ async fn handle_enqueue(
 
     // 🛡️ IDOR Protection: Self-Sovereign check via metadata DB
     // Verify that thread_id belongs to the username
-    let thread_exists: bool = sqlx::query_scalar!(
-        "SELECT EXISTS(SELECT 1 FROM threads t JOIN users u ON t.user_id = u.id WHERE t.id::text = $1 AND u.username = $2)",
-        payload.thread_id,
-        payload.username
+    let thread_exists: bool = sqlx::query_scalar::<_, bool>(
+        "SELECT EXISTS(SELECT 1 FROM threads t JOIN users u ON t.user_id = u.id WHERE t.id::text = $1 AND u.username = $2)"
     )
+    .bind(&payload.thread_id)
+    .bind(&payload.username)
     .fetch_one(&warden.db_pool)
     .await
     .unwrap_or(false);
