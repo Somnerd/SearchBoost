@@ -11,11 +11,11 @@ router.post('/enqueue', verifyToken, async (req, res, next) => {
     if (!query) return res.status(400).json({ error: 'query is required' });
 
     const thread_id = req.body.thread_id && req.body.thread_id !== 'default' ? req.body.thread_id : 'default';
-    const session_id = `SB-SESSION:${req.user.username}:${thread_id}`;
 
     const response = await axios.post(`${process.env.WARDEN_URL}/enqueue`, {
       query,
-      session_id,
+      thread_id: thread_id,
+      username: req.user.username,
       options: options || {}
     }, { timeout: 5000 });
 
@@ -39,7 +39,10 @@ router.get('/result/:job_id', verifyToken, async (req, res, next) => {
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
-    const response = await axios.get(`${process.env.WARDEN_URL}/results/${job_id}`, { timeout: 5000 });
+    const response = await axios.get(`${process.env.WARDEN_URL}/results/${job_id}`, {
+      params: { username: req.user.username },
+      timeout: 5000
+    });
     res.status(response.status).json(response.data);
   } catch (error) {
     if (error.response) {

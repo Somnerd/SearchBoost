@@ -11,17 +11,17 @@ participant "SearXNG" as SRX
 
 User -> UI : Enter Query
 UI -> API : POST /api/search/enqueue {query, thread_id}
-API -> DB : Get Session History
-API -> WRD : POST /enqueue {query, session_id}
+API -> WRD : POST /enqueue {query, thread_id, username}
+WRD -> DB : Verify Ownership (IDOR Check)
 WRD -> RD : Check Semantic Cache
 alt Cache Hit
     RD --> WRD : Return Answer
     WRD --> API : (Instant) Return Answer
-    API -> DB : Save Turn
+    API -> DB : Save History
     API --> UI : OK (Status: Complete)
 else Cache Miss
     WRD -> RD : Enqueue Job (ZADD arq:queue)
-    WRD --> API : OK (Status: Queued)
+    WRD --> API : OK (Status: Queued, job_id)
     API --> UI : OK (Start Polling)
     
     WKR -> RD : Pull Job
@@ -36,11 +36,11 @@ else Cache Miss
     end
     WKR -> DB : Save Assistant Turn
     WKR -> RD : Cache Result (if PII-Safe)
-    WKR -> RD : SET job_result:uuid
+    WKR -> RD : SET sb:result:job_id
     
     UI -> API : GET /api/search/result/:id
-    API -> WRD : Proxy result check
-    WRD -> RD : GET job_result:uuid
+    API -> WRD : GET /results/:id?username=...
+    WRD -> RD : GET sb:result:id
     RD --> WRD : Result Content
     WRD --> API : Protected Result
     API --> UI : final_answer

@@ -21,7 +21,7 @@
 # ---------------------------------------------------------------------
 
 
-import json , logging , os , aiofiles, yaml
+import logging , os , aiofiles, yaml
 from pathlib import Path
 from typing import Type, Dict, Any, TypeVar , Optional
 from pydantic import BaseModel , Field
@@ -237,7 +237,7 @@ class Configurator(BaseSettings):
                     expanded_content = os.path.expandvars(content)
                     master_data = yaml.safe_load(expanded_content) or {}
                     deep_merge(data, master_data)
-        except Exception as e:
+        except (OSError, yaml.YAMLError) as e:
             self._logger.warning(f"Config Loader: Error reading {master_filepath}: {e}")
 
         try:
@@ -247,7 +247,7 @@ class Configurator(BaseSettings):
                     expanded_content = os.path.expandvars(content)
                     discrete_data = yaml.safe_load(expanded_content) or {}
                     deep_merge(data, discrete_data)
-        except Exception as e:
+        except (OSError, yaml.YAMLError) as e:
             self._logger.warning(f"Config Loader: Error reading {discrete_filepath}: {e}")
 
         return data.get(config_name, {})

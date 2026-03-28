@@ -42,6 +42,10 @@ router.post('/login', async (req, res, next) => {
       return res.status(400).json({ error: 'Username and password are required' });
     }
 
+    if (typeof username !== 'string' || typeof password !== 'string') {
+      return res.status(400).json({ error: 'Invalid input types' });
+    }
+
     const user = await findByUsername(username);
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
@@ -64,7 +68,7 @@ router.post('/login', async (req, res, next) => {
     // Handle pure numbers (interpreted as seconds) or standard time strings (24h, 1d)
     const matchTime = expiresInString.match(/^(\d+)([smhd])?$/);
     if (matchTime) {
-      const val = parseInt(matchTime[1]);
+      const val = parseInt(matchTime[1], 10);
       const unit = matchTime[2];
       
       if (!unit) {
@@ -74,6 +78,10 @@ router.post('/login', async (req, res, next) => {
         const multipliers = { s: 1000, m: 60 * 1000, h: 60 * 60 * 1000, d: 24 * 60 * 60 * 1000 };
         maxAge = val * multipliers[unit];
       }
+    }
+
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET is not configured');
     }
 
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
@@ -94,7 +102,11 @@ router.post('/login', async (req, res, next) => {
 });
 
 router.post('/logout', (req, res) => {
-  res.clearCookie('sb_token');
+  res.clearCookie('sb_token', {
+    httpOnly: true,
+    sameSite: 'strict',
+    secure: process.env.NODE_ENV === 'production'
+  });
   res.status(200).json({ message: 'Logged out' });
 });
 

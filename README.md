@@ -58,7 +58,7 @@ SearchBoost/
 
 ---
 
-## �� Technical Roadmap
+## 📋 Technical Roadmap
 
 - [x] **Warden Authority**: Rust-side Job ID generation and enqueuing.
 - [x] **Infrastructure Decoupling**: Pure HTTP communication between tiers.

@@ -52,11 +52,34 @@ pub struct BreakerSettings {
 }
 
 #[derive(Deserialize, Clone)]
+pub struct DatabaseSettings {
+    pub host: String,
+    pub port: u16,
+    pub user: String,
+    pub password: Option<String>,
+    pub database: String,
+}
+
+impl DatabaseSettings {
+    pub fn database_url(&self) -> String {
+        match &self.password {
+            Some(pass) if !pass.is_empty() => {
+                format!("postgres://{}:{}@{}:{}/{}", self.user, pass, self.host, self.port, self.database)
+            }
+            _ => {
+                format!("postgres://{}@{}:{}/{}", self.user, self.host, self.port, self.database)
+            }
+        }
+    }
+}
+
+#[derive(Deserialize, Clone)]
 pub struct Settings {
     pub network: NetworkSettings,
     pub observer: ObserverSettings,
     pub breaker: BreakerSettings,
     pub redis: RedisSettings,
+    pub db: DatabaseSettings,
 }
 
 impl Settings {
@@ -82,6 +105,11 @@ impl Settings {
         if let Ok(pass) = env::var("REDIS_PASSWORD") {
             if !pass.is_empty() {
                 settings.redis.password = Some(pass);
+            }
+        }
+        if let Ok(pass) = env::var("DB_PASSWORD") {
+            if !pass.is_empty() {
+                settings.db.password = Some(pass);
             }
         }
 

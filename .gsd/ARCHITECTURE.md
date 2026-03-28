@@ -31,7 +31,7 @@ SearchBoost is a decentralized, highly-resilient hybrid-AI search engine pipelin
 ### React Web Client 
 - **Purpose:** Interactive GUI for concurrent search threads and authentications.
 - **Location:** `searchboost_ui/`
-- **Security:** CSRF protection via HttpOnly cookies; no client-side JWT access.
+- **Security:** XSS protection via HttpOnly cookies (hides JWT from scripts); CSRF mitigation via `Strict` SameSite policy.
 
 ### Node.js REST API 
 - **Purpose:** Manages User Identity (JWT), maps database Session Threads using colon-delimited unique identifiers (`SB-SESSION:user:thread`), and securely proxies queries to Warden.
