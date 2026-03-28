@@ -1,8 +1,14 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const ms = require('ms');
 const { findByUsername, createUser } = require('../db/users');
 const { verifyToken } = require('../middleware/auth');
+
+// Fail-fast environment check
+if (!process.env.JWT_SECRET) {
+  throw new Error('FATAL: JWT_SECRET environment variable is not configured');
+}
 
 const router = express.Router();
 
@@ -63,25 +69,11 @@ router.post('/login', async (req, res, next) => {
     };
 
     const expiresInString = process.env.JWT_EXPIRES_IN || '24h';
-    let maxAge = 24 * 60 * 60 * 1000; // Default 24h
+    let maxAge = ms(expiresInString);
 
-    // Handle pure numbers (interpreted as seconds) or standard time strings (24h, 1d)
-    const matchTime = expiresInString.match(/^(\d+)([smhd])?$/);
-    if (matchTime) {
-      const val = parseInt(matchTime[1], 10);
-      const unit = matchTime[2];
-      
-      if (!unit) {
-        // Standard JWT 'expiresIn' as pure number is interpreted as seconds
-        maxAge = val * 1000;
-      } else {
-        const multipliers = { s: 1000, m: 60 * 1000, h: 60 * 60 * 1000, d: 24 * 60 * 60 * 1000 };
-        maxAge = val * multipliers[unit];
-      }
-    }
-
-    if (!process.env.JWT_SECRET) {
-      throw new Error('JWT_SECRET is not configured');
+    if (maxAge === undefined) {
+      const numericVal = parseInt(expiresInString, 10);
+      maxAge = !isNaN(numericVal) ? numericVal * 1000 : 24 * 60 * 60 * 1000;
     }
 
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
