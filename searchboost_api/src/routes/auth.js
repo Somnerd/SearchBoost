@@ -58,15 +58,25 @@ router.post('/login', async (req, res, next) => {
       role: user.role
     };
 
+    const expiresInString = process.env.JWT_EXPIRES_IN || '24h';
+    const matchTime = expiresInString.match(/^(\d+)([smhd])$/);
+    let maxAge = 24 * 60 * 60 * 1000; // Default 24h
+    if (matchTime) {
+      const val = parseInt(matchTime[1]);
+      const unit = matchTime[2];
+      const multipliers = { s: 1000, m: 60 * 1000, h: 60 * 60 * 1000, d: 24 * 60 * 60 * 1000 };
+      maxAge = val * multipliers[unit];
+    }
+
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRES_IN || '24h'
+      expiresIn: expiresInString
     });
 
     res.cookie('sb_token', token, {
       httpOnly: true,
       sameSite: 'strict',
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000 // 24h
+      maxAge: maxAge
     });
 
     res.status(200).json(payload);

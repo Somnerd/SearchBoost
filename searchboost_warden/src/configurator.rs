@@ -52,15 +52,10 @@ pub struct BreakerSettings {
 }
 
 #[derive(Deserialize, Clone)]
-pub struct WardenSettings {
+pub struct Settings {
     pub network: NetworkSettings,
     pub observer: ObserverSettings,
     pub breaker: BreakerSettings,
-}
-
-#[derive(Deserialize, Clone)]
-pub struct Settings {
-    pub warden: WardenSettings,
     pub redis: RedisSettings,
 }
 
@@ -71,11 +66,11 @@ impl Settings {
             
         let discrete_env = env::var("WARDEN_CONFIG_PATH");
         let discrete_path = discrete_env.clone().unwrap_or_else(|_| "../configs/warden.yml".to_string());
-
+ 
         let settings = Config::builder()
             .add_source(File::new(&master_path, FileFormat::Yaml).required(master_env.is_ok()))
             .add_source(File::new(&discrete_path, FileFormat::Yaml).required(discrete_env.is_ok()))
-            .add_source(config::Environment::with_prefix("WARDEN").separator("__"))
+            .add_source(config::Environment::with_prefix("WARDEN").separator("__").keep_prefix(false))
             .build()
             .expect("Warden Error: Could not find config file");
 

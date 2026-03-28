@@ -17,7 +17,7 @@ router.post('/enqueue', verifyToken, async (req, res, next) => {
       query,
       session_id,
       options: options || {}
-    });
+    }, { timeout: 5000 });
 
     res.status(response.status).json(response.data);
   } catch (error) {
@@ -39,7 +39,7 @@ router.get('/result/:job_id', verifyToken, async (req, res, next) => {
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
-    const response = await axios.get(`${process.env.WARDEN_URL}/results/${job_id}`);
+    const response = await axios.get(`${process.env.WARDEN_URL}/results/${job_id}`, { timeout: 5000 });
     res.status(response.status).json(response.data);
   } catch (error) {
     if (error.response) {

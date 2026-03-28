@@ -234,7 +234,8 @@ class Configurator(BaseSettings):
             if os.path.exists(master_filepath):
                 async with aiofiles.open(master_filepath, 'r') as f:
                     content = await f.read()
-                    master_data = yaml.safe_load(content) or {}
+                    expanded_content = os.path.expandvars(content)
+                    master_data = yaml.safe_load(expanded_content) or {}
                     deep_merge(data, master_data)
         except Exception as e:
             self._logger.warning(f"Config Loader: Error reading {master_filepath}: {e}")
@@ -243,7 +244,8 @@ class Configurator(BaseSettings):
             if os.path.exists(discrete_filepath):
                 async with aiofiles.open(discrete_filepath, 'r') as f:
                     content = await f.read()
-                    discrete_data = yaml.safe_load(content) or {}
+                    expanded_content = os.path.expandvars(content)
+                    discrete_data = yaml.safe_load(expanded_content) or {}
                     deep_merge(data, discrete_data)
         except Exception as e:
             self._logger.warning(f"Config Loader: Error reading {discrete_filepath}: {e}")

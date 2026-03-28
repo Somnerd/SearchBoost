@@ -2,75 +2,51 @@
 
 ## Phase 1: Fix Worker Hangs
 **Status**: ✅ Complete
-**Branch**: merged → dev
-**Summary**: Resolved worker hang root causes. Warden 500 error fixed, job ID double-prefix fixed, Ollama timeout raised to 180s, multi-turn chat persistence via PostgreSQL HistoryService, PII-safe semantic cache (triple-layer gate), rate limiting (tower_governor), client-provided UUIDs, timeout regression tests added.
 
 ---
 
 ## Phase 2: Web UI
 **Status**: ✅ Complete
-**Branch**: dev-web-ui
-**Plans**:
-- ✅ 2.1 Node.js API Scaffold + User Database Schema    [Wave 1]
-- ✅ 2.2 Auth Endpoints + JWT Middleware                 [Wave 1]
-- ✅ 2.3 Search Proxy + Admin API Routes                 [Wave 2]
-- ✅ 2.4 React App Scaffold + Auth Context + Layout      [Wave 2]
-- ✅ 2.5 Login + Register Pages                          [Wave 3]
-- ✅ 2.6 Search Page (Core Product UI)                   [Wave 3]
-- ✅ 2.7 Admin Panel                                     [Wave 4]
-- ✅ 2.8 Docker Integration                              [Wave 5]
-- ✅ 2.9 Web Stack Stabilization (Poll Resilience)      [Wave 6]
-- ✅ 2.10 Chat History Integration                       [Wave 7]
 
 ---
 
 ## Phase 3: Bug Fixes (Cache & Context Issues)
 **Status**: ✅ Complete
-**Objective**: Fix the newly discovered bugs from Phase 2 (Cache post-optimization, TTL entropy, container log timestamps, UI session leakage).
-**Depends on**: Phase 2
-
-**Tasks**:
-- [ ] TBD (run /plan 3 to create)
-
-**Verification**:
-- TBD
 
 ---
 
 ## Phase 4: Environment Stability & Config Generalization
 **Status**: ✅ Complete
-**Objective**: Overhaul the 25-minute Warden compilation cycle by implementing Rust multi-stage caching and dev-mode toggles, while consolidating environment structures into a single YAML configuration.
-**Depends on**: Phase 3
-
-**Tasks**:
-- [ ] TBD (run /plan 4 to create)
-
-**Verification**:
-- TBD
 
 ---
 
 ## Phase 5: Concurrent Chat Sessions
 **Status**: ✅ Complete
-**Objective**: Overhaul the UI and backend history tracking to separate queries into distinct chat threads with a visual sidebar for historical navigation.
-**Depends on**: Phase 4
-
-**Tasks**:
-- [ ] TBD (run /plan 5 to create)
-
-**Verification**:
-- TBD
 
 ---
 
 ## Phase 6: CodeRabbit Security & Stability Sweep
-**Status**: 🏃 In Progress
+**Status**: ✅ Complete
 **Branch**: dev-web-ui
-**Objective**: Rapidly patch all Critical IDOR, Docker escalation routines, Hardcoded JWT falls, PostgreSQL LIKE loopholes, and Cache state-bypasses surfaced by CodeRabbit.
-**Depends on**: Phase 5
+**Summary**: Successfully resolved 14 critical security and architectural flaws. Implemented "Secure-by-Default" posture with non-root containers, colon-delimited identity isolation, and fail-closed secret management.
+
+---
+
+## Phase 7: Production Rigor & Vector Search 🏃 Next UP
+**Objective**: Transition the "Pristine" dev state into a hardened public-facing deployment while improving search retrieval performance.
 
 **Plans**:
-- [ ] 6.1 Configuration & Licensing               [Wave 1]
-- [ ] 6.2 Hardcoded Secrets & ENV Handlers        [Wave 1]
-- [ ] 6.3 Docker Non-Root Identity Fixes          [Wave 2]
-- [ ] 6.4 Core Logic Security & Cache Bypass      [Wave 3]
+- [ ] 7.1 **Production Reverse Proxy**: Deploy an Nginx container with SSL/TLS (Certbot/ACME) to protect the Edge API.
+- [ ] [**pgvector**] **Migration**: Migrate PostgreSQL history to use vector embeddings for semantic similarity search within past threads.
+- [ ] **Worker Horizontal Scaling**: Implement and test multi-worker concurrency with synchronized Redis state.
+- [ ] **Performance Audit**: Benchmarking system latencies under load (10+ concurrent users).
+
+---
+
+## Phase 8: IO Normalization & Observability
+**Objective**: Finalize the system's "Authority" model by removing legacy binary serialization (Pickle) and integrating real-time telemetry.
+
+**Plans**:
+- [ ] **JSON/Protobuf Handshake**: Standardize cross-language communication (Rust ↔ Python ↔ Node) to remove the Pickle dependency.
+- [ ] **Grafana/Prometheus Dashboard**: Real-time metrics for Warden Circuit-Breaker state and LLM research pipeline latency.
+- [ ] **Exponential Backoff**: Jittered polling strategy for the React UI to optimize resource utilization.

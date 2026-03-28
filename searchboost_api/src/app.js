@@ -33,8 +33,11 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3001;
 
 async function start() {
-  if (!process.env.JWT_SECRET) {
-    console.error('FATAL: JWT_SECRET environment variable is missing.');
+  const requiredEnv = ['JWT_SECRET', 'DB_PASSWORD'];
+  const missing = requiredEnv.filter(k => !process.env[k]);
+  
+  if (missing.length > 0) {
+    console.error(`FATAL: Missing mandatory environment variables: ${missing.join(', ')}`);
     process.exit(1);
   }
   try {
