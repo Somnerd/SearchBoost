@@ -30,4 +30,4 @@ config = { version = "0.15.19", features = ["yaml"] }
 uuid = { version = "1.6", features = ["v4", "serde"] }
 tower_governor = "0.4.2"
 governor = "0.6.3"
-sqlx = { version = "0.8", features = [ "runtime-tokio", "postgres", "macros" ] }
+sqlx = { version = "0.8", features = [ "runtime-tokio", "postgres", "macros", "tls-rustls" ] }

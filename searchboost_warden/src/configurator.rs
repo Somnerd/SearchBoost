@@ -112,6 +112,30 @@ impl Settings {
                 settings.db.password = Some(pass);
             }
         }
+        if let Ok(user) = env::var("DB_USER") {
+            if !user.is_empty() {
+                settings.db.user = user;
+            }
+        }
+        if let Ok(host) = env::var("DB_HOST") {
+            if !host.is_empty() {
+                settings.db.host = host;
+            }
+        }
+        if let Ok(port_str) = env::var("DB_PORT") {
+            if let Ok(port) = port_str.parse::<u16>() {
+                settings.db.port = port;
+            }
+        }
+        if let Ok(name) = env::var("DB_NAME") {
+            if !name.is_empty() {
+                settings.db.database = name;
+            }
+        } else if let Ok(name) = env::var("DB_DATABASE") {
+            if !name.is_empty() {
+                settings.db.database = name;
+            }
+        }
 
         settings
     }
