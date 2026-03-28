@@ -27,26 +27,27 @@
 
 ## Phase 6: CodeRabbit Security & Stability Sweep
 **Status**: ✅ Complete
-**Branch**: dev-web-ui
-**Summary**: Successfully resolved 14 critical security and architectural flaws. Implemented "Secure-by-Default" posture with non-root containers, colon-delimited identity isolation, and fail-closed secret management.
+**Summary**: Resolved 14+ architectural vulnerabilities. Implemented non-root isolation and fail-closed secret management.
 
 ---
 
 ## Phase 7: Production Rigor & Vector Search 🏃 Next UP
-**Objective**: Transition the "Pristine" dev state into a hardened public-facing deployment while improving search retrieval performance.
+**Objective**: Hardening for public deployment and semantic discovery.
 
 **Plans**:
-- [ ] 7.1 **Production Reverse Proxy**: Deploy an Nginx container with SSL/TLS (Certbot/ACME) to protect the Edge API.
-- [ ] [**pgvector**] **Migration**: Migrate PostgreSQL history to use vector embeddings for semantic similarity search within past threads.
-- [ ] **Worker Horizontal Scaling**: Implement and test multi-worker concurrency with synchronized Redis state.
-- [ ] **Performance Audit**: Benchmarking system latencies under load (10+ concurrent users).
+- [ ] 7.1 **Production Proxy**: Deploy Nginx Reverse Proxy with SSL/ACME.
+- [ ] 7.2 **pgvector Migration**: Enable semantic history similarity search.
+- [ ] 7.3 **Worker Scaling**: Horizontal scaling with Redis task locality.
+- [ ] 7.4 **Dynamic LLM Selection**: Allow UI/Terminal overrides for Ollama model names (e.g., `mistral`, `llama3.2`).
+- [ ] 7.5 **Performance Benchmarks**: Document latencies under load.
 
 ---
 
-## Phase 8: IO Normalization & Observability
-**Objective**: Finalize the system's "Authority" model by removing legacy binary serialization (Pickle) and integrating real-time telemetry.
+## Phase 8: Hybrid Shift & IO Normalization
+**Objective**: Standardize the communication "Contract" and migrate performance-critical paths into Rust.
 
 **Plans**:
-- [ ] **JSON/Protobuf Handshake**: Standardize cross-language communication (Rust ↔ Python ↔ Node) to remove the Pickle dependency.
-- [ ] **Grafana/Prometheus Dashboard**: Real-time metrics for Warden Circuit-Breaker state and LLM research pipeline latency.
-- [ ] **Exponential Backoff**: Jittered polling strategy for the React UI to optimize resource utilization.
+- [ ] 8.1 **gRPC Handshake**: Replace Pickle with Protobuf for Rust ↔ Python ↔ Node safety.
+- [ ] 8.2 **Rust Logic Migration**: Port `PIIDetector` and "Fast-Path" (cache) logic into the Warden.
+- [ ] 8.3 **Telemetry & Dashboards**: Prometheus/Grafana integration for Warden Circuit Breakers.
+- [ ] 8.4 **UI Observability**: Real-time research progress tracking in React dashboard.
