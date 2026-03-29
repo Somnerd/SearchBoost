@@ -110,9 +110,11 @@ services:
       - DB_NAME=${DB_NAME:-searchboost_db}
       - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set}
       - WARDEN_URL=http://warden:14141
+      - OLLAMA_URL=http://ollama:11434
     depends_on:
       - db
       - warden
+      - ollama
     ports:
       - "3001:3001"
 

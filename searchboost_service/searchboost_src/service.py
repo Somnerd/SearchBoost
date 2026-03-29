@@ -99,6 +99,24 @@ class SearchBoostService:
                 history_svc = HistoryService(db_session, self.logger, ollama_client=ollama_client)
                 self.chatdetails.history = await history_svc.load_history(self.session_id)
 
+                # Cross-thread semantic retrieval (long-term memory)
+                parts = self.session_id.split(':')
+                if len(parts) >= 2:
+                    username = parts[1]
+                    session_prefix = f"SB-SESSION:{username}:"
+                    self.logger.info(f"SearchBoostService : Fetching cross-thread semantic context for user '{username}'")
+                    semantic_context = await history_svc.search_relevant_history(session_prefix, self.args.query)
+                    
+                    if semantic_context:
+                        # Deduplicate semantic context if it's already in the linear history
+                        # (Linear history is already in self.chatdetails.history)
+                        context_str = "\n".join([
+                            f"[{ctx['role'].upper()} from thread '{ctx['session_id'].split(':')[-1]}']: {ctx['content']}"
+                            for ctx in semantic_context
+                        ])
+                        self.logger.info("SearchBoostService : Injecting semantic context into prompt.")
+                        self.chatdetails.prompt = f"--- CROSS-THREAD CONTEXT ---\n{context_str}\n----------------------------\n\n{self.chatdetails.prompt}"
+
             await self.cache.connect()
             cached_result = await self.cache.get_cached_response(self.args.query)
             if cached_result:

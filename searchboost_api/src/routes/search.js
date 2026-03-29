@@ -1,7 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const { verifyToken } = require('../middleware/auth');
-const { getHistory, getSessions } = require('../db/history');
+const { getHistory, getSessions, searchHistory } = require('../db/history');
 
 const router = express.Router();
 
@@ -82,6 +82,29 @@ router.get(['/history', '/history/:thread_id'], verifyToken, async (req, res, ne
     res.json(history);
   } catch (err) {
     res.status(500).json({ error: 'Failed to retrieve history' });
+  }
+});
+
+router.post('/history/search', verifyToken, async (req, res, next) => {
+  try {
+    const { query, limit } = req.body;
+    if (!query) return res.status(400).json({ error: 'query is required' });
+
+    // 1. Generate embedding using Ollama
+    const ollamaUrl = process.env.OLLAMA_URL || 'http://sb_ollama:11434';
+    const embedRes = await axios.post(`${ollamaUrl}/api/embeddings`, {
+      model: 'nomic-embed-text',
+      prompt: query
+    });
+    const vector = embedRes.data.embedding;
+
+    // 2. Search Database
+    const results = await searchHistory(req.user.username, JSON.stringify(vector), limit || 5);
+    
+    res.json(results);
+  } catch (err) {
+    console.error(`[API] Semantic History Search Failed: ${err.message}`);
+    res.status(500).json({ error: 'Failed to retrieve relevant history' });
   }
 });
 

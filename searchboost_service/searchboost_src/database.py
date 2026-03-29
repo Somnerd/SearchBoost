@@ -112,3 +112,37 @@ class HistoryService:
         except Exception as e:
             if self.logger:
                 self.logger.error(f"HistoryService: Failed to save turn for '{session_id}': {e}")
+
+    async def search_relevant_history(self, session_prefix: str, query: str, limit: int = 5) -> list[dict]:
+        """Perform semantic vector search using pgvector to find relevant prior turns."""
+        from searchboost_src.models import ConversationTurn
+        try:
+            if not self.ollama_client:
+                return []
+
+            query_embedding = await self.ollama_client.get_embedding(query)
+            if not query_embedding:
+                return []
+
+            # Perform vector similarity search (<=> is cosine distance in pgvector)
+            result = await self.session.execute(
+                select(ConversationTurn)
+                .where(ConversationTurn.session_id.like(f"{session_prefix}%"))
+                .where(ConversationTurn.embedding.isnot(None))
+                .order_by(ConversationTurn.embedding.distance_cosine(query_embedding))
+                .limit(limit)
+            )
+            turns = result.scalars().all()
+            
+            relevant_context = [
+                {"role": t.role, "content": t.content, "session_id": t.session_id} 
+                for t in turns
+            ]
+            
+            if self.logger:
+                self.logger.info(f"HistoryService: Found {len(relevant_context)} semantically relevant turns for query '{query[:50]}...'")
+            return relevant_context
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"HistoryService: Semantic search failed: {e}")
+            return []

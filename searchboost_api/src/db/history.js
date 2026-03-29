@@ -70,4 +70,25 @@ async function getHistory(sessionId) {
   }
 }
 
-module.exports = { getHistory, getSessions };
+async function searchHistory(username, queryVector, limit = 5) {
+  const escapedUsername = username.replace(/[\\%_]/g, '\\$&');
+  const sessionPrefix = `SB-SESSION:${escapedUsername}:%`;
+  try {
+    const result = await pool.query(
+      `SELECT session_id, role, content, created_at, 
+              (embedding <=> $1) as distance
+       FROM conversation_turns 
+       WHERE session_id LIKE $2 ESCAPE '\\'
+         AND embedding IS NOT NULL
+       ORDER BY distance ASC
+       LIMIT $3`,
+      [queryVector, sessionPrefix, limit]
+    );
+    return result.rows;
+  } catch (err) {
+    console.error('searchHistory Error:', err);
+    throw err;
+  }
+}
+
+module.exports = { getHistory, getSessions, searchHistory };
