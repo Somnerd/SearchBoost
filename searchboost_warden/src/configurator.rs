@@ -101,40 +101,20 @@ impl Settings {
         let mut settings: Self = settings.try_deserialize()
             .expect("Warden Error: Config file format is invalid");
 
-        // Explicit environment overrides for shared secrets
-        if let Ok(pass) = env::var("REDIS_PASSWORD") {
-            if !pass.is_empty() {
-                settings.redis.password = Some(pass);
-            }
+        // 🛡️ Elegant Environment Overrides
+        // We prioritize explicit environment variables (e.g., from Docker secrets)
+        // over the values found in YAML configuration files.
+        let get_env = |var: &str| env::var(var).ok().filter(|s| !s.is_empty());
+
+        if let Some(pass) = get_env("REDIS_PASSWORD") { settings.redis.password = Some(pass); }
+        if let Some(pass) = get_env("DB_PASSWORD")    { settings.db.password = Some(pass); }
+        if let Some(user) = get_env("DB_USER")        { settings.db.user = user; }
+        if let Some(host) = get_env("DB_HOST")        { settings.db.host = host; }
+        if let Some(name) = get_env("DB_NAME").or_else(|| get_env("DB_DATABASE")) { 
+            settings.db.database = name; 
         }
-        if let Ok(pass) = env::var("DB_PASSWORD") {
-            if !pass.is_empty() {
-                settings.db.password = Some(pass);
-            }
-        }
-        if let Ok(user) = env::var("DB_USER") {
-            if !user.is_empty() {
-                settings.db.user = user;
-            }
-        }
-        if let Ok(host) = env::var("DB_HOST") {
-            if !host.is_empty() {
-                settings.db.host = host;
-            }
-        }
-        if let Ok(port_str) = env::var("DB_PORT") {
-            if let Ok(port) = port_str.parse::<u16>() {
-                settings.db.port = port;
-            }
-        }
-        if let Ok(name) = env::var("DB_NAME") {
-            if !name.is_empty() {
-                settings.db.database = name;
-            }
-        } else if let Ok(name) = env::var("DB_DATABASE") {
-            if !name.is_empty() {
-                settings.db.database = name;
-            }
+        if let Some(port) = get_env("DB_PORT").and_then(|s| s.parse().ok()) { 
+            settings.db.port = port; 
         }
 
         settings

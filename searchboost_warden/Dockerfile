@@ -27,6 +27,7 @@ ARG BUILD_PROFILE=release
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     libssl3 \
+    wget \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app/target/${BUILD_PROFILE}/sb_warden /usr/local/bin/warden

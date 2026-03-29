@@ -6,26 +6,36 @@ const { getHistory, getSessions } = require('../db/history');
 const router = express.Router();
 
 router.post('/enqueue', verifyToken, async (req, res, next) => {
+  const { query, options } = req.body;
+  if (!query) return res.status(400).json({ error: 'query is required' });
+
+  let thread_id = 'default';
+  if (typeof req.body.thread_id === 'string' && /^[a-zA-Z0-9_-]+$/.test(req.body.thread_id)) {
+    thread_id = req.body.thread_id;
+  }
+
+  const payload = {
+    query,
+    thread_id,
+    username: req.user.username,
+    options: options || {}
+  };
+
+  console.log(`[API] Proxying to Warden: ${JSON.stringify(payload)}`);
+
   try {
-    const { query, options } = req.body;
-    if (!query) return res.status(400).json({ error: 'query is required' });
-
-    let thread_id = 'default';
-    if (typeof req.body.thread_id === 'string' && /^[a-zA-Z0-9_-]+$/.test(req.body.thread_id)) {
-      thread_id = req.body.thread_id;
-    }
-
-    const response = await axios.post(`${process.env.WARDEN_URL}/enqueue`, {
-      query,
-      thread_id: thread_id,
-      username: req.user.username,
-      options: options || {}
-    }, { timeout: 5000 });
-
+    const response = await axios.post(`${process.env.WARDEN_URL}/enqueue`, payload, { 
+      timeout: 5000,
+      validateStatus: (status) => status < 300 // Force throw on non-2xx
+    });
     res.status(response.status).json(response.data);
   } catch (error) {
+    console.error(`[API] Warden Handshake Failed: ${error.message}`);
     // Mask raw Warden errors for security hardening
-    res.status(503).json({ error: 'Service Unavailable', details: 'The search proxy is currently unable to handle this request.' });
+    res.status(503).json({ 
+      error: 'Service Unavailable', 
+      details: 'The search gateway is currently offline or unable to process this request.' 
+    });
   }
 });
 
