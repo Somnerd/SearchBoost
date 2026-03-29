@@ -48,6 +48,11 @@
 - [ ] 7.4 **Worker Scaling**: Horizontal scaling with Redis task locality.
 - [ ] 7.5 **Dynamic LLM Selection**: Allow UI/Terminal overrides for Ollama model names.
 - [ ] 7.6 **Performance Benchmarks**: Document latencies under load.
+- [ ] 7.7 **Audit Polish**: Resolve remaining minor CodeRabbit suggestions:
+    - [ ] Entropy/TTL for time-sensitive queries.
+    - [ ] Accurate timestamps for Warden observation logs.
+    - [ ] Exponential backoff with jitter in React UI.
+    - [ ] Standardized `Result` types in Rust components.
 
 ---
 
