@@ -83,7 +83,7 @@ services:
     restart: always
 
   db:
-      image: postgres:16-alpine
+      image: pgvector/pgvector:pg16
       container_name: sb_db
       restart: always
       environment:

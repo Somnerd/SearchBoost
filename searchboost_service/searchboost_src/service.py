@@ -94,7 +94,9 @@ class SearchBoostService:
             # Load prior conversation history for this session
             history_svc = None
             if db_session and self.session_id:
-                history_svc = HistoryService(db_session, self.logger)
+                from searchboost_src.ollama_client import OllamaClient
+                ollama_client = OllamaClient(logger=self.logger, ChatDetails=self.chatdetails)
+                history_svc = HistoryService(db_session, self.logger, ollama_client=ollama_client)
                 self.chatdetails.history = await history_svc.load_history(self.session_id)
 
             await self.cache.connect()

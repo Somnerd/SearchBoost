@@ -44,7 +44,7 @@
 **Plans**:
 - [x] 7.1 **Production Proxy**: Mask raw backend errors and enforce 503 masking.
 - [x] 7.2 **Container Health**: Standardize HEALTHCHECK instructions across Dockerfiles.
-- [ ] 7.3 **pgvector Migration**: Initialize `pgvector` in PostgreSQL for vector storage.
+- [x] 7.3 **pgvector Migration**: Initialize `pgvector` in PostgreSQL for vector storage.
 - [ ] 7.4 **Worker Scaling**: Horizontal scaling with Redis task locality.
 - [ ] 7.5 **Dynamic LLM Selection**: Allow UI/Terminal overrides for Ollama model names.
 - [ ] 7.6 **Performance Benchmarks**: Document latencies under load.

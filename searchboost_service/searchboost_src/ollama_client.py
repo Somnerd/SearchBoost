@@ -44,7 +44,8 @@ class OllamaClient:
 
     async def query_ollama(self):
         try:
-            self.logger.debug(f"""OLLAMA  CLIENT: User Prompt :{self.ChatDetails.prompt}""")
+            if self.logger:
+                self.logger.debug(f"""OLLAMA  CLIENT: User Prompt :{self.ChatDetails.prompt}""")
             
             # Build a full multi-turn message array:
             #   [system] + [prior history turns...] + [current user message]
@@ -52,7 +53,8 @@ class OllamaClient:
 
             history = getattr(self.ChatDetails, 'history', [])
             if history:
-                self.logger.info(f"OLLAMA CLIENT: Injecting {len(history)} prior conversation turns into context.")
+                if self.logger:
+                    self.logger.info(f"OLLAMA CLIENT: Injecting {len(history)} prior conversation turns into context.")
                 messages.extend(history)
             
             messages.append({"role": self.ChatDetails.config.role, "content": self.ChatDetails.prompt})
@@ -64,19 +66,36 @@ class OllamaClient:
             
             # Accommodating slow CPU inference with a configurable upper bound (default: 180s)
             timeout_limit = getattr(self.ChatDetails.config, 'timeout', 180.0)
-            self.logger.info(f"OLLAMA CLIENT: Sending chat request to {self.host} (Timeout: {timeout_limit}s)")
+            if self.logger:
+                self.logger.info(f"OLLAMA CLIENT: Sending chat request to {self.host} (Timeout: {timeout_limit}s)")
             
             response = await asyncio.wait_for(chat_coroutine, timeout=timeout_limit)
             
-            self.logger.info("OLLAMA CLIENT: Successfully received response from LLM.")
-            self.logger.debug(f"""OLLAMA CLIENT :
-                                    Ollama Response:
-                                        {response}
-                                        """)
+            if self.logger:
+                self.logger.info("OLLAMA CLIENT: Successfully received response from LLM.")
+                self.logger.debug(f"""OLLAMA CLIENT :
+                                        Ollama Response:
+                                            {response}
+                                            """)
             return response['message']['content']
         except asyncio.TimeoutError:
-            self.logger.error(f"OLLAMA CLIENT: Timeout! The local LLM model failed to respond within {timeout_limit} seconds.")
+            if self.logger:
+                self.logger.error(f"OLLAMA CLIENT: Timeout! The local LLM model failed to respond within {timeout_limit} seconds.")
             return f"Error: The AI model took too long to respond (timeout after {timeout_limit}s). Please try again later."
         except Exception as e:
-            self.logger.error(f"OLLAMA CLIENT : Error querying Ollama API: {e}")
+            if self.logger:
+                self.logger.error(f"OLLAMA CLIENT : Error querying Ollama API: {e}")
             return "Error: Unable to connect to the LLM."
+
+    async def get_embedding(self, text: str, model: str = "nomic-embed-text") -> list[float]:
+        """Generate a vector embedding for the given text using Ollama."""
+        try:
+            if self.logger:
+                self.logger.info(f"OLLAMA CLIENT: Generating embedding for text (Model: {model})")
+            # Use the same host/client settings as query_ollama
+            response = await self.client.embeddings(model=model, prompt=text)
+            return response['embedding']
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"OLLAMA CLIENT: Error generating embedding: {e}")
+            return None
