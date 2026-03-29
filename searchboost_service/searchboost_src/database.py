@@ -24,6 +24,7 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
 from sqlalchemy import select
+from datetime import datetime, timedelta, timezone
 from searchboost_src.configurator import PostgreSQLSettings
 
 Base = declarative_base()
@@ -58,16 +59,21 @@ class HistoryService:
         self.session = session
         self.logger = logger
 
-    async def load_history(self, session_id: str, limit: int = 10) -> list[dict]:
+    async def load_history(self, session_id: str, limit: int = 10, max_age_minutes: int = 15) -> list[dict]:
         """
-        Fetch the last `limit` turns for a session_id, returned oldest-first
-        so Ollama reads the conversation in chronological order.
+        Fetch the last `limit` turns for a session_id within `max_age_minutes`, 
+        returned oldest-first so Ollama reads the conversation in chronological order.
         """
         from searchboost_src.models import ConversationTurn
         try:
+            cutoff = datetime.now(timezone.utc) - timedelta(minutes=max_age_minutes)
+            # Remove tzinfo before comparison since SQLAlchemy schema stores naive datetime via func.now()
+            cutoff = cutoff.replace(tzinfo=None)
+
             result = await self.session.execute(
                 select(ConversationTurn)
                 .where(ConversationTurn.session_id == session_id)
+                .where(ConversationTurn.created_at >= cutoff)
                 .order_by(ConversationTurn.created_at.desc())
                 .limit(limit)
             )

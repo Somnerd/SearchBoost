@@ -21,7 +21,7 @@
 # ---------------------------------------------------------------------
 
 
-import json , logging , os , aiofiles
+import logging , os , aiofiles, yaml
 from pathlib import Path
 from typing import Type, Dict, Any, TypeVar , Optional
 from pydantic import BaseModel , Field
@@ -47,7 +47,7 @@ class CloudAISettings(AISettings):
 class SearchSettings(BaseModel):
     engine: str = Field(default="searxng", alias = "search_engine", description="Search engine domain to use")
     num_results: int = Field(default=5, description="Number of search results to retrieve")
-    host : str = Field(default="sb_searxng", description="Host for the web search service")
+    host : str = Field(default="sb-searxng", description="Host for the web search service")
     port : int = Field(default=8080, description="Port for the web search service")
     language: str = Field(default="en-US", description="Language for the search results")
     safe_search: str = Field(default="1", description="Safe search level")
@@ -193,17 +193,18 @@ class Configurator(BaseSettings):
         base_data = env_instance.model_dump()
         self._logger.debug(f"Configurator: Base data for {config_name} -> {base_data}")
 
-        json_data = await self._load_json_file(config_name)
-        self._logger.debug(f"Configurator: JSON data for {config_name} -> {json_data}")
+        yaml_data = await self._load_yaml_config(config_name)
+        self._logger.debug(f"Configurator: YAML data for {config_name} -> {yaml_data}")
 
         allowed_keys = model_cls.model_fields.keys()
         filtered_cli = {k: v for k, v in (cli_overrides or {}).items() if k in allowed_keys}
 
-        final_data = {**base_data, **manual_env_data, **filtered_cli, **json_data}
+        # Precedence: CLI > Manual Env > YAML > Default Base
+        final_data = {**base_data, **yaml_data, **manual_env_data, **filtered_cli}
 
         if not self._is_docker:
             current_host = final_data.get("host")
-            container_names = ["sb_redis", "sb_db", "sb_ollama", "sb_warden", "sb_searxng"]
+            container_names = ["sb_redis", "sb_db", "sb_ollama", "sb_warden", "sb-searxng"]
 
             if current_host in container_names:
                 self._logger.debug(f"Configurator: Remapping {current_host} -> 127.0.0.1 for local host execution.")
@@ -217,17 +218,39 @@ class Configurator(BaseSettings):
             self._logger.error(f"Configurator: Resolution failed for {config_name}: {e}")
             return model_cls()
 
-    async def _load_json_file(self, filename: str) -> dict:
-        filepath = f"{self._config_dir}/{filename}.json"
+    async def _load_yaml_config(self, config_name: str) -> dict:
+        master_filepath = f"{self._config_dir}/master_settings.yml"
+        discrete_filepath = f"{self._config_dir}/worker.yml"
+        data = {}
+
+        def deep_merge(target, source):
+            for key, val in source.items():
+                if key in target and isinstance(target[key], dict) and isinstance(val, dict):
+                    deep_merge(target[key], val)
+                else:
+                    target[key] = val
+
         try:
-            if os.path.exists(filepath):
-                async with aiofiles.open(filepath, 'r') as f:
+            if os.path.exists(master_filepath):
+                async with aiofiles.open(master_filepath, 'r') as f:
                     content = await f.read()
-                    return json.loads(content)
-            return {}
-        except Exception as e:
-            self._logger.warning(f"Config Loader: Error reading {filepath}: {e}")
-            return {}
+                    expanded_content = os.path.expandvars(content)
+                    master_data = yaml.safe_load(expanded_content) or {}
+                    deep_merge(data, master_data)
+        except (OSError, yaml.YAMLError) as e:
+            self._logger.warning(f"Config Loader: Error reading {master_filepath}: {e}")
+
+        try:
+            if os.path.exists(discrete_filepath):
+                async with aiofiles.open(discrete_filepath, 'r') as f:
+                    content = await f.read()
+                    expanded_content = os.path.expandvars(content)
+                    discrete_data = yaml.safe_load(expanded_content) or {}
+                    deep_merge(data, discrete_data)
+        except (OSError, yaml.YAMLError) as e:
+            self._logger.warning(f"Config Loader: Error reading {discrete_filepath}: {e}")
+
+        return data.get(config_name, {})
 
     def _find_config_dir(self) -> Optional[Path]:
         env_path = os.getenv("SEARCHBOOST_CONFIG_DIR")

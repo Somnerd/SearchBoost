@@ -5,6 +5,6 @@
     "region": "us",
     "language": "en-US",
     "safe_search": "1",
-    "host": "sb_searxng",
+    "host": "sb-searxng",
     "port": 8080
 }

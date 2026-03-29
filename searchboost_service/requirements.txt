@@ -13,3 +13,4 @@ asyncpg>=0.31.0
 # Services
 openai>=1.1.0
 ollama>=0.1.6
+PyYAML>=6.0.1

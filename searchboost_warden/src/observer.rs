@@ -48,7 +48,7 @@ pub async fn start_log_observer(container_name: &str, log_dir: &str) -> anyhow::
     info!("AFTER ERROR FILE OPERATION");
 
     let options = LogsOptions::<String> {
-        follow: true, stdout: true, stderr: true, ..Default::default()
+        follow: true, stdout: true, stderr: true, timestamps: true, ..Default::default()
     };
     info!("AFTER IDK FILE OPERATION");
 

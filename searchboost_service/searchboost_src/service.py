@@ -91,20 +91,25 @@ class SearchBoostService:
             self.logger.info("SearchBoostService : Running service...")
             self.logger.info("SearchBoostService : Connecting to Redis")
 
-            await self.cache.connect()
-            cached_result = await self.cache.get_cached_response(self.args.query)
-            if cached_result:
-                self.logger.info("--- CACHE HIT ---")
-                print(f"\nFinal Response (Cached):\n{cached_result}")
-                return cached_result
-
-            self.logger.info("--- CACHE MISS: Executing Research Loop ---")
-
             # Load prior conversation history for this session
             history_svc = None
             if db_session and self.session_id:
                 history_svc = HistoryService(db_session, self.logger)
                 self.chatdetails.history = await history_svc.load_history(self.session_id)
+
+            await self.cache.connect()
+            cached_result = await self.cache.get_cached_response(self.args.query)
+            if cached_result:
+                self.logger.info("--- CACHE HIT ---")
+                if history_svc and self.session_id:
+                    await history_svc.save_turn(self.session_id, "user", self.args.query)
+                    await history_svc.save_turn(self.session_id, "assistant", cached_result)
+                print(f"\nFinal Response (Cached):\n{cached_result}")
+                return cached_result
+
+            self.logger.info("--- CACHE MISS: Executing Research Loop ---")
+
+            if history_svc and self.session_id:
                 # Save the current user turn immediately
                 await history_svc.save_turn(self.session_id, "user", self.args.query)
 
@@ -118,6 +123,15 @@ class SearchBoostService:
 
             self.ai_handler = AIHandler(self.logger, reason="optimization")
             optimized_query = await self.ai_handler.query_LLM(self.chatdetails)
+
+            self.logger.info(f"--- CHECKING POST-OPTIMIZATION CACHE for '{optimized_query}' ---")
+            post_opt_cache = await self.cache.get_cached_response(optimized_query)
+            if post_opt_cache:
+                self.logger.info("--- CACHE HIT (POST-OPTIMIZATION) ---")
+                if history_svc and self.session_id:
+                    await history_svc.save_turn(self.session_id, "assistant", post_opt_cache)
+                print(f"\nFinal Response (Cached via Optimized Query):\n{post_opt_cache}")
+                return post_opt_cache
 
             # Second PII scan on the optimizer's output — LLMs can echo PII
             # back verbatim (e.g. "4111-1111-1111-1111 credit card validation").
@@ -150,9 +164,11 @@ class SearchBoostService:
 
             if cache_eligible and not final_response_pii:
                 self.logger.debug(
-                    f"SearchBoostService : Caching final response for: '{self.args.query}'"
+                    f"SearchBoostService : Caching final response for: '{self.args.query}' and optimized '{optimized_query}'"
                 )
                 await self.cache.cache_response(self.args.query, final_response)
+                if self.args.query != optimized_query:
+                    await self.cache.cache_response(optimized_query, final_response)
             else:
                 self.logger.warning(
                     "SearchBoostService : Cache write SKIPPED — PII detected in query, optimizer output, or final response."

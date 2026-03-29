@@ -46,12 +46,20 @@ class RedisManager:
             self._logger.error(f"RedisManager: Failed to connect: {e}")
             self._redis = None
 
+    def is_time_sensitive(self, query: str) -> bool:
+        sensitive_words = {"today", "now", "current", "time", "date", "weather", "latest"}
+        query_lower = query.lower()
+        return any(word in query_lower.split() for word in sensitive_words)
+
     async def get_cached_response(self, query: str):
         """Check if we have a result for this query."""
         if not self._redis: return None
         return await self._redis.get(f"query:{query}")
 
-    async def cache_response(self, query: str, response: str, ttl: int = 3600):
-        """Store result in Redis with an expiration (1 hour default)."""
+    async def cache_response(self, query: str, response: str, ttl: int = 604800):
+        """Store result in Redis with an expiration (1 week default, 1 day for time-sensitive)."""
         if not self._redis: return
-        await self._redis.set(f"query:{query}", response, ex=ttl)
+        
+        actual_ttl = 86400 if self.is_time_sensitive(query) else ttl
+        self._logger.debug(f"RedisManager: Caching query '{query}' with TTL {actual_ttl}s")
+        await self._redis.set(f"query:{query}", response, ex=actual_ttl)

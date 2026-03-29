@@ -35,6 +35,7 @@ use configurator::Settings;
 pub struct Warden { 
     pub breaker: breaker::WardenBreaker,
     pub redis_client: redis::Client,
+    pub db_pool: sqlx::PgPool,
 }
 
 #[tokio::main] 
@@ -44,6 +45,9 @@ async fn main() -> anyhow::Result<()> {
     let settings = Settings::load();
     let redis_url = settings.get_redis_url();
     
+    let db_pool = sqlx::PgPool::connect(&settings.db.database_url()).await
+        .expect("Warden Error: Could not connect to PostgreSQL metadata DB");
+
     let redis_client = redis::Client::open(redis_url)
         .expect("Invalid Redis URL in Config");
         
@@ -54,8 +58,9 @@ async fn main() -> anyhow::Result<()> {
     
     let warden = Arc::new(Warden { 
         breaker,
-        redis_client
-     });
+        redis_client,
+        db_pool
+    });
 
     let obs_name = settings.observer.container_name.clone();
     let obs_path = settings.observer.log_path.clone();

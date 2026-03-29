@@ -63,6 +63,9 @@ class Worker:
             from argparse import Namespace
             args_namespace = Namespace(**args_namespace)
 
+        # Ensure the service has the query available via the namespace object
+        setattr(args_namespace, 'query', query)
+
         self.settings_bundle = await self.config_manager.initialize(args_namespace)
         await self._ensure_db_ready(self.settings_bundle['db'], log)
 

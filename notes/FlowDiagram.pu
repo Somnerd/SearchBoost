@@ -1,42 +1,48 @@
 @startuml
-User --> SearchBoost : initial query
-Worker <-- SearchBoost : SearchBoost service starts Worker Containers
-Worker --> Redis : Request ID
-Worker <-- Redis : Give Job ID 
-Worker <-- Redis : Add job to queue
-Worker --> Redis : ask Redis if query previously asked
+actor User
+participant "React UI" as UI
+participant "Node.js API" as API
+database "PostgreSQL" as DB
+participant "Rust Warden" as WRD
+database "Redis" as RD
+participant "Python Worker" as WKR
+participant "Ollama / LLM" as LLM
+participant "SearXNG" as SRX
 
-alt Query Already in Redis
-Worker <-- Redis : Give previous answer to worker
-Worker --> SearchBoost : Give answer to service
-else Query not in Redis
-
-    Worker --> AIHandler : Give request to appropriate AI service
-    alt Local AI
-    Ollama <-- AIHandler : Give request for search engine optimization
-    else Cloud AI
-    Poe API <-- AIHandler : Give request for search engine optimization
+User -> UI : Enter Query
+UI -> API : POST /api/search/enqueue {query, thread_id}
+API -> WRD : POST /enqueue {query, thread_id, username}
+WRD -> DB : Verify Ownership (IDOR Check)
+WRD -> RD : Check Semantic Cache
+alt Cache Hit
+    RD --> WRD : Return Answer
+    WRD --> API : (Instant) Return Answer
+    API -> DB : Save History
+    API --> UI : OK (Status: Complete)
+else Cache Miss
+    WRD -> RD : Enqueue Job (ZADD arq:queue)
+    WRD --> API : OK (Status: Queued, job_id)
+    API --> UI : OK (Start Polling)
+    
+    WKR -> RD : Pull Job
+    WKR -> LLM : Optimize Query
+    WKR -> RD : Check Post-Opt Cache
+    alt Post-Opt Cache Hit
+        RD --> WKR : Return Answer
+    else Post-Opt Miss
+        WKR -> SRX : Perform Web Search
+        SRX --> WKR : Results
+        WKR -> LLM : Final Synthesis
     end
-
-    alt Local AI
-    Ollama --> SearXNG : Give optimized query
-    else Cloud AI
-    Poe API --> SearXNG : Give optimized query
-    end
-
-    SearXNG --> SearXNG : Search for query and normalize results
-
-
-    alt Local AI
-    Ollama <-- SearXNG : Give results to AI for final response
-    Ollama --> Redis : Store answer as to skip search and research if asked again
-    Ollama --> Worker : Give answer to worker
-    else Cloud AI
-    PoeAPI <-- SearXNG : Give results to AI for final response
-    PoeAPI --> Redis : Store answer as to skip search and research if asked again
-    PoeAPI --> Worker : Give answer to worker
-    end
-
-    Worker --> SearchBoost : Give final answer to user
- end
+    WKR -> DB : Save Assistant Turn
+    WKR -> RD : Cache Result (if PII-Safe)
+    WKR -> RD : SET sb:result:job_id
+    
+    UI -> API : GET /api/search/result/:id
+    API -> WRD : GET /results/:id?username=...
+    WRD -> RD : GET sb:result:id
+    RD --> WRD : Result Content
+    WRD --> API : Protected Result
+    API --> UI : final_answer
+end
 @enduml

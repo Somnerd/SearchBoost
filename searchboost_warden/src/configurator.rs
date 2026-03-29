@@ -52,25 +52,72 @@ pub struct BreakerSettings {
 }
 
 #[derive(Deserialize, Clone)]
+pub struct DatabaseSettings {
+    pub host: String,
+    pub port: u16,
+    pub user: String,
+    pub password: Option<String>,
+    pub database: String,
+}
+
+impl DatabaseSettings {
+    pub fn database_url(&self) -> String {
+        match &self.password {
+            Some(pass) if !pass.is_empty() => {
+                format!("postgres://{}:{}@{}:{}/{}", self.user, pass, self.host, self.port, self.database)
+            }
+            _ => {
+                format!("postgres://{}@{}:{}/{}", self.user, self.host, self.port, self.database)
+            }
+        }
+    }
+}
+
+#[derive(Deserialize, Clone)]
 pub struct Settings {
     pub network: NetworkSettings,
-    pub redis: RedisSettings,
     pub observer: ObserverSettings,
     pub breaker: BreakerSettings,
+    pub redis: RedisSettings,
+    pub db: DatabaseSettings,
 }
 
 impl Settings {
     pub fn load() -> Self {
-        let config_path = env::var("WARDEN_CONFIG_PATH")
-            .unwrap_or_else(|_| "../configs/warden.ini".to_string());
-
+        // Bootstrap: Determine paths to master and discrete YAML configs via ENV
+        let master_env = env::var("MASTER_CONFIG_PATH");
+        let master_path = master_env.clone().unwrap_or_else(|_| "../configs/master_settings.yml".to_string());
+            
+        let discrete_env = env::var("WARDEN_CONFIG_PATH");
+        let discrete_path = discrete_env.clone().unwrap_or_else(|_| "../configs/warden.yml".to_string());
+ 
         let settings = Config::builder()
-            .add_source(File::new(&config_path, FileFormat::Ini))
-            .add_source(config::Environment::with_prefix("WARDEN").separator("__"))
+            .add_source(File::new(&master_path, FileFormat::Yaml).required(master_env.is_ok()))
+            .add_source(File::new(&discrete_path, FileFormat::Yaml).required(discrete_env.is_ok()))
+            .add_source(config::Environment::with_prefix("WARDEN").separator("__").keep_prefix(false))
             .build()
             .expect("Warden Error: Could not find config file");
 
-        settings.try_deserialize().expect("Warden Error: Config file format is invalid")
+        let mut settings: Self = settings.try_deserialize()
+            .expect("Warden Error: Config file format is invalid");
+
+        // 🛡️ Elegant Environment Overrides
+        // We prioritize explicit environment variables (e.g., from Docker secrets)
+        // over the values found in YAML configuration files.
+        let get_env = |var: &str| env::var(var).ok().filter(|s| !s.is_empty());
+
+        if let Some(pass) = get_env("REDIS_PASSWORD") { settings.redis.password = Some(pass); }
+        if let Some(pass) = get_env("DB_PASSWORD")    { settings.db.password = Some(pass); }
+        if let Some(user) = get_env("DB_USER")        { settings.db.user = user; }
+        if let Some(host) = get_env("DB_HOST")        { settings.db.host = host; }
+        if let Some(name) = get_env("DB_NAME").or_else(|| get_env("DB_DATABASE")) { 
+            settings.db.database = name; 
+        }
+        if let Some(port) = get_env("DB_PORT").and_then(|s| s.parse().ok()) { 
+            settings.db.port = port; 
+        }
+
+        settings
     }
 
     pub fn get_redis_url(&self) -> String {

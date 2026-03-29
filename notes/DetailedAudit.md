@@ -1,94 +1,81 @@
 # 🔍 SearchBoost: Detailed Codebase Audit (March 2026)
 
-This document serves as a master reference for the SearchBoost architecture. It maps the evolution of the project from a simple search tool into a decentralized, resilient "Warden Authority" system.
+This document serves as the master technical reference for the SearchBoost architecture, mapping its evolution into a secure, distributed Web-scale system.
 
 ---
 
 ## 🗺️ 1. System Topology
 
-SearchBoost is divided into three primary "Actors" and a shared "Infrastructure" layer.
+SearchBoost is a decentralized 4-tier system prioritizing security, high-availability, and LLM research reliability.
 
 | Actor | Language | Role | Key File(s) |
 | :--- | :--- | :--- | :--- |
-| **Warden** | Rust | Reliability Sidecar, ID Authority, Circuit Breaker | `main.rs`, `relay.rs` |
-| **Orchestrator** | Python | Client UI, Query Optimization, Routing | `main.py`, `configurator.py` |
-| **Worker** | Python | Fact-finding, LLM Research, Persistence | `worker.py`, `service.py` |
-| **Infrastructure** | Docker | Redis (Broker), Postgres (Memory), SearxNG | `docker-compose.yml` |
+| **Web UI** | React | Modern SPA dashboard with per-thread chat history | `App.jsx`, `Search.jsx` |
+| **Edge API** | Node.js | Auth (JWT), Session Mapping, Identity Shield | `auth.js`, `search.js` |
+| **Warden** | Rust | GCRA Rate Limiting, Circuit Breaking, ID Authority | `main.rs`, `relay.rs` |
+| **Worker** | Python | Semantic Research, Ollama RAG, Persistence | `worker.py`, `service.py` |
+| **Infrastructure**| Docker | Redis (Cache), Postgres (State), SearXNG | `docker-compose.yml` |
 
 ---
 
-## 🛡️ 2. The Warden (Rust Sidecar)
+## 🛡️ 2. Edge API (Node.js Gateway)
+*Path: `searchboost_api/`*
+
+The Edge API is the primary boundary for user requests. It isolates internal infrastructure from the public internet.
+*   **Identity Mapping**: Converts user JWTs into unique **Colon-Delimited Session IDs** (`SB-SESSION:user:thread`).
+*   **Security**: Prevents IDOR by validating `job_id` ownership before proxying result fetches to the Warden.
+*   **Fail-Closed**: Boots only if `JWT_SECRET` and `DB_PASSWORD` are provided; otherwise, it exits immediately.
+
+---
+
+## 🦀 3. The Warden (Rust Reliability Engine)
 *Path: `searchboost_warden/`*
 
-The Warden is the gatekeeper of the system. It ensures that the Python client doesn't overwhelm the backend and acts as the "Source of Truth" for job identities.
-
-### Key Modules:
-*   **`relay.rs`**: The heart of the sidecar. 
-    *   **Authority**: It generates the `session:uuid` composite key.
-    *   **Enqueuing**: Uses `ZADD` to push jobs into Redis in the format `arq` expects (including Unix timestamps as scores). It natively serializes job payloads into Python's `pickle` binary format using the `serde-pickle` crate for perfect cross-language compatibility.
-    *   **Result Proxy**: Provides the `GET /results/:id` endpoint so the client never has to touch Redis directly.
-*   **`configurator.rs`**: Uses the `config` crate to merge `warden.ini` and environment variables.
-*   **`breaker.rs`**: Implements a **Circuit Breaker**. If Redis fails multiple times, the breaker "Opens," and the Warden returns `503 Service Unavailable` to the client.
-*   **`observer.rs`**: Logs into the Docker daemon via `bollard`. It watches the `sb_worker` container and replicates its logs to `./logs/service_observation.log`, alerting on errors.
+The Warden acts as a high-performance reliability sidecar for the pipeline.
+*   **Network Relay**: Provides high-speed ingress for the Node.js API.
+*   **Rate Limiting**: Implements `tower_governor` (GCRA) to prevent abusive search spikes (25 req/s).
+*   **Circuit Breaker**: Uses the `failsafe` crate to protect the system from Redis or Worker-induced cascaded failures.
+*   **Configuration**: Loads from `master_settings.yml` (YAML) with flattened environment overrides (`WARDEN__REDIS__HOST`).
 
 ---
 
-## 🐍 3. The Orchestrator (Python Client)
+## 🏗️ 4. The Worker (Python Research Engine)
 *Path: `searchboost_service/`*
 
-The Orchestrator is the intelligence layer. It handles the "Human" side of the search.
-
-### Key Modules:
-*   **`main.py`**: The entry point. It attempts to talk to the Warden first. If the Warden is down or the circuit is open, it automatically triggers the **Fallback**.
-*   **`configurator.py`**: A complex, environment-aware settings manager built on Pydantic. 
-    *   **Hierarchy**: CLI Args > Environment Vars (`SEARCHBOOST_`) > JSON Files > Defaults.
-    *   **Local Routing**: If you run on your host machine (not in Docker), it automatically maps `sb_redis` to `127.0.0.1`.
-*   **`fallback_handler.py`**: The "Safe Mode." It contains the logic to talk directly to Redis/Arq using the `arq` library, bypassing the Warden sidecar entirely if necessary.
-
----
-
-## 🏗️ 4. The Worker (Python Processor)
-*Path: `searchboost_service/searchboost_src/`*
-
-The Worker is where the heavy lifting happens. It is triggered by the Warden's Redis push.
-
-### Key Modules:
-*   **`worker.py`**: The Arq worker implementation. It listens for the `run_task` function call.
-*   **`service.py`**: Contains the `SearchBoostService` class.
-    *   **Efficiency**: Check Redis Cache -> Optimize Query via LLM -> Web Search (SearxNG) -> Final LLM Synthesis.
-    *   **`PersistenceService`**: A child class that saves the final `SearchResult` into **PostgreSQL** using SQLAlchemy.
-*   **`database.py` & `models.py`**: Define the SQLAlchemy models and the Postgres connection pool logic.
+The Worker consumes research tasks and executes the search-then-synthesize loop.
+*   **Semantic Optimization**: Queries Ollama (`llama3.2`) to refine user intent before searching the web.
+*   **Triple-Gate PII Guard**: Uses `PIIDetector` to scan inputs and outputs, ensuring sensitive data is NEVER cached.
+*   **Persistence**: Saves every interaction to **PostgreSQL** via `HistoryService` (SQLAlchemy).
+*   **Configuration**: Uses Pydantic-Settings for **recursive deep-merging** of YAML and Env vars.
 
 ---
 
 ## 🔄 5. The Search Lifecycle (Data Flow)
 
-1.  **Submission**: User runs `main.py --query "X"`.
-2.  **Authority Check**: `main.py` calls Warden `POST /enqueue`.
-3.  **Key Generation**: Warden creates `{session}:{uuid}`, calculates a timestamp score, and runs `ZADD arq:queue`.
-4.  **Acknowledgment**: Warden returns the ID to the Client. Client enters a polling loop: `GET /results/{id}`.
-5.  **Execution**: `sb_worker` sees the new item in Redis. It triggers `Worker.run_task`.
-6.  **Research**: Worker queries `Ollama` for a better search string, hits `SearxNG` for data, then `Ollama` again for the final answer.
-7.  **Archival**: Worker writes the answer to **Postgres** and caches the result in **Redis**.
-8.  **Completion**: Warden sees `arq:result:{id}` in Redis and serves it to the Client loop.
+1.  **Ingress**: User submits a query through the React UI.
+2.  **Auth**: Node.js API validates JWT and constructs a `SB-SESSION:user:thread` identifier.
+3.  **Authority**: Node Calls Warden `POST /enqueue`. Warden generates `SB-SESSION:user:thread:uuid`.
+4.  **Enqueue**: Warden pushes the Job ID into Redis (`ZADD arq:queue`).
+5.  **Execution**: Python Worker pulls the task from Redis, runs the LLM -> SearXNG -> LLM loop.
+6.  **Persistence**: Worker saves turns to Postgres and (if PII-safe) caches response in Redis.
+7.  **Polling**: React UI polls Node.js `/api/result/:id`; Node.js verifies ownership and fetches from Warden.
 
 ---
 
-## ⚙️ 6. Configuration Management
+## ⚙️ 6. Unified Configuration (YAML Framework)
 
-### Warden (`warden.ini`)
-*   **`[network]`**: Controls the sidecar listening port (default: 14141).
-*   **`[redis]`**: Credentials for the message broker.
-*   **`[breaker]`**: Thresholds for when to trip the circuit (e.g., 5 failures).
+SearchBoost has migrated from legacy .ini/.json formats to a unified **Master YAML** system:
+*   **`configs/master_settings.yml`**: Shared infrastructure defaults (Redis, DB, Search).
+*   **`configs/warden.yml`**: Sidecar-specific network and breaker thresholds.
+*   **`configs/worker.yml`**: Worker-specific prompt strategies and model parameters.
 
-### Orchestrator (`configs/*.json`)
-*   **`web_search.json`**: Configure SearxNG instance and engine types.
-*   **`local_ai.json`**: Configure local Ollama model names and ports.
-*   **`service_settings.json`**: High-level strategy overrides.
+### Precedence Policy:
+`CLI Arguments` > `Environment Variables` > `YAML Overrides` > `Base Defaults`.
 
 ---
 
-## 🛠️ Summary of "Hidden" Intelligence
-*   **Redis Hash Tags**: The use of `{session}:uuid` ensures all data for one user hits the same Redis shard in a cluster environment.
-*   **Docker Logic**: The system knows when it is inside a container vs on your Desktop and adjusts its networking automatically.
-*   **Multiplexing**: The Warden uses a shared Redis client to avoid TCP connection overhead.
+## 🛠️ Summary of Post-Audit Hardening
+*   **Rootless Strategy**: All Docker services run as non-root unprivileged users.
+*   **Filesystem Locks**: Sensitive `.env` files are restricted to `chmod 600`.
+*   **Delimiter Safety**: Neutralized "alice vs alice2" prefix collision bugs via strict colon delimiters.
+*   **Token Isolation**: JWTs delivered via **HttpOnly cookies** only, shielding them from XSS.
