@@ -45,10 +45,13 @@
 - [x] 7.1 **Production Proxy**: Mask raw backend errors and enforce 503 masking.
 - [x] 7.2 **Container Health**: Standardize HEALTHCHECK instructions across Dockerfiles.
 - [x] 7.3 **pgvector Migration**: Initialize `pgvector` in PostgreSQL for vector storage.
-- [ ] 7.4 **Worker Scaling**: Horizontal scaling with Redis task locality.
-- [ ] 7.5 **Dynamic LLM Selection**: Allow UI/Terminal overrides for Ollama model names.
-- [ ] 7.6 **Performance Benchmarks**: Document latencies under load.
-- [ ] 7.7 **Audit Polish**: Resolve remaining minor CodeRabbit suggestions:
+- [x] 7.4 **Semantic Persistence**: Synchronous embedding generation for conversation history.
+- [x] 7.5 **History Search API**: New `POST /api/search/history/search` endpoint.
+- [x] 7.6 **Context Injection**: Automated cross-session context discovery for research.
+- [ ] 7.7 **Worker Scaling**: Horizontal scaling with Redis task locality.
+- [ ] 7.8 **Dynamic LLM Selection**: Allow UI/Terminal overrides for Ollama model names.
+- [ ] 7.9 **Performance Benchmarks**: Document latencies under load.
+- [ ] 7.10 **Audit Polish**: Resolve remaining minor CodeRabbit suggestions:
     - [ ] Entropy/TTL for time-sensitive queries.
     - [ ] Accurate timestamps for Warden observation logs.
     - [ ] Exponential backoff with jitter in React UI.

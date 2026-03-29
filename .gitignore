@@ -67,7 +67,6 @@ searchboost_warden/target/
 .agent/
 .gemini/
 .cursor/
-.gsd/
 .claude/
 .anthropic/
 .codex/
