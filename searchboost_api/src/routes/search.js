@@ -6,7 +6,7 @@ const { getHistory, getSessions, searchHistory } = require('../db/history');
 const router = express.Router();
 
 router.post('/enqueue', verifyToken, async (req, res, next) => {
-  const { query, options } = req.body;
+  const { query, options, model } = req.body;
   if (!query) return res.status(400).json({ error: 'query is required' });
 
   let thread_id = 'default';
@@ -14,11 +14,13 @@ router.post('/enqueue', verifyToken, async (req, res, next) => {
     thread_id = req.body.thread_id;
   }
 
+  const mergedOptions = { ...(options || {}), model: model || undefined };
+
   const payload = {
     query,
     thread_id,
     username: req.user.username,
-    options: options || {}
+    options: mergedOptions
   };
 
   console.log(`[API] Proxying to Warden: ${JSON.stringify(payload)}`);

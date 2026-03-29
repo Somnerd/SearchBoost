@@ -44,6 +44,11 @@ class SearchBoostService:
         self.redis_config = redis
         self.db_config = db
 
+        # 🚀 Model Override: Priority given to runtime argument
+        if hasattr(self.args, 'model') and self.args.model:
+            self.logger.info(f"SearchBoostService : Overriding default model '{self.ai_config.model}' with '{self.args.model}'")
+            self.ai_config.model = self.args.model
+
         self.cache = RedisManager(self.redis_config, self.logger)
 
         self.chatdetails = ChatDetails(config=self.ai_config,

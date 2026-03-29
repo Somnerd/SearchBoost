@@ -7,6 +7,7 @@ redis:
 
 observer:
   container_name: sb_worker
+  container_label: com.searchboost.service=worker
   log_path: /logs/worker
 
 breaker:

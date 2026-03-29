@@ -62,14 +62,11 @@ async fn main() -> anyhow::Result<()> {
         db_pool
     });
 
-    let obs_name = settings.observer.container_name.clone();
-    let obs_path = settings.observer.log_path.clone();
-
+    let obs_settings = settings.observer.clone();
     tokio::spawn(async move {
-        info!("Warden: Attempting to connect to Docker for container: {}", obs_name);
-        if let Err(e) = observer::start_log_observer(&obs_name, &obs_path).await {
+        info!("Warden: Initializing Observer Service...");
+        if let Err(e) = observer::start_log_observer(obs_settings).await {
             error!("Observer failed: {}", e);
-            info!("Are you running outside Docker?");
         }
     });
 

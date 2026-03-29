@@ -30,7 +30,8 @@ services:
 
   worker:
     build: ./searchboost_service
-    container_name: sb_worker
+    labels:
+      - "com.searchboost.service=worker"
     env_file: .env
     environment:
       - SEARCHBOOST_REDIS_HOST=sb_redis
