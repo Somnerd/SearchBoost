@@ -6,7 +6,7 @@ This document provides formal evidence for the resolution of Phase 7's productio
 **Requirement**: User bubbles must be right-aligned; Assistant bubbles must be left-aligned.
 
 **Evidence**:
-- **Screenshot**: [searchboost_v2_japan_result.png](media/click_feedback_1775076540977.png)
+- **Screenshot**: [searchboost_v2_japan_result.png](../media/click_feedback_1775076540977.png)
 - **Observation**: Question ("Japan") is right-justified. Answer ("Tokyo") is left-justified.
 
 ---
@@ -15,7 +15,7 @@ This document provides formal evidence for the resolution of Phase 7's productio
 **Requirement**: The 'Researching...' animation must be unique to the task and disappear exactly when content arrives.
 
 **Evidence**:
-- **Recording**: [QA Session Recording](media/phase7_qa_bugfixes_v2_1775076399519.webp)
+- **Recording**: [QA Session Recording](../media/phase7_qa_bugfixes_v2_1775076399519.webp)
 - **Observation**: At 00:15 in the recording, the dot-pulse appears immediately after 'Japan' is sent. At 00:22, it is instantly replaced by the first line of text.
 
 ---
@@ -36,7 +36,7 @@ This document provides formal evidence for the resolution of Phase 7's productio
 **Requirement**: Switching threads must not lose 'Researching...' state for background tasks.
 
 **Evidence**:
-- **Screenshot**: [restore_thread_state.png](media/click_feedback_1775076863141.png)
+- **Screenshot**: [restore_thread_state.png](../media/click_feedback_1775076863141.png)
 - **Observation**: After initiating a Mars search and switching threads, returning to the first thread correctly restores the active 'Researching...' pulse.
 
 ---
