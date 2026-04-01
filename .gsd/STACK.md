@@ -1,6 +1,6 @@
 # Technology Stack
 
-> Phase 6: Hardened Infrastructure Registry
+> Phase 7: Distributed & Semantic Infrastructure Registry
 
 ## Runtime
 | Technology | Version | Purpose |
@@ -17,13 +17,14 @@
 | jsonwebtoken | npm | Secure cookie-based session management |
 | tokio, axum | cargo | Asynchronous Rust API framework |
 | tower_governor | cargo | GCRA rate-limiting (25 req/s per user) |
+| bollard | cargo | Docker API client for dynamic worker discovery |
 | arq, asyncpg, redis | pip | High-speed task queue and ACID database persistence |
 | pydantic-settings | pip | Recursive deep-merge configuration validation |
 
 ## Infrastructure
 | Service | Provider | Purpose |
 |---------|----------|---------|
-| PostgreSQL 16 | DB Engine | Permanent persistence for User Accounts and Chat History Threads |
+| PostgreSQL 16 + pgvector | DB Engine | Relational persistence + Vector similarity for Chat History |
 | Redis 7.4-Alpine | Memory Cache | Authenticated Semantic TTL Caching + ARQ Job Queue |
 | SearXNG | Web Fetcher | Distributed meta-search proxy returning JSON metadata |
 | Ollama | LLM Engine | Local model execution (llama3.2) for private research |

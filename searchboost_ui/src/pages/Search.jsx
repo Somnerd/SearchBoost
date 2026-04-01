@@ -12,10 +12,13 @@ export default function Search() {
   const [conversationHistory, setConversationHistory] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [currentThreadId, setCurrentThreadId] = useState(() => Date.now().toString());
+  const [selectedModel, setSelectedModel] = useState('llama3.2:latest');
+  const [availableModels, setAvailableModels] = useState(['llama3.2:latest']);
   const pollIntervalRef = useRef(null);
 
   useEffect(() => {
     fetchSessions();
+    fetchAvailableModels();
   }, []);
 
   useEffect(() => {
@@ -31,6 +34,16 @@ export default function Search() {
       setSessions(res.data);
     } catch (err) {
       console.error('Failed to fetch sessions:', err);
+    }
+  };
+
+  const fetchAvailableModels = async () => {
+    try {
+      // In a real app, the API would proxy this. For now, we hardcode based on discovery or add a route later.
+      // But we know llama3.2:latest is there.
+      setAvailableModels(['llama3.2:latest', 'nomic-embed-text:latest']);
+    } catch (err) {
+      console.error('Failed to fetch models:', err);
     }
   };
 
@@ -58,13 +71,17 @@ export default function Search() {
     });
 
     try {
-      const res = await client.post('/search/enqueue', { query, thread_id: currentThreadId });
+      const res = await client.post('/search/enqueue', { 
+        query, 
+        thread_id: currentThreadId,
+        model: selectedModel 
+      });
       const jobId = res.data.id || res.data.job_id || res.data.job_id_used;
       
       let pollCount = 0;
       pollIntervalRef.current = setInterval(async () => {
         pollCount++;
-        if (pollCount > 120) { // 240 seconds max
+        if (pollCount > 300) { // 600 seconds max
           clearInterval(pollIntervalRef.current);
           setError('Request timed out');
           setLoading(false);
@@ -183,6 +200,25 @@ export default function Search() {
             </div>
           </div>
         )}
+
+        <div style={{ maxWidth: '800px', margin: '0 auto 1rem', width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.5rem' }}>
+          <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Model:</label>
+          <select 
+            value={selectedModel} 
+            onChange={(e) => setSelectedModel(e.target.value)}
+            style={{
+              background: 'var(--bg-glass)',
+              color: 'var(--text-primary)',
+              border: '1px solid var(--border-glass)',
+              borderRadius: '6px',
+              padding: '0.3rem 0.5rem',
+              fontSize: '0.85rem',
+              outline: 'none'
+            }}
+          >
+            {availableModels.map(m => <option key={m} value={m}>{m}</option>)}
+          </select>
+        </div>
 
         <SearchBar onSubmit={handleSearch} loading={loading} />
         

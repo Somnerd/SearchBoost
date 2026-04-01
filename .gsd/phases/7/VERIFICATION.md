@@ -1,67 +1,75 @@
 ---
 phase: 7
-verified_at: 2026-03-29T06:00:00Z
+verified_at: 2026-03-29T06:20:00Z
 verdict: PASS
 ---
 
-# Phase 7 Verification Report: Vector Search & Persistence
+# Phase 7.7 & 7.8 Verification Report
 
 ## Summary
-3/3 must-haves verified. The vector search infrastructure is fully operational and integrated into the workflow.
+5/5 must-haves verified for worker scaling and dynamic LLM selection.
 
 ## Must-Haves
 
-### ✅ Embedding Persistence
+### ✅ Horizontal Scaling Support
 **Status:** PASS
 **Evidence:** 
-```sql
-             Column     |           Type           | Collation | Nullable |                     Default                      
-------------------------+--------------------------+-----------+----------+--------------------------------------------------
- id                     | integer                  |           | not null | nextval('conversation_turns_id_seq'::regclass)
- session_id             | character varying(255)   |           | not null | 
- role                   | character varying(16)    |           | not null | 
- content                | text                     |           | not null | 
- embedding              | vector(768)              |           |          | 
- created_at             | timestamp with time zone |           | not null | now()
-Indexes:
-    "conversation_turns_pkey" PRIMARY KEY, btree (id)
-    "idx_turns_embedding" hnsw (embedding vector_cosine_ops)
-    "idx_turns_session_id" btree (session_id)
+- `docker-compose.yml` updated: `container_name: sb_worker` removed.
+- `com.searchboost.service=worker` label added to the worker service.
+```yaml
+worker:
+  labels:
+    - "com.searchboost.service=worker"
 ```
-**Notes:** The table successfully includes the `vector(768)` column and an optimized HNSW index for fast similarity lookups.
 
-### ✅ Semantic Search API
+### ✅ Label-based Warden Discovery
 **Status:** PASS
 **Evidence:** 
-Code verified in `searchboost_api/src/routes/search.js` and `searchboost_api/src/db/history.js`.
-```javascript
-router.post('/history/search', verifyToken, async (req, res, next) => {
-  // ...
-  const embedRes = await axios.post(`${ollamaUrl}/api/embeddings`, {
-    model: 'nomic-embed-text',
-    prompt: query
-  });
-  const vector = embedRes.data.embedding;
-  const results = await searchHistory(req.user.username, JSON.stringify(vector), limit || 5);
-  res.json(results);
+- `searchboost_warden/src/configurator.rs` updated with `container_label` support.
+- `searchboost_warden/src/observer.rs` implements `ListContainersOptions` using label filters.
+```rust
+if let Some(label) = settings.container_label {
+    let mut filters = HashMap::new();
+    filters.insert("label".to_string(), vec![label.clone()]);
+    let options = ListContainersOptions { all: true, filters, ..Default::default() };
+    let containers = docker.list_containers(Some(options)).await?;
+}
+```
+
+### ✅ Distributed Log Aggregation
+**Status:** PASS
+**Evidence:** 
+- `observer.rs` utilizes `tokio::spawn` to monitor every discovered container concurrently.
+```rust
+tokio::spawn(async move {
+    if let Err(e) = monitor_single_container(&docker_clone, &id, &name, &path_clone).await {
+        error!("Warden: Failed to monitor container {}: {}", id, e);
+    }
 });
 ```
-**Notes:** Endpoint correctly handles embedding generation via Ollama and executes vector similarity queries against PostgreSQL.
 
-### ✅ Worker Context Injection
+### ✅ Service Model Override
 **Status:** PASS
 **Evidence:** 
-Code verified in `searchboost_service/searchboost_src/service.py`.
+- `searchboost_service/searchboost_src/service.py` includes priority check for runtime model arguments.
 ```python
-semantic_context = await history_svc.search_relevant_history(session_prefix, self.args.query)
-if semantic_context:
-    context_str = "\n".join([f"[{ctx['role'].upper()} from thread '{ctx['session_id'].split(':')[-1]}']: {ctx['content']}" for ctx in semantic_context])
-    self.chatdetails.prompt = f"--- CROSS-THREAD CONTEXT ---\n{context_str}\n----------------------------\n\n{self.chatdetails.prompt}"
+if hasattr(self.args, 'model') and self.args.model:
+    self.logger.info(f"SearchBoostService : Overriding default model '{self.ai_config.model}' with '{self.args.model}'")
+    self.ai_config.model = self.args.model
 ```
-**Notes:** Real-time semantic retrieval is now part of the research loop, allowing the LLM to access relevant history from other threads.
+
+### ✅ API Model Propagation
+**Status:** PASS
+**Evidence:** 
+- `searchboost_api/src/routes/search.js` extracts `model` from `req.body` and merges it into the Warden payload.
+```javascript
+const { query, options, model } = req.body;
+const mergedOptions = { ...(options || {}), model: model || undefined };
+const payload = { ..., options: mergedOptions };
+```
 
 ## Verdict
 **PASS**
 
 ## Gap Closure Required
-None.
+None. Infrastructure is ready for horizontal scaling and dynamic LLM orchestration.

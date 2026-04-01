@@ -64,8 +64,8 @@ class OllamaClient:
                 messages=messages
             )
             
-            # Accommodating slow CPU inference with a configurable upper bound (default: 180s)
-            timeout_limit = getattr(self.ChatDetails.config, 'timeout', 180.0)
+            # Accommodating slow CPU inference with a configurable upper bound (default: 600s)
+            timeout_limit = getattr(self.ChatDetails.config, 'timeout', 600.0)
             if self.logger:
                 self.logger.info(f"OLLAMA CLIENT: Sending chat request to {self.host} (Timeout: {timeout_limit}s)")
             

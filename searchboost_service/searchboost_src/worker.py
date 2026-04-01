@@ -51,6 +51,21 @@ class Worker:
                             Ready to process tasks.""")
         ctx['logger'].debug(f"WORKER : config_manager set : {self.config_manager}")
 
+        # Sovereign Pivot: Ensure models are pre-downloaded on boot
+        try:
+            from ollama import AsyncClient
+            settings = await self.config_manager.initialize(None)
+            ai_cfg = settings['ai']
+            client = AsyncClient(host=ai_cfg.base_url)
+
+            required_models = [ai_cfg.model, "nomic-embed-text"]
+            for m in required_models:
+                ctx['logger'].info(f"WORKER : Ensuring model '{m}' is present...")
+                await client.pull(m)
+            ctx['logger'].info("WORKER : All required models are synchronized.")
+        except Exception as e:
+            ctx['logger'].warning(f"WORKER : Automated model pull failed (non-critical): {e}")
+
     async def shutdown(self, ctx):
         ctx['logger'].info("WORKER : Worker shutting down...")
 

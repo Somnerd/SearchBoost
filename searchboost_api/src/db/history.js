@@ -91,4 +91,18 @@ async function searchHistory(username, queryVector, limit = 5) {
   }
 }
 
-module.exports = { getHistory, getSessions, searchHistory };
+async function ensureThread(userId, threadId) {
+  console.log(`[DB] ensureThread called for user=${userId}, thread=${threadId}`);
+  try {
+    const res = await pool.query(
+      'INSERT INTO threads (id, user_id) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING',
+      [threadId, userId]
+    );
+    console.log(`[DB] ensureThread result: rowsAffected=${res.rowCount}`);
+  } catch (err) {
+    console.error('[DB] ensureThread Error:', err);
+    throw err;
+  }
+}
+
+module.exports = { getHistory, getSessions, searchHistory, ensureThread };

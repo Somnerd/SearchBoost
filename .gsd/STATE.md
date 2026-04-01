@@ -1,17 +1,17 @@
 ## Current Position
-- **Phase**: 7 (verified)
-- **Task**: Security Hardening & Precedence Overhaul (Phase 6.5)
+- **Phase**: 7.8 (verified)
+- **Task**: Worker Scaling & Dynamic LLM Selection
 - **Status**: ✅ Complete and verified
 
 ## Last Session Summary
-Phase 6 was transformed into a deep security audit after CodeRabbit flagged critical vulnerabilities. We resolved:
-1.  **Critical IDOR Collision**: Switched to colon-separated session IDs (`SB-SESSION:user:thread`) to block name-prefix attacks.
-2.  **Strict Secrets Enforcement**: Eliminated all default password fallbacks in API, Worker, and Warden. Implemented `chmod 600` on `.env`.
-3.  **Docker Isolation**: API and UI containers now run as unprivileged users (node/nginx-unprivileged).
-4.  **Config Overhaul**: Implemented recursive deep-merge and CLI > ENV > YAML precedence in the Python configurator.
-5.  **History Persistence**: Fixed cache-hit history drops in `SearchBoostService.run()`.
+Phase 7.7 and 7.8 successfully transitioned SearchBoost to a horizontally scalable architecture:
+1.  **Horizontal Scaling**: Removed hardcoded container names and transitioned to label-based discovery for workers.
+2.  **Distributed Observation**: Warden now dynamically discovers and monitors all worker instances via Docker labels.
+3.  **Dynamic LLM Selection**: Implementation of runtime model overrides in the service layer and propagation through the API.
+4.  **Vector Search Hardening**: Completed embedding persistence and history search APIs.
 
 ## Next Steps
-1. Merge PR #6 into `dev`.
-2. Final review of audit results in `.gsd/phases/6/6-VERIFICATION.md`.
-3. Plan Phase 7 deployment strategy.
+1. Performance Benchmarks: Document latencies under distributed load (Phase 7.9).
+2. Resolve remaining minor CodeRabbit audit items (Phase 7.10).
+3. Begin gRPC handshake implementation (Phase 8.1).
+

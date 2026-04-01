@@ -35,6 +35,7 @@ class AISettings(BaseModel):
     port: int = Field(default=11434, description="Port for the LLM service")
     stream: bool = Field(default=False, description="Enable streaming responses from the LLM")
     role: str = Field(default="user", description="Role for the chat messages")
+    timeout: float = Field(default=600.0, description="Timeout for LLM responses in seconds")
     @property
     def base_url(self) -> str:
         return f"http://{self.host}:{self.port}"

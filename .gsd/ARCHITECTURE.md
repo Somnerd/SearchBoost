@@ -1,9 +1,9 @@
 # Architecture
 
-> Updated to Phase 6: Post-Audit Security Hardening
+> Updated to Phase 7: Distributed Observation & Semantic Search
 
 ## Overview
-SearchBoost is a decentralized, resilient hybrid-AI search engine pipeline. It is architected as an asynchronous distributed system isolating user authorization (Node.js), performant boundary ingress/caching (Rust), resource-intensive background execution (Python), and frontend client rendering (React). The system is configured for security, enforcing fail-closed configuration and unprivileged container execution.
+SearchBoost is a decentralized, resilient hybrid-AI search engine pipeline. It is architected as an asynchronous distributed system isolating user authorization (Node.js), observability-driven gateway (Rust), resource-intensive background execution (Python), and frontend client rendering (React). The system now supports horizontal scaling of workers via label-based discovery and deep semantic persistence using vector embeddings.
 
 ## System Diagram
 ```text
@@ -11,15 +11,15 @@ SearchBoost is a decentralized, resilient hybrid-AI search engine pipeline. It i
 │
 (HTTP / JWT / HttpOnly Cookie)
 ▼
-[ Express API (Node.js) ] ───────▶ [ PostgreSQL DB (Auth & History) ]
-│
-(Network Relay / Colon-Delimited ID)
+[ Express API (Node.js) ] ───────▶ [ PostgreSQL (Auth & Semantic History) ]
+│                                  └─▶ (pgvector extension)
+(Network Relay / Job Delegation)
 ▼
 [ Warden Proxy (Rust) ] ─────────▶ [ Redis (Cache & Enqueue) ]
-│
-(ARQ Polling / Pickle Serialization)
+│                                  └─▶ (Label-based Worker Discovery) 
+(ARQ Tasking / Dynamic Model Injected)
 ▼
-[ Worker Instance (Python) ] ────▶ [ PostgreSQL DB ]
+[ Worker Instances (Python x N) ] ──▶ [ PostgreSQL DB ]
 │
 ┌─────┴──────┐
 ▼            ▼
@@ -43,7 +43,7 @@ SearchBoost is a decentralized, resilient hybrid-AI search engine pipeline. It i
 
 
 ### Rust Warden Proxy
-- **Purpose:** Ingress Gateway serving high-performance Semantic Cache lookups. Runs strict `tower_governor` GCRA rate-limiting (25 req/s) and Circuit Breaking.
+- **Purpose:** Ingress Gateway serving high-performance Semantic Cache lookups and real-time worker fleet observation. Discovers workers via Docker labels and streams logs to centralized audit files.
 - **Location:** `searchboost_warden/`
 - **Security:** Authenticates to Redis via environment secrets. Validates `job_id` segments to prevent IDOR traversal.
 

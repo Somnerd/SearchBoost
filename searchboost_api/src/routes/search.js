@@ -1,7 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const { verifyToken } = require('../middleware/auth');
-const { getHistory, getSessions, searchHistory } = require('../db/history');
+const { getHistory, getSessions, searchHistory, ensureThread } = require('../db/history');
 
 const router = express.Router();
 
@@ -12,6 +12,14 @@ router.post('/enqueue', verifyToken, async (req, res, next) => {
   let thread_id = 'default';
   if (typeof req.body.thread_id === 'string' && /^[a-zA-Z0-9_-]+$/.test(req.body.thread_id)) {
     thread_id = req.body.thread_id;
+  }
+
+  // 🛡️ Security: Ensure thread exists in DB for Warden IDOR protection
+  try {
+    await ensureThread(req.user.id, thread_id);
+  } catch (err) {
+    console.error(`[API] Thread Registration Failed: ${err.message}`);
+    return res.status(500).json({ error: 'Internal Server Error', details: 'Failed to initialize search session' });
   }
 
   const mergedOptions = { ...(options || {}), model: model || undefined };

@@ -129,7 +129,7 @@ class HistoryService:
                 select(ConversationTurn)
                 .where(ConversationTurn.session_id.like(f"{session_prefix}%"))
                 .where(ConversationTurn.embedding.isnot(None))
-                .order_by(ConversationTurn.embedding.distance_cosine(query_embedding))
+                .order_by(ConversationTurn.embedding.cosine_distance(query_embedding))
                 .limit(limit)
             )
             turns = result.scalars().all()
