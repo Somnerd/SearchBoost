@@ -110,7 +110,11 @@ class SearchBoostService:
                     username = parts[1]
                     session_prefix = f"SB-SESSION:{username}:"
                     self.logger.info(f"SearchBoostService : Fetching cross-thread semantic context for user '{username}'")
-                    semantic_context = await history_svc.search_relevant_history(session_prefix, self.args.query)
+                    semantic_context = await history_svc.search_relevant_history(
+                        session_prefix, 
+                        self.args.query,
+                        exclude_session_id=self.session_id
+                    )
                     
                     if semantic_context:
                         # Deduplicate semantic context if it's already in the linear history

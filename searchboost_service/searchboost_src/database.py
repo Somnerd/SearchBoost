@@ -113,8 +113,8 @@ class HistoryService:
             if self.logger:
                 self.logger.error(f"HistoryService: Failed to save turn for '{session_id}': {e}")
 
-    async def search_relevant_history(self, session_prefix: str, query: str, limit: int = 5) -> list[dict]:
-        """Perform semantic vector search using pgvector to find relevant prior turns."""
+    async def search_relevant_history(self, session_prefix: str, query: str, exclude_session_id: str = None, limit: int = 5) -> list[dict]:
+        """Perform semantic vector search using pgvector to find relevant prior turns, excluding current session."""
         from searchboost_src.models import ConversationTurn
         try:
             if not self.ollama_client:
@@ -125,13 +125,15 @@ class HistoryService:
                 return []
 
             # Perform vector similarity search (<=> is cosine distance in pgvector)
-            result = await self.session.execute(
-                select(ConversationTurn)
-                .where(ConversationTurn.session_id.like(f"{session_prefix}%"))
-                .where(ConversationTurn.embedding.isnot(None))
-                .order_by(ConversationTurn.embedding.cosine_distance(query_embedding))
-                .limit(limit)
-            )
+            stmt = select(ConversationTurn).where(ConversationTurn.session_id.like(f"{session_prefix}%"))
+            
+            if exclude_session_id:
+                stmt = stmt.where(ConversationTurn.session_id != exclude_session_id)
+            
+            stmt = stmt.where(ConversationTurn.embedding.isnot(None))
+            stmt = stmt.order_by(ConversationTurn.embedding.cosine_distance(query_embedding)).limit(limit)
+
+            result = await self.session.execute(stmt)
             turns = result.scalars().all()
             
             relevant_context = [
@@ -140,7 +142,7 @@ class HistoryService:
             ]
             
             if self.logger:
-                self.logger.info(f"HistoryService: Found {len(relevant_context)} semantically relevant turns for query '{query[:50]}...'")
+                self.logger.info(f"HistoryService: Found {len(relevant_context)} semantically relevant turns (Excluded: {exclude_session_id})")
             return relevant_context
         except Exception as e:
             if self.logger:

@@ -41,8 +41,6 @@ services:
       - SEARCHBOOST_REDIS_PASSWORD=${REDIS_PASSWORD}
       - SEARCHBOOST_DB_PASSWORD=${DB_PASSWORD:-searchboost_pass}
       - SEARCHBOOST_DB_USER=${DB_USER:-searchboost}
-      - SEARCHBOOST_DB_NAME=${DB_NAME:-searchboost_db}
-      - SEARCHBOOST_DB_HOST=${DB_HOST:-db}
       - SEARCHBOOST_DB_PORT=${DB_PORT:-5432}
       - PYTHONPATH=/app
     command : arq searchboost_src.worker.WorkerSettings

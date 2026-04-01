@@ -38,7 +38,8 @@
 ---
 
 
-## Phase 7: Production Rigor & Vector Search (In Progress)
+## Phase 7: Production Rigor & Vector Search
+**Status**: ✅ Complete
 **Objective**: Architecture hardening for deployment and semantic discovery.
 
 **Plans**:
@@ -48,14 +49,14 @@
 - [x] 7.4 **Semantic Persistence**: Synchronous embedding generation for conversation history.
 - [x] 7.5 **History Search API**: New `POST /api/search/history/search` endpoint.
 - [x] 7.6 **Context Injection**: Automated cross-session context discovery for research.
-- [x] 7.7 **Worker Scaling**: Horizontal scaling with Redis task locality.
-- [x] 7.8 **Dynamic LLM Selection**: Allow UI/Terminal overrides for Ollama model names.
-- [ ] 7.9 **Performance Benchmarks**: Document latencies under load.
-- [ ] 7.10 **Audit Polish**: Resolve remaining minor CodeRabbit suggestions:
-    - [ ] Entropy/TTL for time-sensitive queries.
-    - [ ] Accurate timestamps for Warden observation logs.
-    - [ ] Exponential backoff with jitter in React UI.
-    - [ ] Standardized `Result` types in Rust components.
+- [x] 7.7 **Worker Scaling**: Horizontal scaling with label-based discovery.
+- [x] 7.8 **Dynamic LLM Selection**: UI/Terminal overrides for Ollama model names.
+- [x] 7.9 **Performance Benchmarks**: Document latencies under distributed load.
+- [x] 7.10 **Audit Polish**: Resolve remaining CodeRabbit audit suggestions.
+    - [x] Entropy/TTL for time-sensitive queries.
+    - [x] Accurate timestamps for Warden observation logs.
+    - [x] Exponential backoff with jitter in React UI.
+    - [x] Standardized `Result` types in Rust components.
 
 ---
 

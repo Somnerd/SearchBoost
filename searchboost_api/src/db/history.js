@@ -9,24 +9,24 @@ async function getSessions(username) {
   const prefix = `SB-SESSION:${escapedUsername}:%`;
   try {
     const result = await pool.query(
-      `SELECT session_id, MAX(created_at) as last_activity
-       FROM conversation_turns
-       WHERE session_id LIKE $1 ESCAPE '\\'
-       GROUP BY session_id
-       ORDER BY last_activity DESC`, 
-       [prefix]
+      `SELECT t.id as thread_id, 
+              COALESCE(MAX(c.created_at), t.created_at) as last_activity,
+              t.title
+       FROM threads t
+       LEFT JOIN conversation_turns c ON c.session_id = 'SB-SESSION:' || $1 || ':' || t.id
+       JOIN users u ON t.user_id = u.id
+       WHERE u.username = $1
+       GROUP BY t.id, t.created_at, t.title
+       ORDER BY last_activity DESC`,
+       [username]
     );
 
-    return result.rows.map(r => {
-      // session_id: SB-SESSION:username:thread_id
-      const parts = r.session_id.split(':');
-      const threadId = parts[2] || 'default';
-      return {
-        thread_id: threadId,
-        session_id: r.session_id,
-        last_activity: r.last_activity
-      };
-    });
+    return result.rows.map(r => ({
+      thread_id: r.thread_id,
+      session_id: `SB-SESSION:${username}:${r.thread_id}`,
+      last_activity: r.last_activity,
+      title: r.title
+    }));
   } catch (err) {
     console.error('getSessions Error:', err);
     throw err;

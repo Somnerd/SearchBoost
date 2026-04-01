@@ -45,26 +45,47 @@ class Worker:
 
     async def startup(self, ctx):
         ctx['logger'] = setup_logger("INFO")
-        ctx['logger'].info("WORKER : Worker starting up...")
-        self.config_manager = get_configurator(ctx['logger'])
-        ctx['logger'].info("""WORKER : Configurator initialized.
-                            Ready to process tasks.""")
-        ctx['logger'].debug(f"WORKER : config_manager set : {self.config_manager}")
+        log = ctx['logger']
+        self.config_manager = get_configurator(log)
+        log.info("WORKER : Initialization starting...")
 
-        # Sovereign Pivot: Ensure models are pre-downloaded on boot
+        # 1. Initialize Configuration with slight retry logic
+        settings = None
+        for attempt in range(3):
+            try:
+                settings = await self.config_manager.initialize(None)
+                break
+            except Exception as e:
+                log.error(f"WORKER : Config initialization failed (attempt {attempt+1}): {e}")
+                await asyncio.sleep(2 ** attempt)
+
+        if not settings:
+            log.error("WORKER : Failed to initialize configuration after retries. Manual intervention requested.")
+            return
+
+        # 2. Sovereign Pivot: Ensure models are pre-downloaded on boot
         try:
             from ollama import AsyncClient
-            settings = await self.config_manager.initialize(None)
             ai_cfg = settings['ai']
             client = AsyncClient(host=ai_cfg.base_url)
 
+            # Pulling models sequentially to avoid overwhelming local resources
             required_models = [ai_cfg.model, "nomic-embed-text"]
             for m in required_models:
-                ctx['logger'].info(f"WORKER : Ensuring model '{m}' is present...")
-                await client.pull(m)
-            ctx['logger'].info("WORKER : All required models are synchronized.")
+                log.info(f"WORKER : Validating model '{m}' presence...")
+                try:
+                    await client.pull(m)
+                    log.info(f"WORKER : Model '{m}' is ready.")
+                except Exception as pull_err:
+                    log.warning(f"WORKER : Could not pull model '{m}': {pull_err}")
+            
+            log.info("WORKER : Model synchronization check complete.")
+        except ImportError:
+            log.warning("WORKER : 'ollama' library not found. Skipping auto-pull.")
         except Exception as e:
-            ctx['logger'].warning(f"WORKER : Automated model pull failed (non-critical): {e}")
+            log.warning(f"WORKER : Unexpected error during model synchronization: {e}")
+
+        log.info("WORKER : Startup sequence finalized. Ready for tasks.")
 
     async def shutdown(self, ctx):
         ctx['logger'].info("WORKER : Worker shutting down...")
