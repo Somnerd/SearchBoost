@@ -9,7 +9,7 @@ Template for `.gsd/REQUIREMENTS.md` — formal requirements tracking with tracea
 ```markdown
 ---
 milestone: {name}
-updated: [ISO timestamp]
+updated: [RFC3339 UTC timestamp, e.g. 2026-04-01T21:29:34Z]
 ---
 
 # Requirements

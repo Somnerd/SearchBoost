@@ -15,7 +15,7 @@
 - **Method**: Grepped worker logs for "HistoryService" after a cross-thread search.
 - **Output**: 
   ```text
-  2026-04-01 20:53:42,504 - INFO - HistoryService: Found 2 semantically relevant turns (Excluded: SB-SESSION:qa_tester:1775076518201)
+  2026-04-01 20:53:42,504 - INFO - HistoryService: Found 2 semantically relevant turns (Excluded: SB-SESSION:***redacted***)
   ```
 - **Observation**: The `Excluded` parameter matches the current `session_id`, confirming no duplicate context injection.
 

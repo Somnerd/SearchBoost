@@ -41,14 +41,20 @@ This plan requires manual setup that the AI cannot perform.
 
 **Add to project:**
 ```powershell
+
 # Add to .env.local
-{ENV_VAR}=your_key_here
+
+{
+ENV_VAR}=your_key_here
 ```
 
 **Verify:**
 ```powershell
+
 # Test the connection
-{verification command}
+
+{
+verification command}
 ```
 
 ---

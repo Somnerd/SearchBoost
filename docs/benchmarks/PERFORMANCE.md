@@ -18,7 +18,7 @@ Impact of runtime model selection on API response time.
 | llama3.2:latest         | 173ms               | 34.6ms      |
 | nomic-embed-text:latest | 39ms                | 7.8ms       |
 
-**Key Finding**: Switching models in the `SearchBoostService` adds negligible overhead (~10-20ms) to the task dispatch phase, confirming that runtime overrides are efficient for low-latency dispatch.
+**Key Finding**: Switching models in the `SearchBoostService` adds a total of **~25-30ms** to the task dispatch phase (including internal DNS lookup and option merging), confirming that the runtime overhead is manageable for low-latency search applications.
 
 ## Scaling Verified
 - [x] Warden successfully discovers multiple workers via labels.

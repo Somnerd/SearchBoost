@@ -40,13 +40,19 @@ created: {ISO timestamp}
 ## Efficiency Analysis
 
 ### What Worked Well
-- {Strategy that saved tokens}
+
+-
+ {Strategy that saved tokens}
 
 ### Could Improve
-- {Opportunity for optimization}
+
+-
+ {Opportunity for optimization}
 
 ### Recommendations
-- {Suggestion for next wave}
+
+-
+ {Suggestion for next wave}
 ```
 
 ---
@@ -66,6 +72,7 @@ Create a token report:
 For simple tracking:
 
 ```markdown
+
 ## Token Report: Wave {N}
 
 - Files: {count}

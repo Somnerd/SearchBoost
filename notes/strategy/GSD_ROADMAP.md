@@ -1,44 +1,44 @@
 # SearchBoost Roadmap
 
-
 ## Phase 1: Fix Worker Hangs
+
 **Status**: ✅ Complete
 
 ---
-
 
 ## Phase 2: Web UI
+
 **Status**: ✅ Complete
 
 ---
-
 
 ## Phase 3: Bug Fixes (Cache & Context Issues)
+
 **Status**: ✅ Complete
 
 ---
-
 
 ## Phase 4: Environment Stability & Config Generalization
+
 **Status**: ✅ Complete
 
 ---
-
 
 ## Phase 5: Concurrent Chat Sessions
+
 **Status**: ✅ Complete
 
 ---
 
-
 ## Phase 6: CodeRabbit Security & Stability Sweep
+
 **Status**: ✅ Complete
 **Summary**: SearchBoost is a decentralized, resilient hybrid-AI search engine pipeline. It is architected as an asynchronous distributed system isolating user authorization (Node.js), performant boundary ingress/caching (Rust), resource-intensive background execution (Python), and frontend client rendering (React). The system is configured for security, enforcing fail-closed configuration and unprivileged container execution.
 
 ---
 
-
 ## Phase 7: Production Rigor & Vector Search
+
 **Status**: ✅ Complete
 **Objective**: Architecture hardening for deployment and semantic discovery.
 
@@ -60,8 +60,8 @@
 
 ---
 
-
 ## Phase 8: Hybrid Shift & IO Normalization (90-Day Sprint: Month 1)
+
 **Objective**: Standardize the communication "Contract" and migrate performance logic.
 
 **Plans**:
@@ -74,8 +74,8 @@
 
 ---
 
-
 ## Phase 9: Knowledge Ingestion & Serverless RAG (90-Day Sprint: Month 2)
+
 **Objective**: Transition to Zero-Ops infrastructure with deep local intelligence.
 
 **Plans**:
@@ -87,8 +87,8 @@
 
 ---
 
-
 ## Phase 10: Enterprise Connectivity & Data Sovereignty
+
 **Objective**: Support B2B integrations with legacy and external data sources.
 
 **Plans**:
@@ -97,6 +97,7 @@
 - [ ] 10.3 **OIDC / IAP Auth**: Zero-trust identity management for corporate internal deployment.
 
 ## PHAS 11
+
 **Plans**:
 - [ ] 11.1 **Local Ingest Crawler**: Build a Python-based worker to scan and embed local files (PDF/MD/TXT) into `pgvector`.
 - [ ] 11.2 **Embedding Pipeline**: Integrate Ollama embeddings (e.g. `nomic-embed-text`) for local chunking.

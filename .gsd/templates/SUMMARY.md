@@ -1,6 +1,6 @@
 # Summary Template
 
-Template for `.gsd/phases/{N}/{plan}-SUMMARY.md` — execution summary after plan completion.
+Template for `notes/execution/phases/{N}/{plan}-SUMMARY.md` — execution summary after plan completion.
 
 ---
 
@@ -10,7 +10,7 @@ Template for `.gsd/phases/{N}/{plan}-SUMMARY.md` — execution summary after pla
 ---
 phase: {N}
 plan: {M}
-completed_at: [ISO timestamp]
+completed_at: [RFC3339 UTC timestamp, e.g. 2026-04-01T21:29:34Z]
 duration_minutes: {N}
 status: complete | partial | failed
 ---
@@ -50,13 +50,19 @@ status: complete | partial | failed
 {If none: "None — executed as planned."}
 
 ### Rule 1 — Bug Fixes
-- {description of bug fixed}
+
+-
+ {description of bug fixed}
 
 ### Rule 2 — Missing Critical
-- {description of functionality added}
+
+-
+ {description of functionality added}
 
 ### Rule 3 — Blocking Issues
-- {description of blocker fixed}
+
+-
+ {description of blocker fixed}
 
 ---
 

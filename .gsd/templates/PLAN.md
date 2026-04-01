@@ -13,10 +13,14 @@ gap_closure: false
 # Plan {N}.{M}: {Descriptive Name}
 
 ## Objective
-{One paragraph explaining what this plan delivers and why it matters}
+
+{
+One paragraph explaining what this plan delivers and why it matters}
 
 ## Context
-Load these files for context:
+
+L
+oad these files for context:
 - .gsd/SPEC.md
 - .gsd/ARCHITECTURE.md
 - {relevant source files}
@@ -60,12 +64,16 @@ Load these files for context:
 </task>
 
 ## Must-Haves
-After all tasks complete, verify:
+
+A
+fter all tasks complete, verify:
 - [ ] {Must-have 1 — derived from phase goal}
 - [ ] {Must-have 2}
 
 ## Success Criteria
-- [ ] All tasks verified passing
+
+-
+ [ ] All tasks verified passing
 - [ ] Must-haves confirmed
 - [ ] No regressions in tests
 ```

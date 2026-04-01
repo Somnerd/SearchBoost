@@ -96,6 +96,7 @@ status: {complete | partial | blocked}
 For quick state dumps during debugging:
 
 ```markdown
+
 # Debug State Snapshot
 
 **Time:** {timestamp}

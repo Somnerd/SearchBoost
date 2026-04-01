@@ -1,6 +1,6 @@
 # Context Template
 
-Template for `.gsd/phases/{N}/CONTEXT.md` — user's vision for a phase.
+Template for `notes/execution/phases/{N}/CONTEXT.md` — user's vision for a phase.
 
 ---
 
@@ -10,7 +10,7 @@ Template for `.gsd/phases/{N}/CONTEXT.md` — user's vision for a phase.
 ---
 phase: {N}
 name: {phase-name}
-created: [ISO timestamp]
+created: [RFC3339 UTC timestamp, e.g. 2026-04-01T21:29:34Z]
 ---
 
 # Phase {N} Context
@@ -44,13 +44,19 @@ Explicitly NOT part of this phase:
 ## User Expectations
 
 ### Look and Feel
-{How it should appear/behave}
+
+{
+How it should appear/behave}
 
 ### Performance
-{Speed/responsiveness expectations}
+
+{
+Speed/responsiveness expectations}
 
 ### Integration
-{How it fits with existing work}
+
+{
+How it fits with existing work}
 
 ## Examples / Inspiration
 

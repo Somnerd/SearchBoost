@@ -10,7 +10,7 @@ Template for `.gsd/ROADMAP.md` — phase structure and progress tracking.
 ---
 milestone: {name}
 version: {semantic version}
-updated: [ISO timestamp]
+updated: [RFC3339 UTC timestamp, e.g. 2026-04-01T21:29:34Z]
 ---
 
 # Roadmap
@@ -29,7 +29,9 @@ updated: [ISO timestamp]
 ## Phases
 
 ### Phase 1: {Foundation}
-**Status:** ⬜ Not Started | 🔄 In Progress | ✅ Complete
+
+*
+*Status:** ⬜ Not Started | 🔄 In Progress | ✅ Complete
 **Objective:** {What this phase delivers}
 **Requirements:** REQ-01, REQ-02
 
@@ -40,7 +42,9 @@ updated: [ISO timestamp]
 ---
 
 ### Phase 2: {Core Feature}
-**Status:** ⬜ Not Started
+
+*
+*Status:** ⬜ Not Started
 **Objective:** {What this phase delivers}
 **Depends on:** Phase 1
 
@@ -51,14 +55,18 @@ updated: [ISO timestamp]
 ---
 
 ### Phase 3: {Integration}
-**Status:** ⬜ Not Started
+
+*
+*Status:** ⬜ Not Started
 **Objective:** {What this phase delivers}
 **Depends on:** Phase 2
 
 ---
 
 ### Phase 4: {Polish/Launch}
-**Status:** ⬜ Not Started
+
+*
+*Status:** ⬜ Not Started
 **Objective:** {Final touches and deployment}
 **Depends on:** Phase 3
 

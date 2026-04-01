@@ -19,6 +19,7 @@ SearchBoost is a decentralized 4-tier system prioritizing security, high-availab
 ---
 
 ## 🛡️ 2. Edge API (Node.js Gateway)
+
 *Path: `searchboost_api/`*
 
 The Edge API is the primary boundary for user requests. It isolates internal infrastructure from the public internet.
@@ -29,6 +30,7 @@ The Edge API is the primary boundary for user requests. It isolates internal inf
 ---
 
 ## 🦀 3. The Warden (Rust Reliability Engine)
+
 *Path: `searchboost_warden/`*
 
 The Warden acts as a high-performance reliability sidecar for the pipeline.
@@ -40,6 +42,7 @@ The Warden acts as a high-performance reliability sidecar for the pipeline.
 ---
 
 ## 🏗️ 4. The Worker (Python Research Engine)
+
 *Path: `searchboost_service/`*
 
 The Worker consumes research tasks and executes the search-then-synthesize loop.
@@ -70,11 +73,13 @@ SearchBoost has migrated from legacy .ini/.json formats to a unified **Master YA
 *   **`configs/worker.yml`**: Worker-specific prompt strategies and model parameters.
 
 ### Precedence Policy:
+
 `CLI Arguments` > `Environment Variables` > `YAML Overrides` > `Base Defaults`.
 
 ---
 
 ## 🛠️ Summary of Post-Audit Hardening
+
 *   **Rootless Strategy**: All Docker services run as non-root unprivileged users.
 *   **Filesystem Locks**: Sensitive `.env` files are restricted to `chmod 600`.
 *   **Delimiter Safety**: Neutralized "alice vs alice2" prefix collision bugs via strict colon delimiters.

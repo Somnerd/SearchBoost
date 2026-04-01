@@ -13,12 +13,16 @@
 ## Core Technologies
 
 ### {Category 1}
-| Feature | System | Purpose |
+
+|
+ Feature | System | Purpose |
 |---------|--------|---------|
 | {Feature} | {System/Location} | {Purpose} |
 
 ### {Category 2}
-| Directory | Files | Purpose |
+
+|
+ Directory | Files | Purpose |
 |-----------|-------|---------|
 | `{path}` | {count} | {purpose} |
 

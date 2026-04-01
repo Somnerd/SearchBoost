@@ -5,6 +5,7 @@ Here is the condensed, high-level **Technical Blueprint** for the SearchBoost "S
 ## 🛡️ SearchBoost: Technical Strategy & Pivot Summary
 
 ### **1. Core Architectural Shift: The "Warden Protocol"**
+
 * **The Mission:** Move from a "Python app" to a **Language-Agnostic AI Gateway**.
 * **The Handshake:** Replace all internal JSON/Pickle messaging with **gRPC (Protocol Buffers)**.
 * **The Warden (Rust):** Acts as the **Source of Truth** and **Resource Governor**.
@@ -13,12 +14,14 @@ Here is the condensed, high-level **Technical Blueprint** for the SearchBoost "S
     * **Data Locality:** Enforce Redis `{session}:uuid` hash-tagging for cluster-aware scaling.
 
 ### **2. Monetization-Ready Infrastructure**
+
 * **Multi-Tenancy:** Implement API Key validation in the Warden to partition data/billing between different clients.
 * **Sovereign Observability:** Build a real-time telemetry stream (via gRPC) that feeds a "Warden Dashboard" UI.
 * **Auth Layer:** Integrate OIDC/IAP for Enterprise "Zero-Trust" compatibility.
 * **Licensing Strategy:** Maintain **AGPLv3** for the core repo but architect the Warden to allow **Commercial License Exceptions** for proprietary enterprise integrations.
 
 ### **3. The 90-Day "Abatton" Sprint**
+
 * **Month 1 (Protocol):** Define `searchboost.proto` and migrate Warden/Worker to gRPC.
 * **Month 2 (Product):** Build the "Control Tower" UI and implement the "Managed Cloud" Docker stack.
 * **Month 3 (Market):** Launch the "Sovereign AI Manifesto" and onboard 3 "Whale" beta clients from the Telecom/SRE network.
@@ -38,6 +41,7 @@ Here is the condensed, high-level **Technical Blueprint** for the SearchBoost "S
 ---
 
 ### **🏝️ Current Environment Stats (For AI Context)**
+
 * **VM:** Google Cloud Compute Engine (Debian).
 * **Shell:** Zsh (with Oh My Zsh/Powerlevel10k).
 * **Identity:** SSH-Key based (IdentityFile `~/.ssh/github_searchboost_deploy`).

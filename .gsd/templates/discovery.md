@@ -1,6 +1,6 @@
 # Discovery Template
 
-Template for `.gsd/phases/{N}/DISCOVERY.md` — shallow research for library/option decisions.
+Template for `notes/execution/phases/{N}/DISCOVERY.md` — shallow research for library/option decisions.
 
 **Purpose:** Answer "which library/option should we use" questions during planning.
 
@@ -63,30 +63,43 @@ Output: DISCOVERY.md with recommendation
 
 ## Output Structure
 
-Create `.gsd/phases/{N}/DISCOVERY.md`:
+Create `notes/execution/phases/{N}/DISCOVERY.md`:
 
 ```markdown
+
 # [Topic] Discovery
 
 ## Summary
-[2-3 paragraph executive summary]
+
+[
+2-3 paragraph executive summary]
 
 ## Primary Recommendation
-[What to do and why — specific and actionable]
+
+[
+What to do and why — specific and actionable]
 
 ## Alternatives Considered
-[What else was evaluated and why not chosen]
+
+[
+What else was evaluated and why not chosen]
 
 ## Key Findings
 
 ### [Category 1]
-- [Finding with source URL]
+
+-
+ [Finding with source URL]
 
 ### [Category 2]
-- [Finding with relevance]
+
+-
+ [Finding with relevance]
 
 ## Code Examples
-[Relevant patterns if applicable]
+
+[
+Relevant patterns if applicable]
 
 ## Metadata
 

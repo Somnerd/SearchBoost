@@ -4,17 +4,23 @@
 > **Status**: In Progress | Complete
 
 ## Goal
-{One sentence describing what this sprint aims to achieve.}
+
+{
+One sentence describing what this sprint aims to achieve.}
 
 ## Scope
 
 ### Included
-- {Feature/task 1}
+
+-
+ {Feature/task 1}
 - {Feature/task 2}
 - {Feature/task 3}
 
 ### Explicitly Excluded
-- {Out of scope item 1}
+
+-
+ {Out of scope item 1}
 - {Out of scope item 2}
 
 ## Tasks
@@ -28,11 +34,15 @@
 ## Daily Log
 
 ### Day 1 (YYYY-MM-DD)
-- {What was accomplished}
+
+-
+ {What was accomplished}
 - {Blockers encountered}
 
 ### Day 2 (YYYY-MM-DD)
-- {What was accomplished}
+
+-
+ {What was accomplished}
 - {Blockers encountered}
 
 ## Risks & Blockers
@@ -44,13 +54,19 @@
 ## Retrospective (end of sprint)
 
 ### What Went Well
-- {Positive outcome 1}
+
+-
+ {Positive outcome 1}
 
 ### What Could Improve
-- {Area for improvement 1}
+
+-
+ {Area for improvement 1}
 
 ### Action Items
-- [ ] {Action to take in next sprint}
+
+-
+ [ ] {Action to take in next sprint}
 
 ---
 

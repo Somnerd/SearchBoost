@@ -21,7 +21,9 @@ total_count: {Y}
 ## Must-Haves
 
 ### ✅ 1. {Must-have description}
-**Status:** PASS
+
+*
+*Status:** PASS
 **Method:** {How this was verified}
 **Evidence:**
 ```
@@ -29,7 +31,9 @@ total_count: {Y}
 ```
 
 ### ❌ 2. {Must-have description}
-**Status:** FAIL
+
+*
+*Status:** FAIL
 **Method:** {How this was verified}
 **Expected:** {What should happen}
 **Actual:** {What actually happened}
@@ -40,7 +44,9 @@ total_count: {Y}
 **Gap:** {What needs to be fixed}
 
 ### ⏭️ 3. {Must-have description}
-**Status:** SKIPPED
+
+*
+*Status:** SKIPPED
 **Reason:** {Why this couldn't be verified}
 
 ## Gap Closure Required

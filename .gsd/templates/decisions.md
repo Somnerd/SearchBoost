@@ -5,25 +5,36 @@
 ## Template
 
 ```markdown
+
 ## [DECISION-XXX] Title
 
 **Date**: YYYY-MM-DD
 **Status**: Proposed | Accepted | Deprecated | Superseded
 
 ### Context
-What is the issue we're facing?
+
+W
+hat is the issue we're facing?
 
 ### Decision
-What have we decided to do?
+
+W
+hat have we decided to do?
 
 ### Rationale
-Why did we make this decision?
+
+W
+hy did we make this decision?
 
 ### Consequences
-What are the trade-offs?
+
+W
+hat are the trade-offs?
 
 ### Alternatives Considered
-What other options were evaluated?
+
+W
+hat other options were evaluated?
 ```
 
 ---

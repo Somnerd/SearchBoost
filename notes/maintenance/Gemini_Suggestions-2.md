@@ -3,6 +3,7 @@ To hit that **€50k/month** "money printing" target, you have to move from "usi
 ---
 
 ### 1. Replacing SearxNG ➡️ **Firecrawl or Brave Search API**
+
 SearxNG is great for privacy, but for a professional AI agent, it’s a "maintenance nightmare." It gets blocked constantly, requiring you to manage proxy rotations (which costs time and money).
 
 * **The Swap:** **Firecrawl** or **Tantivy (Local Index)**.
@@ -10,6 +11,7 @@ SearxNG is great for privacy, but for a professional AI agent, it’s a "mainten
 * **Monetization Impact:** You stop paying for proxy services and start providing "Clean Data" that doesn't need 500 lines of Python regex to clean.
 
 ### 2. Replacing pgvector ➡️ **LanceDB (Embedded)**
+
 `pgvector` is the current "safe" choice, but it requires a full PostgreSQL instance. For your **Crete Farm** setup, you want something that scales without the overhead.
 
 * **The Swap:** **LanceDB**.
@@ -17,6 +19,7 @@ SearxNG is great for privacy, but for a professional AI agent, it’s a "mainten
 * **Monetization Impact:** You can ship your entire "Abatton" as a single Docker image or even a binary. No "Database Admin" needed. It’s the ultimate "Zero-Ops" pitch to clients.
 
 ### 3. Replacing Redis ➡️ **Valkey (The "Sovereign" Fork)**
+
 Redis recently changed its license, which made a lot of "Sovereign" developers nervous.
 
 * **The Swap:** **Valkey**.
@@ -35,8 +38,7 @@ Redis recently changed its license, which made a lot of "Sovereign" developers n
 | **Redis** | **Valkey** | Truly open-source; better multi-core scaling. |
 
 ### 🏝️ The "Abatton" Final Form
+
 By making these swaps, your **Warden (Rust)** becomes even more powerful. Instead of managing five separate servers (Postgres, Redis, SearxNG, etc.), the Warden manages **files (LanceDB)** and **lightweight binaries (Valkey/Llama.cpp)**.
-
-
 
 **Which of these "Sovereign" swaps would you like to implement first in your Antigravity instance? I recommend starting with the Llama.cpp pivot.**

@@ -1,6 +1,6 @@
 # UAT Template
 
-Template for `.gsd/phases/{N}/UAT.md` — User Acceptance Testing checklist.
+Template for `notes/execution/phases/{N}/UAT.md` — User Acceptance Testing checklist.
 
 **Purpose:** Structured manual testing protocol for human verification checkpoints.
 
@@ -12,7 +12,7 @@ Template for `.gsd/phases/{N}/UAT.md` — User Acceptance Testing checklist.
 ---
 phase: {N}
 type: uat
-created: [ISO timestamp]
+created: [RFC3339 UTC timestamp, e.g. 2026-04-01T21:29:34Z]
 status: pending | in_progress | passed | failed
 ---
 
@@ -35,7 +35,7 @@ status: pending | in_progress | passed | failed
 - [ ] Browser dev tools open for error monitoring
 
 **Test Data:**
-- User: test@example.com / password123
+- User: {test_email} / {test_password}
 - Other relevant test accounts/data
 
 ---

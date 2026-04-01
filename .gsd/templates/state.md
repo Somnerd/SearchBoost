@@ -8,7 +8,7 @@ Template for `.gsd/STATE.md` — project memory across sessions.
 
 ```markdown
 ---
-updated: [ISO timestamp]
+updated: [RFC3339 UTC timestamp, e.g. 2026-04-01T21:29:34Z]
 ---
 
 # Project State

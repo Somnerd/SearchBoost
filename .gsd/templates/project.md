@@ -9,7 +9,7 @@ Template for `.gsd/SPEC.md` (or PROJECT.md) — project specification.
 ```markdown
 ---
 status: DRAFT | FINALIZED
-created: [ISO timestamp]
+created: [RFC3339 UTC timestamp, e.g. 2026-04-01T21:29:34Z]
 finalized: [ISO timestamp when status changed]
 ---
 
@@ -58,14 +58,20 @@ Explicitly NOT part of this project:
 ## Constraints
 
 ### Technical
-- {Technical constraint 1}
+
+-
+ {Technical constraint 1}
 - {Technical constraint 2}
 
 ### Timeline
-- {Timeline constraint}
+
+-
+ {Timeline constraint}
 
 ### Other
-- {Budget, resources, etc.}
+
+-
+ {Budget, resources, etc.}
 
 ---
 

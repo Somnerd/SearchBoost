@@ -10,12 +10,14 @@ Template for `.gsd/debug/[slug].md` — active debug session tracking.
 ---
 status: gathering | investigating | fixing | verifying | resolved
 trigger: "[verbatim user input]"
-created: [ISO timestamp]
-updated: [ISO timestamp]
+created: [RFC3339 UTC timestamp, e.g. 2026-04-01T21:29:34Z]
+updated: [RFC3339 UTC timestamp, e.g. 2026-04-01T21:29:34Z]
 ---
 
 ## Current Focus
-<!-- OVERWRITE on each update - always reflects NOW -->
+
+<
+!-- OVERWRITE on each update - always reflects NOW -->
 
 hypothesis: [current theory being tested]
 test: [how testing it]
@@ -23,7 +25,9 @@ expecting: [what result means if true/false]
 next_action: [immediate next step]
 
 ## Symptoms
-<!-- Written during gathering, then immutable -->
+
+<
+!-- Written during gathering, then immutable -->
 
 expected: [what should happen]
 actual: [what actually happens]
@@ -32,14 +36,18 @@ reproduction: [how to trigger]
 started: [when it broke / always broken]
 
 ## Eliminated
-<!-- APPEND only - prevents re-investigating after context reset -->
+
+<
+!-- APPEND only - prevents re-investigating after context reset -->
 
 - hypothesis: [theory that was wrong]
   evidence: [what disproved it]
   timestamp: [when eliminated]
 
 ## Evidence
-<!-- APPEND only - facts discovered during investigation -->
+
+<
+!-- APPEND only - facts discovered during investigation -->
 
 - timestamp: [when found]
   checked: [what was examined]
@@ -47,7 +55,9 @@ started: [when it broke / always broken]
   implication: [what this means]
 
 ## Resolution
-<!-- OVERWRITE as understanding evolves -->
+
+<
+!-- OVERWRITE as understanding evolves -->
 
 root_cause: [empty until found]
 fix: [empty until applied]

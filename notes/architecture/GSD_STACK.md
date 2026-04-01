@@ -3,6 +3,7 @@
 > Phase 7: Distributed & Semantic Infrastructure Registry
 
 ## Runtime
+
 | Technology | Version | Purpose |
 |------------|---------|---------|
 | Node.js | v20-Alpine | Authenticated REST API (Non-root `node` user) |
@@ -11,6 +12,7 @@
 | Nginx-Unprivileged| Stable-Alpine | Secure frontend delivery on non-root Port 8080 |
 
 ## Production Dependencies
+
 | Package | Ecosystem | Purpose |
 |---------|---------|---------|
 | express, pg, bcrypt | npm | JWT Auth and PostgreSQL conversation mapping |
@@ -22,6 +24,7 @@
 | pydantic-settings | pip | Recursive deep-merge configuration validation |
 
 ## Infrastructure
+
 | Service | Provider | Purpose |
 |---------|----------|---------|
 | PostgreSQL 16 + pgvector | DB Engine | Relational persistence + Vector similarity for Chat History |
@@ -30,6 +33,7 @@
 | Ollama | LLM Engine | Local model execution (llama3.2) for private research |
 
 ## Configuration & Security
+
 | Variable | Purpose | Required |
 |----------|---------|----------|
 | JWT_SECRET | Root signing key for user tokens | **YES** (Fail-Closed) |
@@ -39,6 +43,7 @@
 | SB_INSTANCE_IP | Target deployment IP for testplan resolution | No |
 
 ### Security Policies
+
 - **File Permissions**: `.env` strictly enforced at `600`.
 - **Identity Isolation**: Colons used as delimiters (`SB-SESSION:user:thread`) to prevent name-prefix collisions.
 - **Rootless Execution**: 100% of application containers run as unprivileged users.

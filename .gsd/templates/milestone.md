@@ -11,7 +11,7 @@ Template for `.gsd/milestones/{name}/MILESTONE.md` — milestone definition and 
 name: {milestone-name}
 version: {semantic version, e.g., v1.0}
 status: planning | active | complete | archived
-created: [ISO timestamp]
+created: [RFC3339 UTC timestamp, e.g. 2026-04-01T21:29:34Z]
 target_date: [optional target]
 ---
 
