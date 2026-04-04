@@ -14,10 +14,10 @@
 
 | Requirement | Verified | Evidence |
 |-------------|----------|----------|
-| Horizontal Scaling | ✅ | [VERIFICATION.md](file:///home/somnerd/SearchBoost/.gsd/phases/7/VERIFICATION.md) |
-| Dynamic LLM Selection | ✅ | [Search.jsx](file:///home/somnerd/SearchBoost/searchboost_ui/src/pages/Search.jsx) |
-| Semantic History Search | ✅ | [search.js](file:///home/somnerd/SearchBoost/searchboost_api/src/routes/search.js) |
-| Performance Benchmarking | ✅ | [PERFORMANCE.md](file:///home/somnerd/SearchBoost/docs/benchmarks/PERFORMANCE.md) |
+| Horizontal Scaling | ✅ | [VERIFICATION.md](../../maintenance/verification/PHASE7_VERIFICATION.md) |
+| Dynamic LLM Selection | ✅ | [Search.jsx](../../../searchboost_ui/src/pages/Search.jsx) |
+| Semantic History Search | ✅ | [search.ts](../../../searchboost_api/src/routes/search.ts) |
+| Performance Benchmarking | ✅ | [PERFORMANCE.md](../../../docs/benchmarks/PERFORMANCE.md) |
 
 ## Achievements
 

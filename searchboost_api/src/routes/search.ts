@@ -21,7 +21,7 @@ router.post('/enqueue', verifyToken, async (req: Request, res: Response, next: N
   try {
     const userId = req.user!.id;
     await prisma.thread.upsert({
-      where: { id: thread_id },
+      where: { userId_id: { userId, id: thread_id } },
       update: {},
       create: { id: thread_id, userId: userId, title: 'New Conversation' }
     });
@@ -40,7 +40,11 @@ router.post('/enqueue', verifyToken, async (req: Request, res: Response, next: N
     options: mergedOptions
   };
 
-  console.log(`[API] Proxying to Warden: ${JSON.stringify(payload)}`);
+  console.log('[API] Proxying to Warden', {
+    thread_id,
+    model: mergedOptions.model,
+    query_length: query.length
+  });
 
   try {
     const response = await axios.post(`${process.env.WARDEN_URL}/enqueue`, payload, { 
@@ -136,7 +140,11 @@ router.post('/history/search', verifyToken, async (req: Request, res: Response, 
     // 2. Search Database using raw query for pgvector operations
     // Using simple literal format suitable for Prisma
     const vectorLiteral = JSON.stringify(vector);
-    const sessionLike = `SB-SESSION:${req.user!.username}:%`;
+    const escapedUsername = req.user!.username
+      .replace(/\\/g, '\\\\')
+      .replace(/%/g, '\\%')
+      .replace(/_/g, '\\_');
+    const sessionLike = `SB-SESSION:${escapedUsername}:%`;
     
     // Safety fallback: if we can't search, return empty
     try {
@@ -147,7 +155,7 @@ router.post('/history/search', verifyToken, async (req: Request, res: Response, 
         const results = await prisma.$queryRawUnsafe(`
           SELECT id, session_id as "sessionId", role, content, created_at as "createdAt"
           FROM conversation_turns
-          WHERE session_id LIKE $1
+          WHERE session_id LIKE $1 ESCAPE '\\'
           ORDER BY embedding <=> $2::vector
           LIMIT $3
         `, sessionLike, vectorLiteral, safeLimit);

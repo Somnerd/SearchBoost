@@ -21,12 +21,13 @@ model User {
 }
 
 model Thread {
-  id        String   @id @db.VarChar(128)
-  userId    Int?     @map("user_id")
+  id        String   @db.VarChar(128)
+  userId    Int      @map("user_id")
   title     String?
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
-  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@id([userId, id])
   @@index([userId], map: "idx_threads_user_id")
   @@map("threads")
 }

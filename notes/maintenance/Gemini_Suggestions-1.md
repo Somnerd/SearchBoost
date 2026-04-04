@@ -44,7 +44,7 @@ Here is the condensed, high-level **Technical Blueprint** for the SearchBoost "S
 
 * **VM:** Google Cloud Compute Engine (Debian).
 * **Shell:** Zsh (with Oh My Zsh/Powerlevel10k).
-* **Identity:** SSH-Key based (IdentityFile `~/.ssh/github_searchboost_deploy`).
+* **Identity:** SSH key-based authentication configured (IdentityFile `[REDACTED]`).
 * **Stack:** Rust (Warden), Python (Worker/Orchestrator), Redis (Broker), PostgreSQL (Storage), SearxNG (Search).
 
 **Shall we start by generating the first iteration of the `searchboost.proto` file for you to save into the repo?**

@@ -104,10 +104,11 @@ class SearchBoostService:
             self.logger.info("--- CACHE HIT ---")
             if history_svc and self.session_id:
                 # Fire and forget history save
-                asyncio.gather(
-                    history_svc.save_turn(self.session_id, "user", self.args.query),
-                    history_svc.save_turn(self.session_id, "assistant", cached_result)
-                )
+                try:
+                    await history_svc.save_turn(self.session_id, "user", self.args.query)
+                    await history_svc.save_turn(self.session_id, "assistant", cached_result)
+                except Exception as e:
+                    self.logger.error(f"Failed to persist cache hit to history: {e}")
             return cached_result
 
         self.logger.info("--- CACHE MISS: Executing Research Loop ---")
@@ -125,7 +126,10 @@ class SearchBoostService:
         if post_opt_cache:
             self.logger.info("--- CACHE HIT (POST-OPTIMIZATION) ---")
             if history_svc and self.session_id:
-                asyncio.gather(history_svc.save_turn(self.session_id, "assistant", post_opt_cache))
+                try:
+                    await history_svc.save_turn(self.session_id, "assistant", post_opt_cache)
+                except Exception as e:
+                    self.logger.error(f"Failed to persist optimized cache hit to history: {e}")
             return post_opt_cache
 
         optimized_query_pii = pii_detector.scan(optimized_query)
