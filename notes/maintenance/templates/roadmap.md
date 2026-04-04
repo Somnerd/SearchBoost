@@ -16,7 +16,7 @@ updated: [RFC3339 UTC timestamp, e.g. 2026-04-01T21:29:34Z]
 # Roadmap
 
 > **Current Phase:** {N} - {name}
-> **Status:** {planning | executing | verifying}
+> **Status:** {planning | executing | verifying | complete | paused | blocked}
 
 ## Must-Haves (from SPEC)
 

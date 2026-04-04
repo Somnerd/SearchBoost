@@ -11,29 +11,25 @@ One paragraph describing what this project is and why it exists.}
 
 ## Goals
 
-1
-. **{Goal 1}** — {Brief description}
+1. **{Goal 1}** — {Brief description}
 2. **{Goal 2}** — {Brief description}
 3. **{Goal 3}** — {Brief description}
 
 ## Non-Goals (Out of Scope)
 
--
- {What this project explicitly will NOT do}
+- {What this project explicitly will NOT do}
 - {Features that are intentionally excluded}
 - {Scope boundaries}
 
 ## Constraints
 
--
- {Technical constraint 1}
+- {Technical constraint 1}
 - {Business constraint 1}
 - {Timeline constraint 1}
 
 ## Success Criteria
 
--
- [ ] {Measurable outcome 1}
+- [ ] {Measurable outcome 1}
 - [ ] {Measurable outcome 2}
 - [ ] {Measurable outcome 3}
 - [ ] {Measurable outcome 4}
@@ -42,14 +38,12 @@ One paragraph describing what this project is and why it exists.}
 
 ### As a {user type}
 
--
- I want to {action}
+- I want to {action}
 - So that {benefit}
 
-### As a {user type}
+### As another {user type}
 
--
- I want to {action}
+- I want to {action}
 - So that {benefit}
 
 ## Technical Requirements (Optional)

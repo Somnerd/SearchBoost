@@ -43,7 +43,7 @@ What you set out to accomplish this session.}
 
 ---
 
-## Session: YYYY-MM-DD HH:MM
+## Session Template (Copy for each new entry)
 
 ### Objective
 

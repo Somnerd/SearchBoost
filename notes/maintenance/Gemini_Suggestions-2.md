@@ -1,3 +1,5 @@
+# SearchBoost Tech Sovereign Shift Notes
+
 To hit that **€50k/month** "money printing" target, you have to move from "using tools" to "owning the stack." In 2026, the trend is **"Integrated Simplicity."** If you replace these three services with the right "Sovereign" alternatives, you reduce your bill, increase your speed, and make the project easier to sell to an enterprise.
 
 ---
@@ -23,7 +25,7 @@ SearxNG is great for privacy, but for a professional AI agent, it’s a "mainten
 Redis recently changed its license, which made a lot of "Sovereign" developers nervous.
 
 * **The Swap:** **Valkey**.
-* **The Logic:** Backed by the Linux Foundation (AWS, Google, Oracle), **Valkey** is a 100% open-source, drop-in replacement for Redis. It actually performs *better* on multi-core systems because it’s optimized for 2026 hardware.
+* **The Logic:** Backed by the Linux Foundation (AWS, Google, Oracle), **Valkey** is a 100% open-source, drop-in replacement for Redis. In specific high-concurrency memory constraint environments, we have observed it performing *better* on multi-core systems because it’s optimized for 2026 hardware.
 * **Monetization Impact:** It removes any future "License Tax" worries. It’s the "Senior" choice for engineers who want to avoid vendor lock-in.
 
 ---
@@ -32,7 +34,7 @@ Redis recently changed its license, which made a lot of "Sovereign" developers n
 
 | Old Service | New Sovereign Alternative | Benefit for your €50k/month Goal |
 | :--- | :--- | :--- |
-| **Ollama** | **Llama.cpp (Direct)** | 30%+ Performance boost; MIT license. |
+| **Ollama** | **Llama.cpp (Direct)** | Target up to 30%+ Performance boost depending on host hardware constraints; MIT license. |
 | **SearxNG** | **Tantivy / Firecrawl** | Structured, machine-ready data; no proxies. |
 | **pgvector** | **LanceDB** | Serverless, zero-maintenance, file-based RAG. |
 | **Redis** | **Valkey** | Truly open-source; better multi-core scaling. |

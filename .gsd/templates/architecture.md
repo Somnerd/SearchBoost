@@ -26,8 +26,7 @@
 
 ### Component A
 
--
- **Purpose:** {What this component does}
+- **Purpose:** {What this component does}
 - **Location:** `{path/to/component}`
 - **Files:** {count} files
 - **Pattern:** {architectural pattern used}
@@ -39,8 +38,7 @@
 
 ### Component B
 
--
- **Purpose:** {What this component does}
+- **Purpose:** {What this component does}
 - **Location:** `{path/to/component}`
 
 ## Data Flow
