@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  db:
+    image: ankane/pgvector
+    environment:
+      POSTGRES_PASSWORD: test_password
+      POSTGRES_DB: searchboost_test
+
+  redis:
+    image: redis:7-alpine
+
+  e2e_runner:
+    image: node:20-alpine
+    command: npm test
+    working_dir: /app
+    volumes:
+      - ../searchboost_api:/app

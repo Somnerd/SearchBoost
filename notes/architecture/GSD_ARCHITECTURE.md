@@ -1,10 +1,10 @@
 # Architecture
 
-> Updated to Phase 7: Distributed Observation & Semantic Search
+> Updated to Phase 7: Death Audit Resilience
 
 ## Overview
 
-SearchBoost is a decentralized, resilient hybrid-AI search engine pipeline. It is architected as an asynchronous distributed system isolating user authorization (Node.js), observability-driven gateway (Rust), resource-intensive background execution (Python), and frontend client rendering (React). The system now supports horizontal scaling of workers via label-based discovery and deep semantic persistence using vector embeddings.
+SearchBoost is a decentralized, resilient hybrid-AI search engine pipeline. It is architected as an asynchronous distributed system isolating user authorization (TypeScript/Node.js), observability-driven gateway (Rust), resource-intensive background execution (Decoupled Python Services), and frontend client rendering (React). The system supports horizontal scaling of workers via label-based discovery, deep semantic context injection, and is designed for zero-ops local deployment paths alongside secure enterprise environments.
 
 ## System Diagram
 
@@ -13,16 +13,16 @@ SearchBoost is a decentralized, resilient hybrid-AI search engine pipeline. It i
 │
 (HTTP / JWT / HttpOnly Cookie)
 ▼
-[ Express API (Node.js) ] ───────▶ [ PostgreSQL (Auth & Semantic History) ]
-│                                  └─▶ (pgvector extension)
-(Network Relay / Job Delegation)
+[ Express API (TypeScript) ] ────▶ [ PostgreSQL (Auth & Semantic History via Prisma) ]
+│                                  
+(Protobuf/gRPC Target Phase 8)
 ▼
-[ Warden Proxy (Rust) ] ─────────▶ [ Redis (Cache & Enqueue) ]
+[ Warden Proxy (Rust) ] ─────────▶ [ Redis/Valkey (deadpool Connection Pool) ]
 │                                  └─▶ (Label-based Worker Discovery) 
-(ARQ Tasking / Dynamic Model Injected)
+(ARQ Tasking)
 ▼
-[ Worker Instances (Python x N) ] ──▶ [ PostgreSQL DB ]
-│
+[ Cache / Context Services ] ────▶ [ PostgreSQL pgvector (Target: LanceDB Phase 9) ]
+│ (Isolated Python Workers)
 ┌─────┴──────┐
 ▼            ▼
 [ Ollama ]   [ SearXNG ]
@@ -31,55 +31,33 @@ SearchBoost is a decentralized, resilient hybrid-AI search engine pipeline. It i
 ## Components
 
 ### React Web Client
-
 - **Purpose:** Interactive GUI for concurrent search threads and authentications.
 - **Location:** `searchboost_ui/`
-- **Security:** XSS protection via HttpOnly cookies (hides JWT from scripts); CSRF mitigation via `Strict` SameSite policy.
 
-### Node.js REST API
-
-- **Purpose:** Manages User Identity (JWT), maps database Session Threads using colon-delimited unique identifiers (`SB-SESSION:user:thread`), and securely proxies queries to Warden.
+### TypeScript REST API (Node.js)
+- **Purpose:** Manages User Identity (JWT), leverages Prisma ORM for type-safe database queries, and securely proxies requests to Warden.
 - **Location:** `searchboost_api/`
-- **Security:** Runs as non-root `node` user. Enforces strict `Fail-Closed` startup (crashes if JWT_SECRET is missing).
+- **Security:** Strict type boundaries. No string concatenation for SQL queries.
 
 ### Rust Warden Proxy
-
-- **Purpose:** Ingress Gateway serving high-performance Semantic Cache lookups and real-time worker fleet observation. Discovers workers via Docker labels and streams logs to centralized audit files.
+- **Purpose:** Ingress Gateway serving high-performance Semantic Cache lookups and real-time worker fleet observation.
 - **Location:** `searchboost_warden/`
-- **Security:** Authenticates to Redis via environment secrets. Validates `job_id` segments to prevent IDOR traversal.
+- **Resilience:** Implements `tokio-retry` exponential backoff for database connection safety, and `deadpool-redis` to negate connection churn overhead. Failed IDOR checks map to safe HTTP 503/403 responses instead of internal panics.
 
-### Python ARQ Worker
-
+### Python Service Fleet (Decoupled)
 - **Purpose:** Executes heavy I/O loops against Ollama for semantic reduction.
 - **Location:** `searchboost_service/`
-- **Security:** PII-Gate implemented via `PIIDetector` (triple-pass scan). Recursive deep-merge configuration logic with `CLI > ENV > YAML` precedence.
+- **Architecture:** Separated concerns. The core logic relies on dedicated `ContextService` instances for assembling semantic history and `CacheService` instances for deduplicating LLM requests.
 
 ## Data Flow
+1. User logs in safely via the TypeScript Node API setup (`/api/auth/login`).
+2. Express issues queries utilizing validated schemas.
+3. API dispatches the query to the Rust `Warden`.
+4. Warden securely processes tasks relying on verified connection pools tracking job limits, eliminating panic vectors.
+5. Python workers execute the workflow, transparently yielding specific HTTP timeout errors and logic traces instead of globally swallowing standard exceptions.
 
-1. User logs in safely via Node.js (`/api/auth/login`).
-2. Search triggers dispatch via `Axios` passing secure session cookies.
-3. Node constructs a **session_id** prefix (`SB-SESSION:${username}:${thread_id}`) and dispatches the query to the Rust `Warden`.
-4. Warden generates a unique **job_id** by appending a UUID to the session prefix and enqueues the task in Redis.
-5. Python pulls task, aggregates SearXNG metadata, prompts Ollama, maps the result to Postgres, and updates the Job ID status to `complete` in Redis.
-6. React Client polls Warden via Node Proxy; Node validates result ownership before returning data.
+## Known Technical Debt & Risks
 
-## Integration Points
-
-| External Service | Type | Purpose |
-|------------------|------|---------|
-| SearXNG | HTTP Engine | Open-Source Meta-Search proxy returning clean JSON bypassing bot-bans |
-| Ollama | REST API | Local execution environment parsing open-weights |
-| Redis | Memory DB | Semantic TTL Caching + High-Speed Job Queue (Authenticated) |
-| PostgreSQL | Relational DB | ACID compliance over Account Usernames and Historical Chat states |
-
-## Conventions
-
-- **Naming:** Consistent snake_case for services (`sb_warden`, `sb_worker`), kebab-case for generic dependencies (`sb-searxng`).
-- **Security Policy:** All containers run as unprivileged users. Permissions on `.env` are restricted to `600`.
-- **Testing:** Driven by IDOR verification harnesses and Phase-specific validation plans.
-- **Configuration:** Hierarchical YAML fallback logic with recursive deep-merging.
-
-## Technical Debt
-
-- [ ] Implement robust error-recovery for PostgreSQL connection loss in Python Workers.
-- [ ] Add rate-limit metrics exposure (Prometheus) to the Warden sidecar.
+- **The Distributed Monolith Tax**: Because the system is heavily distributed, a simple chat sequence incurs multiple network hops across Redis just for internal tasking. Future iterations (e.g. gRPC ports) must minimize internal latency parsing.
+- **Prisma Memory Bloat**: Running a full Prisma Query Engine binary inside a Node container for a basic 4-table schema is memory-heavy. Moving the stack directly to `LanceDB` in Phase 9 will relieve this.
+- **Magic String Demarcation**: System currently relies on delimited IDs (`SB-SESSION:user:uuid`). Moving to strict Protobuf contracts (Phase 8) will solidify typings universally across language boundaries across workers.

@@ -60,9 +60,9 @@ Thumbs.db
 searchboost_src.zip
 .history
 .todo
-*/notes/
+/notes/
 test.toml
-*/target/
+/target/
 searchboost_warden/target/
 .agent/
 .gemini/
@@ -76,3 +76,4 @@ dist/
 **/dist/
 .env*
 ! .env.example
+.gsd/

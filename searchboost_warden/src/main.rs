@@ -1,28 +1,3 @@
-/*
- * SearchBoost: AI-Powered Semantic Search & Reliability Engine
- * Copyright (C) 2026 Nikolaos Alexandrakis
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
- *
- * ---------------------------------------------------------------------
- * PROPRIETARY / COMMERCIAL LICENSING:
- * Use of this software in closed-source commercial applications or 
- * proprietary stacks is NOT permitted under AGPLv3. For a commercial 
- * license, please contact: nikolasalexandrakis.work@gmail.com
- * ---------------------------------------------------------------------
- */
-
 mod observer;
 mod relay;
 mod configurator;
@@ -31,10 +6,12 @@ mod breaker;
 use std::sync::Arc;
 use tracing::{info, error};
 use configurator::Settings;
+use tokio_retry::Retry;
+use tokio_retry::strategy::{ExponentialBackoff, jitter};
 
 pub struct Warden { 
     pub breaker: breaker::WardenBreaker,
-    pub redis_client: redis::Client,
+    pub redis_pool: deadpool_redis::Pool,
     pub db_pool: sqlx::PgPool,
 }
 
@@ -45,11 +22,19 @@ async fn main() -> anyhow::Result<()> {
     let settings = Settings::load();
     let redis_url = settings.get_redis_url();
     
-    let db_pool = sqlx::PgPool::connect(&settings.db.database_url()).await
-        .expect("Warden Error: Could not connect to PostgreSQL metadata DB");
+    let retry_strategy = ExponentialBackoff::from_millis(500)
+        .map(jitter)
+        .take(10); // Attempt for up to ~15-20s depending on jitter
 
-    let redis_client = redis::Client::open(redis_url)
-        .expect("Invalid Redis URL in Config");
+    info!("Connecting to PostgreSQL...");
+    let db_pool = Retry::spawn(retry_strategy.clone(), || async {
+        sqlx::PgPool::connect(&settings.db.database_url()).await
+    }).await.expect("FATAL: Could not connect to PostgreSQL metadata DB after retries");
+
+    info!("Configuring Redis Connection Pool...");
+    let redis_pool = deadpool_redis::Config::from_url(&redis_url)
+        .create_pool(Some(deadpool_redis::Runtime::Tokio1))
+        .expect("FATAL: Could not create Redis Connection Pool");
         
     let breaker = breaker::create_breaker(
         settings.breaker.breaker_threshold, 
@@ -58,7 +43,7 @@ async fn main() -> anyhow::Result<()> {
     
     let warden = Arc::new(Warden { 
         breaker,
-        redis_client,
+        redis_pool,
         db_pool
     });
 

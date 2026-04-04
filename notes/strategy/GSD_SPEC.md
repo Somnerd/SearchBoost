@@ -1,31 +1,26 @@
-# Project Specification: Phase 7 - Production Rigor & Vector Search (FINALIZED)
+# Project Specification: Phase 8 - The Safety Net & Strict Contracts
 
 ## Goal
 
-Harden the architecture for production deployment, implement semantic discovery (long-term memory), and enable horizontal scaling of the worker service.
+To abandon the unmaintainable prototype assumptions by replacing fragile "Magic String" communications with definitive cross-language contracts, and establish a foundational automated testing strategy.
 
 ## Requirements
 
-### 1. Vector Search & Long-Term Memory (COMPLETED)
+### 1. Unified Interface Definitions (gRPC / Protobuf)
 
-- **Persistence**: Store conversation turns with vector embeddings (pgvector).
-- **Retrieval API**: API endpoint to search history based on semantic similarity.
-- **Context Injection**: Worker service must retrieve and inject relevant historical context into research prompts.
+- **Standardization**: All object handshakes between Node.js, Rust, and Python must strictly utilize Protobuf definitions.
+- **Vulnerability Patch**: The current reliance on parsing `SB-SESSION:user:uuid` prefix-delimiter strings must be eradicated across all source vectors, mitigating subtle IDOR edge-case risks.
 
-### 2. Horizontal Scaling
+### 2. E2E Safety Scaffolding
 
-- **Redis Task Locality**: Replace current local-only task management with Redis-backed distributed task queue logic if needed, or ensure the current `searchboost_rust` (Warden) can load-balance across multiple Python workers.
-- **Worker Discovery**: The Warden proxy must be able to distribute tasks to multiple worker instances.
-- **Statelessness**: Ensure workers do not rely on local disk for session state (use Redis/Postgres).
+- **Verification Coverage**: The `jest` and `supertest` scaffolding implemented in Phase 7 must assert actual system state. Scaffolds using tautologies (e.g. `expect(true).toBe(true)`) must be replaced with a minimum of 80% route coverage testing inside the `/searchboost_api` module.
 
-### 3. Production Hardening
+### 3. Warden Observability Upgrades
 
-- **Dynamic LLM Selection**: Allow the UI or request headers to override the Ollama model name used for research.
-- **Health Checks**: Standardize Docker HEALTHCHECK instructions for all services.
-- **Error Masking**: Ensure the production proxy masks raw backend stack traces with generic 503/500 errors.
+- **Circuit Telemetry**: Warden's integrated `failsafe` library states must be directly exported via a `/metrics` Prometheus endpoint, enabling external infrastructure monitoring tools (Grafana) to assess whether the Sidecar is actively holding a closed protection boundary during LLM stress-loads.
 
 ## Success Criteria
 
-- [x] Semantic history retrieval is integrated into the research loop.
-- [ ] Multiple worker containers can be deployed and successfully handle separate concurrent requests.
-- [ ] Research model can be changed dynamically without service restart.
+- [ ] Core services interact entirely via compiled Protobuf schema objects instead of arbitrary JSON or Python Pickles.
+- [ ] Running `docker-compose -f docker-compose.test.yml run e2e_runner` yields valid, passing unit-integration results for API endpoints.
+- [ ] A dedicated Prometheus scraper can passively read the `searchboost_warden/health` and `/metrics` paths to aggregate request volumes and proxy breaker-status.
