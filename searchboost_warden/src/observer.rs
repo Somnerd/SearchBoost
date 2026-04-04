@@ -42,34 +42,41 @@ pub async fn start_log_observer(settings: ObserverSettings) -> anyhow::Result<()
 
     if let Some(label) = settings.container_label {
         info!("Warden: Label-based discovery active for: {}", label);
-        let mut filters = HashMap::new();
-        filters.insert("label".to_string(), vec![label.clone()]);
+        let mut monitored_containers: std::collections::HashSet<String> = std::collections::HashSet::new();
         
-        let options = ListContainersOptions {
-            all: true,
-            filters,
-            ..Default::default()
-        };
+        loop {
+            let mut filters = HashMap::new();
+            filters.insert("label".to_string(), vec![label.clone()]);
+            
+            let options = ListContainersOptions {
+                all: true,
+                filters,
+                ..Default::default()
+            };
 
-        let containers = docker.list_containers(Some(options)).await?;
-        info!("Warden: Discovered {} containers matching label", containers.len());
-
-        for container in containers {
-            if let Some(id) = container.id {
-                let docker_clone = docker.clone();
-                let path_clone = log_path.clone();
-                let name = container.names.unwrap_or_default().get(0).cloned().unwrap_or_else(|| id.clone());
-                
-                tokio::spawn(async move {
-                    if let Err(e) = monitor_single_container(&docker_clone, &id, &name, &path_clone).await {
-                        error!("Warden: Failed to monitor container {}: {}", id, e);
+            if let Ok(containers) = docker.list_containers(Some(options)).await {
+                for container in containers {
+                    if let Some(id) = container.id {
+                        if !monitored_containers.contains(&id) {
+                            monitored_containers.insert(id.clone());
+                            let docker_clone = docker.clone();
+                            let path_clone = log_path.clone();
+                            let name = container.names.unwrap_or_default().get(0).cloned().unwrap_or_else(|| id.clone());
+                            
+                            tokio::spawn(async move {
+                                if let Err(e) = monitor_single_container(&docker_clone, &id, &name, &path_clone).await {
+                                    error!("Warden: Failed to monitor container {}: {}", id, e);
+                                }
+                            });
+                        }
                     }
-                });
+                }
             }
+            tokio::time::sleep(tokio::time::Duration::from_secs(30)).await;
         }
-    } else {
-        info!("Warden: Fixed-name observation active for: {}", settings.container_name);
-        monitor_single_container(&docker, &settings.container_name, &settings.container_name, &log_path).await?;
+    } else if let Some(container_name) = settings.container_name {
+        info!("Warden: Fixed-name observation active for: {}", container_name);
+        monitor_single_container(&docker, &container_name, &container_name, &log_path).await?;
     }
 
     Ok(())

@@ -113,9 +113,11 @@ async fn handle_enqueue(
             };
 
             let job_key = format!("arq:job:{}", job_id);
-            let _: () = conn.set_ex(&job_key, pickled, 86400).await.unwrap_or_else(|e| {
-                tracing::error!("RELAY: Failed to set job data: {}", e);
-            });
+            if let Err(e) = conn.set_ex::<_, _, ()>(&job_key, pickled, 86400).await {
+                tracing::error!("RELAY: Failed to set job data (aborting enqueue): {}", e);
+                warden.breaker.on_error();
+                return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to persist job payload").into_response();
+            }
 
             let result: Result<(), _> = conn.zadd("arq:queue", &job_id, score).await;
             match result {

@@ -6,7 +6,6 @@ import client from '../api/client';
 export default function Search() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [conversationHistory, setConversationHistory] = useState([]);
   const [sessions, setSessions] = useState([]);
@@ -72,7 +71,6 @@ export default function Search() {
   const handleSearch = async (query) => {
     setLoading(true);
     setError(null);
-    setResult(null);
     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
 
     const tempJobId = 'job-' + Date.now();
@@ -114,6 +112,13 @@ export default function Search() {
           return;
         }
 
+        if (pollCount % 30 === 0) {
+          const minutesElapsed = pollCount / 30;
+          setConversationHistory(prev => prev.map(m => 
+            m.jobId === jobId ? { ...m, timeElapsed: minutesElapsed } : m
+          ));
+        }
+
         try {
           const resultRes = await client.get(`/search/result/${jobId}`);
           if (resultRes.data.status === 'complete') {
@@ -125,7 +130,6 @@ export default function Search() {
               m.jobId === jobId ? { ...m, result: answer, pending: false } : m
             ));
             
-            setResult(answer);
             fetchSessions();
             setLoading(false);
           } else if (resultRes.data.status === 'failed') {
@@ -138,7 +142,10 @@ export default function Search() {
             setLoading(false);
           }
         } catch (pollErr) {
-          if (pollErr.response?.status === 429) return;
+          if (pollErr?.response?.status === 429) {
+            console.warn('API Rate limited (429), polling will continue on next tick...');
+            return;
+          }
           clearInterval(pollIntervalRef.current);
           setError('Communication error with Warden');
           setLoading(false);
@@ -153,7 +160,6 @@ export default function Search() {
   const clearHistory = () => {
     setCurrentThreadId(Date.now().toString());
     setConversationHistory([]);
-    setResult(null);
     setError(null);
   };
 
@@ -186,7 +192,11 @@ export default function Search() {
                <button onClick={() => setHistorySearchResults(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.7rem' }}>Close</button>
             </div>
             {historySearchResults.map((res, i) => (
-              <div key={i} onClick={() => { setCurrentThreadId(res.session_id.split(':')[2]); setHistorySearchResults(null); }} style={{ fontSize: '0.8rem', padding: '0.4rem', borderRadius: '4px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+              <div key={i} onClick={() => { 
+                const sessionParts = res.session_id.split(':');
+                setCurrentThreadId(sessionParts[sessionParts.length - 1]); 
+                setHistorySearchResults(null); 
+              }} style={{ fontSize: '0.8rem', padding: '0.4rem', borderRadius: '4px', cursor: 'pointer', color: 'var(--text-primary)' }}>
                 {res.content.substring(0, 40)}...
               </div>
             ))}
@@ -225,7 +235,9 @@ export default function Search() {
                  {item.pending ? (
                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                      <div className="dot-pulse"></div>
-                     <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Researching...</span>
+                     <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                       {item.timeElapsed ? `Still researching... (${item.timeElapsed} minutes elapsed)` : 'Researching...'}
+                     </span>
                    </div>
                  ) : (
                    item.result || 'No response received'

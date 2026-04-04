@@ -31,7 +31,7 @@ router.post('/enqueue', verifyToken, async (req: Request, res: Response, next: N
     return;
   }
 
-  const mergedOptions = { ...(options || {}), model: model || undefined };
+  const mergedOptions = { ...(options || {}), ...(model !== undefined ? { model } : {}) };
 
   const payload = {
     query,
@@ -130,7 +130,7 @@ router.post('/history/search', verifyToken, async (req: Request, res: Response, 
     const embedRes = await axios.post(`${ollamaUrl}/api/embeddings`, {
       model: 'nomic-embed-text',
       prompt: query
-    });
+    }, { timeout: 5000 });
     const vector = embedRes.data.embedding;
 
     // 2. Search Database using raw query for pgvector operations
@@ -140,13 +140,17 @@ router.post('/history/search', verifyToken, async (req: Request, res: Response, 
     
     // Safety fallback: if we can't search, return empty
     try {
+        let safeLimit = parseInt(limit, 10);
+        if (isNaN(safeLimit) || safeLimit < 1) safeLimit = 5;
+        if (safeLimit > 100) safeLimit = 100;
+
         const results = await prisma.$queryRawUnsafe(`
           SELECT id, session_id as "sessionId", role, content, created_at as "createdAt"
           FROM conversation_turns
           WHERE session_id LIKE $1
           ORDER BY embedding <=> $2::vector
           LIMIT $3
-        `, sessionLike, vectorLiteral, limit || 5);
+        `, sessionLike, vectorLiteral, safeLimit);
         
         res.json(results);
     } catch (e:any) {

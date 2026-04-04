@@ -93,13 +93,17 @@ class HistoryService:
     async def save_turn(self, session_id: str, role: str, content: str):
         """Persist a single conversation turn (user or assistant) with optional vector embedding."""
         from searchboost_src.models import ConversationTurn
-        try:
-            embedding = None
-            if self.ollama_client:
+        embedding = None
+        if self.ollama_client:
+            try:
                 embedding = await self.ollama_client.get_embedding(content)
                 if self.logger and embedding:
                     self.logger.debug(f"HistoryService: Generated embedding ({len(embedding)} dims) for '{role}' turn")
+            except Exception:
+                if self.logger:
+                    self.logger.exception("HistoryService: Embedding generation failed (turn will lack semantic context)")
 
+        try:
             turn = ConversationTurn(
                 session_id=session_id, 
                 role=role, 
@@ -110,9 +114,11 @@ class HistoryService:
             await self.session.commit()
             if self.logger:
                 self.logger.debug(f"HistoryService: Saved '{role}' turn for session '{session_id}' (Embedding: {embedding is not None})")
-        except Exception as e:
+        except Exception:
+            await self.session.rollback()
             if self.logger:
-                self.logger.error(f"HistoryService: Failed to save turn for '{session_id}': {e}")
+                self.logger.exception(f"HistoryService: Failed to save turn for '{session_id}'")
+            raise
 
     async def search_relevant_history(self, session_prefix: str, query: str, exclude_session_id: str = None, limit: int = 5) -> list[dict]:
         """Perform semantic vector search using pgvector to find relevant prior turns, excluding current session."""
@@ -126,7 +132,8 @@ class HistoryService:
                 return []
 
             # Perform vector similarity search (<=> is cosine distance in pgvector)
-            stmt = select(ConversationTurn).where(ConversationTurn.session_id.like(f"{session_prefix}%"))
+            escaped_prefix = session_prefix.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            stmt = select(ConversationTurn).where(ConversationTurn.session_id.like(f"{escaped_prefix}%", escape='\\'))
             
             if exclude_session_id:
                 stmt = stmt.where(ConversationTurn.session_id != exclude_session_id)

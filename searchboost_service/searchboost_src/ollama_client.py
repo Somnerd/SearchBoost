@@ -22,6 +22,7 @@
 
 import asyncio
 import ollama
+from typing import Optional
 
 from ollama import AsyncClient
 
@@ -45,7 +46,8 @@ class OllamaClient:
     async def query_ollama(self):
         try:
             if self.logger:
-                self.logger.debug(f"""OLLAMA  CLIENT: User Prompt :{self.ChatDetails.prompt}""")
+                prompt_preview = str(self.ChatDetails.prompt)[:32] + "... [REDACTED]" if self.ChatDetails.prompt else ""
+                self.logger.debug(f"""OLLAMA CLIENT: User Prompt Summary: {prompt_preview}""")
             
             # Build a full multi-turn message array:
             #   [system] + [prior history turns...] + [current user message]
@@ -73,10 +75,7 @@ class OllamaClient:
             
             if self.logger:
                 self.logger.info("OLLAMA CLIENT: Successfully received response from LLM.")
-                self.logger.debug(f"""OLLAMA CLIENT :
-                                        Ollama Response:
-                                            {response}
-                                            """)
+                self.logger.debug(f"OLLAMA CLIENT: Response received (length: {len(str(response))}) [BODY REDACTED]")
             return response['message']['content']
         except asyncio.TimeoutError:
             if self.logger:
@@ -87,14 +86,21 @@ class OllamaClient:
                 self.logger.error(f"OLLAMA CLIENT : Error querying Ollama API: {e}")
             return "Error: Unable to connect to the LLM."
 
-    async def get_embedding(self, text: str, model: str = "nomic-embed-text") -> list[float]:
+    async def get_embedding(self, text: str, model: str = "nomic-embed-text") -> Optional[list[float]]:
         """Generate a vector embedding for the given text using Ollama."""
         try:
             if self.logger:
                 self.logger.info(f"OLLAMA CLIENT: Generating embedding for text (Model: {model})")
-            # Use the same host/client settings as query_ollama
-            response = await self.client.embeddings(model=model, prompt=text)
+            
+            timeout_limit = getattr(self.ChatDetails.config, 'timeout', 600.0) if hasattr(self, 'ChatDetails') and self.ChatDetails else 600.0
+            embed_coroutine = self.client.embeddings(model=model, prompt=text)
+            
+            response = await asyncio.wait_for(embed_coroutine, timeout=timeout_limit)
             return response['embedding']
+        except asyncio.TimeoutError:
+            if self.logger:
+                self.logger.error("OLLAMA CLIENT: Timeout! The local LLM model failed to generate embeddings in time.")
+            return None
         except Exception as e:
             if self.logger:
                 self.logger.error(f"OLLAMA CLIENT: Error generating embedding: {e}")

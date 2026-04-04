@@ -61,13 +61,14 @@ class Worker:
 
         if not settings:
             log.error("WORKER : Failed to initialize configuration after retries. Manual intervention requested.")
-            return
+            raise RuntimeError("Fatal configuration failure on worker startup")
 
         # 2. Sovereign Pivot: Ensure models are pre-downloaded on boot
         try:
             from ollama import AsyncClient
+            import httpx
             ai_cfg = settings['ai']
-            client = AsyncClient(host=ai_cfg.base_url)
+            client = AsyncClient(host=ai_cfg.base_url, timeout=httpx.Timeout(600.0))
 
             # Pulling models sequentially to avoid overwhelming local resources
             required_models = [ai_cfg.model, "nomic-embed-text"]

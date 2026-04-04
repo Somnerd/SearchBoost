@@ -41,7 +41,7 @@ pub struct RedisSettings {
 
 #[derive(Deserialize, Clone)]
 pub struct ObserverSettings {
-    pub container_name: String,
+    pub container_name: Option<String>,
     pub container_label: Option<String>,
     pub log_path: String,
 }

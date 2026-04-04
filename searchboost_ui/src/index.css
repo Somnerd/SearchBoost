@@ -151,6 +151,15 @@ input:focus, textarea:focus {
   50% { opacity: 1; transform: scale(1.2); }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .dot-pulse {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+
 /* Custom Scrollbar for Chat */
 .chat-container::-webkit-scrollbar {
   width: 6px;
