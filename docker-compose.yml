@@ -42,6 +42,7 @@ services:
       - SEARCHBOOST_DB_PASSWORD=${DB_PASSWORD:-searchboost_pass}
       - SEARCHBOOST_DB_USER=${DB_USER:-searchboost}
       - SEARCHBOOST_DB_PORT=${DB_PORT:-5432}
+      - DATABASE_URL=postgresql://${DB_USER:-searchboost}:${DB_PASSWORD:-searchboost_pass}@db:5432/${DB_NAME:-searchboost_db}
       - PYTHONPATH=/app
     command : arq searchboost_src.worker.WorkerSettings
     volumes:
@@ -114,6 +115,7 @@ services:
       - DB_USER=${DB_USER:-searchboost}
       - DB_PASSWORD=${DB_PASSWORD:-searchboost_pass}
       - DB_NAME=${DB_NAME:-searchboost_db}
+      - DATABASE_URL=postgresql://${DB_USER:-searchboost}:${DB_PASSWORD:-searchboost_pass}@db:5432/${DB_NAME:-searchboost_db}
       - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set}
       - WARDEN_URL=http://warden:14141
       - OLLAMA_URL=http://ollama:11434

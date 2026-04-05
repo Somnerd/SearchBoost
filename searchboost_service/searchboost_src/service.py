@@ -21,11 +21,12 @@ class CacheService:
         return await self.cache.get_cached_response(query)
 
     async def set(self, query: str, response: str, cache_eligible: bool):
-        if cache_eligible:
+        if cache_eligible and not str(response).startswith("Error:"):
             self.logger.debug(f"CacheService: Caching response for query.")
             await self.cache.cache_response(query, response)
         else:
-            self.logger.warning("CacheService: Cache write SKIPPED — PII detected or ineligible.")
+            reason = "PII detected or ineligible" if not cache_eligible else "Error response skipped"
+            self.logger.warning(f"CacheService: Cache write SKIPPED — {reason}")
 
 
 class ContextService:

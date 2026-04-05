@@ -84,7 +84,9 @@ class OllamaClient:
             return f"Error: The AI model took too long to respond (timeout after {timeout_limit}s). Please try again later."
         except Exception as e:
             if self.logger:
-                self.logger.error(f"OLLAMA CLIENT : Error querying Ollama API: {e}")
+                # Log entire traceback for critical debugging
+                self.logger.exception(f"OLLAMA CLIENT : Critical connection failure to Ollama at {self.host}")
+                self.logger.error(f"OLLAMA CLIENT : Raw Exception: {str(e)}")
             return "Error: Unable to connect to the LLM."
 
     async def get_embedding(self, text: str, model: str = "nomic-embed-text") -> Optional[list[float]]:

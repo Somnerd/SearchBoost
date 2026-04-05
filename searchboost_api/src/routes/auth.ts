@@ -90,7 +90,7 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
     };
 
     const expiresInString = process.env.JWT_EXPIRES_IN || '24h';
-    let maxAge = ms(expiresInString);
+    let maxAge: number | undefined = ms(expiresInString as ms.StringValue);
 
     if (maxAge === undefined) {
       const numericVal = parseInt(expiresInString, 10);

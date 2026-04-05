@@ -26,7 +26,6 @@ from sqlalchemy.orm import declarative_base
 from sqlalchemy import select
 from datetime import datetime, timedelta, timezone
 from searchboost_src.configurator import PostgreSQLSettings
-from searchboost_src.models import ConversationTurn
 
 Base = declarative_base()
 
