@@ -17,19 +17,20 @@ router.post('/enqueue', verifyToken, async (req: Request, res: Response, next: N
     thread_id = req.body.thread_id;
   }
 
-  // 🛡️ Security: Ensure thread exists in DB for Warden IDOR protection
-  try {
-    const userId = req.user!.id;
-    await prisma.thread.upsert({
-      where: { userId_id: { userId, id: thread_id } },
-      update: {},
-      create: { id: thread_id, userId: userId, title: 'New Conversation' }
-    });
-  } catch (err: any) {
-    console.error(`[API] Thread Registration Failed: ${err.message}`);
-    res.status(500).json({ error: 'Internal Server Error', details: 'Failed to initialize search session' });
-    return;
-  }
+    // 🛡️ Security: Ensure thread exists in DB for Warden IDOR protection
+    // This uses a composite unique constraint (userId, id) to prevent cross-user thread collisions.
+    try {
+        const userId = req.user!.id;
+        await prisma.thread.upsert({
+            where: { userId_id: { userId, id: thread_id } },
+            update: {},
+            create: { id: thread_id, userId: userId, title: 'New Conversation' }
+        });
+    } catch (err: any) {
+        console.error(`[API] Thread Registration Failed: ${err.message}`);
+        res.status(500).json({ error: 'Internal Server Error', details: 'Failed to initialize search session' });
+        return;
+    }
 
   const mergedOptions = { ...(options || {}), ...(model !== undefined ? { model } : {}) };
 
@@ -91,7 +92,8 @@ router.get('/sessions', verifyToken, async (req: Request, res: Response, next: N
       orderBy: { createdAt: 'desc' },
       select: { id: true, title: true, createdAt: true }
     });
-    res.json(sessions);
+    // Map 'id' to 'thread_id' to maintain compatibility with the React UI
+    res.json(sessions.map(s => ({ ...s, thread_id: s.id })));
   } catch (err) {
     res.status(500).json({ error: 'Failed to retrieve sessions' });
   }
@@ -153,7 +155,7 @@ router.post('/history/search', verifyToken, async (req: Request, res: Response, 
         if (safeLimit > 100) safeLimit = 100;
 
         const results = await prisma.$queryRawUnsafe(`
-          SELECT id, session_id as "sessionId", role, content, created_at as "createdAt"
+          SELECT id, session_id, role, content, created_at as "createdAt"
           FROM conversation_turns
           WHERE session_id LIKE $1 ESCAPE '\\'
           ORDER BY embedding <=> $2::vector
