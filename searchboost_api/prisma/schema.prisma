@@ -1,0 +1,45 @@
+generator client {
+  provider      = "prisma-client-js"
+  // Provide generic targets often used in Docker and local dev 
+  binaryTargets = ["native", "debian-openssl-1.1.x", "debian-openssl-3.0.x", "linux-musl"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  username     String    @unique @db.VarChar(64)
+  passwordHash String    @map("password_hash")
+  role         String    @default("user") @db.VarChar(16)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  threads      Thread[]
+
+  @@map("users")
+}
+
+model Thread {
+  id        String   @db.VarChar(128)
+  userId    Int      @map("user_id")
+  title     String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, id])
+  @@index([userId], map: "idx_threads_user_id")
+  @@map("threads")
+}
+
+model ConversationTurn {
+  id        Int      @id @default(autoincrement())
+  sessionId String   @map("session_id") @db.VarChar(255)
+  role      String   @db.VarChar(16)
+  content   String
+  embedding Unsupported("vector(768)")?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([sessionId], map: "idx_turns_session_id")
+  @@map("conversation_turns")
+}

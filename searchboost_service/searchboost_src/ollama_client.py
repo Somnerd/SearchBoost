@@ -22,6 +22,7 @@
 
 import asyncio
 import ollama
+from typing import Optional
 
 from ollama import AsyncClient
 
@@ -44,7 +45,9 @@ class OllamaClient:
 
     async def query_ollama(self):
         try:
-            self.logger.debug(f"""OLLAMA  CLIENT: User Prompt :{self.ChatDetails.prompt}""")
+            if self.logger:
+                prompt_preview = str(self.ChatDetails.prompt)[:32] + "... [REDACTED]" if self.ChatDetails.prompt else ""
+                self.logger.debug(f"""OLLAMA CLIENT: User Prompt Summary: {prompt_preview}""")
             
             # Build a full multi-turn message array:
             #   [system] + [prior history turns...] + [current user message]
@@ -52,7 +55,8 @@ class OllamaClient:
 
             history = getattr(self.ChatDetails, 'history', [])
             if history:
-                self.logger.info(f"OLLAMA CLIENT: Injecting {len(history)} prior conversation turns into context.")
+                if self.logger:
+                    self.logger.info(f"OLLAMA CLIENT: Injecting {len(history)} prior conversation turns into context.")
                 messages.extend(history)
             
             messages.append({"role": self.ChatDetails.config.role, "content": self.ChatDetails.prompt})
@@ -62,21 +66,46 @@ class OllamaClient:
                 messages=messages
             )
             
-            # Accommodating slow CPU inference with a configurable upper bound (default: 180s)
-            timeout_limit = getattr(self.ChatDetails.config, 'timeout', 180.0)
-            self.logger.info(f"OLLAMA CLIENT: Sending chat request to {self.host} (Timeout: {timeout_limit}s)")
+            # Accommodating slow CPU inference with a configurable upper bound (default: 600s)
+            timeout_limit = getattr(self.ChatDetails.config, 'timeout', 600.0)
+            timeout_limit = max(1.0, timeout_limit)
+            if self.logger:
+                self.logger.info(f"OLLAMA CLIENT: Sending chat request to {self.host} (Timeout: {timeout_limit}s)")
             
             response = await asyncio.wait_for(chat_coroutine, timeout=timeout_limit)
             
-            self.logger.info("OLLAMA CLIENT: Successfully received response from LLM.")
-            self.logger.debug(f"""OLLAMA CLIENT :
-                                    Ollama Response:
-                                        {response}
-                                        """)
+            if self.logger:
+                self.logger.info("OLLAMA CLIENT: Successfully received response from LLM.")
+                self.logger.debug(f"OLLAMA CLIENT: Response received (length: {len(str(response))}) [BODY REDACTED]")
             return response['message']['content']
         except asyncio.TimeoutError:
-            self.logger.error(f"OLLAMA CLIENT: Timeout! The local LLM model failed to respond within {timeout_limit} seconds.")
+            if self.logger:
+                self.logger.error(f"OLLAMA CLIENT: Timeout! The local LLM model failed to respond within {timeout_limit} seconds.")
             return f"Error: The AI model took too long to respond (timeout after {timeout_limit}s). Please try again later."
         except Exception as e:
-            self.logger.error(f"OLLAMA CLIENT : Error querying Ollama API: {e}")
+            if self.logger:
+                # Log entire traceback for critical debugging
+                self.logger.exception(f"OLLAMA CLIENT : Critical connection failure to Ollama at {self.host}")
+                self.logger.error(f"OLLAMA CLIENT : Raw Exception: {str(e)}")
             return "Error: Unable to connect to the LLM."
+
+    async def get_embedding(self, text: str, model: str = "nomic-embed-text") -> Optional[list[float]]:
+        """Generate a vector embedding for the given text using Ollama."""
+        try:
+            if self.logger:
+                self.logger.info(f"OLLAMA CLIENT: Generating embedding for text (Model: {model})")
+            
+            timeout_limit = getattr(self.ChatDetails.config, 'timeout', 600.0) if hasattr(self, 'ChatDetails') and self.ChatDetails else 600.0
+            timeout_limit = max(1.0, timeout_limit)
+            embed_coroutine = self.client.embeddings(model=model, prompt=text)
+            
+            response = await asyncio.wait_for(embed_coroutine, timeout=timeout_limit)
+            return response['embedding']
+        except asyncio.TimeoutError:
+            if self.logger:
+                self.logger.error("OLLAMA CLIENT: Timeout! The local LLM model failed to generate embeddings in time.")
+            return None
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"OLLAMA CLIENT: Error generating embedding: {e}")
+            return None

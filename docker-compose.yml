@@ -30,7 +30,8 @@ services:
 
   worker:
     build: ./searchboost_service
-    container_name: sb_worker
+    labels:
+      - "com.searchboost.service=worker"
     env_file: .env
     environment:
       - SEARCHBOOST_REDIS_HOST=sb_redis
@@ -38,6 +39,10 @@ services:
       - SEARCHBOOST_SEARCH_HOST=sb-searxng
       - PYTHONBUFFERED=1
       - SEARCHBOOST_REDIS_PASSWORD=${REDIS_PASSWORD}
+      - SEARCHBOOST_DB_PASSWORD=${DB_PASSWORD:-searchboost_pass}
+      - SEARCHBOOST_DB_USER=${DB_USER:-searchboost}
+      - SEARCHBOOST_DB_PORT=${DB_PORT:-5432}
+      - DATABASE_URL=postgresql://${DB_USER:-searchboost}:${DB_PASSWORD:-searchboost_pass}@db:5432/${DB_NAME:-searchboost_db}
       - PYTHONPATH=/app
     command : arq searchboost_src.worker.WorkerSettings
     volumes:
@@ -64,6 +69,8 @@ services:
     container_name: sb_ollama
     environment:
       - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_FLASH_ATTENTION=1
+      - OLLAMA_KV_CACHE_TYPE=q4_0
     ports:
       - "${OLLAMA_PORT:-11434}:11434"
     volumes:
@@ -83,7 +90,7 @@ services:
     restart: always
 
   db:
-      image: postgres:16-alpine
+      image: pgvector/pgvector:pg16
       container_name: sb_db
       restart: always
       environment:
@@ -108,11 +115,14 @@ services:
       - DB_USER=${DB_USER:-searchboost}
       - DB_PASSWORD=${DB_PASSWORD:-searchboost_pass}
       - DB_NAME=${DB_NAME:-searchboost_db}
+      - DATABASE_URL=postgresql://${DB_USER:-searchboost}:${DB_PASSWORD:-searchboost_pass}@db:5432/${DB_NAME:-searchboost_db}
       - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set}
       - WARDEN_URL=http://warden:14141
+      - OLLAMA_URL=http://ollama:11434
     depends_on:
       - db
       - warden
+      - ollama
     ports:
       - "3001:3001"
 

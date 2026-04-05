@@ -107,3 +107,67 @@ input:focus, textarea:focus {
   50% { transform: scale(1.1) translate(-2%, 2%); }
   100% { transform: scale(1) translate(2%, -2%); }
 }
+
+/* Chat Bubbles & Animations */
+.chat-bubble-user {
+  align-self: flex-end;
+  margin-left: auto;
+  width: fit-content;
+  max-width: 80%;
+  padding: 0.8rem 1.2rem;
+  background: var(--accent);
+  color: white;
+  border-radius: 18px 18px 2px 18px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.chat-bubble-ai {
+  align-self: flex-start;
+  margin-right: auto;
+  width: fit-content;
+  max-width: 85%;
+  padding: 1rem 1.2rem;
+  background: rgba(255,255,255,0.05);
+  color: var(--text-primary);
+  border-radius: 18px 18px 18px 2px;
+  font-size: 1rem;
+  line-height: 1.6;
+  border: 1px solid rgba(255,255,255,0.05);
+  white-space: pre-wrap;
+}
+
+.dot-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--accent);
+  animation: dot-pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes dot-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dot-pulse {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+
+/* Custom Scrollbar for Chat */
+.chat-container::-webkit-scrollbar {
+  width: 6px;
+}
+.chat-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+.chat-container::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 3px;
+}

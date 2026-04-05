@@ -55,9 +55,10 @@ class DatabaseManager:
 class HistoryService:
     """Loads and saves multi-turn conversation history from PostgreSQL."""
 
-    def __init__(self, session: AsyncSession, logger=None):
+    def __init__(self, session: AsyncSession, logger=None, ollama_client=None):
         self.session = session
         self.logger = logger
+        self.ollama_client = ollama_client
 
     async def load_history(self, session_id: str, limit: int = 10, max_age_minutes: int = 15) -> list[dict]:
         """
@@ -89,14 +90,68 @@ class HistoryService:
             return []
 
     async def save_turn(self, session_id: str, role: str, content: str):
-        """Persist a single conversation turn (user or assistant)."""
+        """Persist a single conversation turn (user or assistant) with optional vector embedding."""
         from searchboost_src.models import ConversationTurn
+        embedding = None
+        if self.ollama_client:
+            try:
+                embedding = await self.ollama_client.get_embedding(content)
+                if self.logger and embedding:
+                    self.logger.debug(f"HistoryService: Generated embedding ({len(embedding)} dims) for '{role}' turn")
+            except Exception:
+                if self.logger:
+                    self.logger.exception("HistoryService: Embedding generation failed (turn will lack semantic context)")
+
         try:
-            turn = ConversationTurn(session_id=session_id, role=role, content=content)
+            turn = ConversationTurn(
+                session_id=session_id, 
+                role=role, 
+                content=content,
+                embedding=embedding
+            )
             self.session.add(turn)
             await self.session.commit()
             if self.logger:
-                self.logger.debug(f"HistoryService: Saved '{role}' turn for session '{session_id}'")
+                self.logger.debug(f"HistoryService: Saved '{role}' turn for session '{session_id}' (Embedding: {embedding is not None})")
+        except Exception:
+            await self.session.rollback()
+            if self.logger:
+                self.logger.exception(f"HistoryService: Failed to save turn for '{session_id}'")
+            raise
+
+    async def search_relevant_history(self, session_prefix: str, query: str, exclude_session_id: str = None, limit: int = 5) -> list[dict]:
+        """Perform semantic vector search using pgvector to find relevant prior turns, excluding current session."""
+        from searchboost_src.models import ConversationTurn
+        try:
+            if not self.ollama_client:
+                return []
+
+            query_embedding = await self.ollama_client.get_embedding(query)
+            if not query_embedding:
+                return []
+
+            # Perform vector similarity search (<=> is cosine distance in pgvector)
+            escaped_prefix = session_prefix.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            stmt = select(ConversationTurn).where(ConversationTurn.session_id.like(f"{escaped_prefix}%", escape='\\'))
+            
+            if exclude_session_id:
+                stmt = stmt.where(ConversationTurn.session_id != exclude_session_id)
+            
+            stmt = stmt.where(ConversationTurn.embedding.isnot(None))
+            stmt = stmt.order_by(ConversationTurn.embedding.cosine_distance(query_embedding)).limit(limit)
+
+            result = await self.session.execute(stmt)
+            turns = result.scalars().all()
+            
+            relevant_context = [
+                {"role": t.role, "content": t.content, "session_id": t.session_id} 
+                for t in turns
+            ]
+            
+            if self.logger:
+                self.logger.info(f"HistoryService: Found {len(relevant_context)} semantically relevant turns (Excluded: {exclude_session_id})")
+            return relevant_context
         except Exception as e:
             if self.logger:
-                self.logger.error(f"HistoryService: Failed to save turn for '{session_id}': {e}")
+                self.logger.error(f"HistoryService: Semantic search failed: {e}")
+            return []

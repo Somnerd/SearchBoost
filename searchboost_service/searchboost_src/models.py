@@ -21,6 +21,7 @@
 # ---------------------------------------------------------------------
 
 from sqlalchemy import Column, String, Text, DateTime, Integer
+from pgvector.sqlalchemy import Vector
 from datetime import datetime
 from searchboost_src.database import Base
 
@@ -39,4 +40,5 @@ class ConversationTurn(Base):
     session_id = Column(String, nullable=False, index=True)  # e.g. "SB-SESSION-guest"
     role       = Column(String, nullable=False)               # "user" or "assistant"
     content    = Column(Text,   nullable=False)
+    embedding  = Column(Vector(768))                          # nomic-embed-text size
     created_at = Column(DateTime, default=datetime.utcnow)

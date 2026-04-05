@@ -41,7 +41,8 @@ pub struct RedisSettings {
 
 #[derive(Deserialize, Clone)]
 pub struct ObserverSettings {
-    pub container_name: String,
+    pub container_name: Option<String>,
+    pub container_label: Option<String>,
     pub log_path: String,
 }
 
@@ -115,6 +116,9 @@ impl Settings {
         }
         if let Some(port) = get_env("DB_PORT").and_then(|s| s.parse().ok()) { 
             settings.db.port = port; 
+        }
+        if let Some(label) = get_env("WARDEN_OBSERVER_CONTAINER_LABEL") {
+            settings.observer.container_label = Some(label);
         }
 
         settings
