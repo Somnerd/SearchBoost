@@ -24,7 +24,7 @@
 import logging , os , aiofiles, yaml
 from pathlib import Path
 from typing import Type, Dict, Any, TypeVar , Optional
-from pydantic import BaseModel , Field
+from pydantic import BaseModel , Field, field_validator
 from pydantic_settings import BaseSettings , SettingsConfigDict
 
 T = TypeVar("T", bound=BaseModel)
@@ -36,6 +36,13 @@ class AISettings(BaseModel):
     stream: bool = Field(default=False, description="Enable streaming responses from the LLM")
     role: str = Field(default="user", description="Role for the chat messages")
     timeout: float = Field(default=600.0, gt=0, description="Timeout for LLM responses in seconds")
+    
+    @field_validator("timeout")
+    @classmethod
+    def validate_timeout(cls, v: float) -> float:
+        if v < 5.0:
+            return 5.0
+        return v
     @property
     def base_url(self) -> str:
         return f"http://{self.host}:{self.port}"

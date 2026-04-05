@@ -69,16 +69,16 @@ class SearchBoostService:
         self.session_id = session_id  
 
         import copy
-        self.ai_config = copy.copy(ai)
+        self.active_config = copy.copy(ai)
         self.search_config = search
 
         if hasattr(self.args, 'model') and self.args.model:
-            self.logger.info(f"SearchBoostService: Overriding default model '{self.ai_config.model}' with '{self.args.model}'")
-            self.ai_config.model = self.args.model
+            self.logger.info(f"SearchBoostService: Overriding default model '{self.active_config.model}' with '{self.args.model}'")
+            self.active_config.model = self.args.model
 
         self.cache_svc = CacheService(RedisManager(redis, self.logger), self.logger)
 
-        self.chatdetails = ChatDetails(config=self.ai_config, prompt=self.args.query)
+        self.chatdetails = ChatDetails(config=self.active_config, prompt=self.args.query)
         self.web_search_instance = WebSearch(query=self.args.query, config=self.search_config, logger=self.logger)
 
 

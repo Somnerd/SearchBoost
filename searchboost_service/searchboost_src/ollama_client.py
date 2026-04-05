@@ -68,6 +68,7 @@ class OllamaClient:
             
             # Accommodating slow CPU inference with a configurable upper bound (default: 600s)
             timeout_limit = getattr(self.ChatDetails.config, 'timeout', 600.0)
+            timeout_limit = max(1.0, timeout_limit)
             if self.logger:
                 self.logger.info(f"OLLAMA CLIENT: Sending chat request to {self.host} (Timeout: {timeout_limit}s)")
             
@@ -93,6 +94,7 @@ class OllamaClient:
                 self.logger.info(f"OLLAMA CLIENT: Generating embedding for text (Model: {model})")
             
             timeout_limit = getattr(self.ChatDetails.config, 'timeout', 600.0) if hasattr(self, 'ChatDetails') and self.ChatDetails else 600.0
+            timeout_limit = max(1.0, timeout_limit)
             embed_coroutine = self.client.embeddings(model=model, prompt=text)
             
             response = await asyncio.wait_for(embed_coroutine, timeout=timeout_limit)

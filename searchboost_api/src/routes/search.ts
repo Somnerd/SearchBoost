@@ -13,7 +13,7 @@ router.post('/enqueue', verifyToken, async (req: Request, res: Response, next: N
   }
 
   let thread_id = 'default';
-  if (typeof req.body.thread_id === 'string' && /^[a-zA-Z0-9_-]+$/.test(req.body.thread_id)) {
+  if (typeof req.body.thread_id === 'string' && /^[a-zA-Z0-9_-]{1,128}$/.test(req.body.thread_id)) {
     thread_id = req.body.thread_id;
   }
 
