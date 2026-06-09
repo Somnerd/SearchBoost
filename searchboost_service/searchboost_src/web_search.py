@@ -21,7 +21,7 @@
 # ---------------------------------------------------------------------
 
 import asyncio
-import requests
+import httpx
 import searchboost_src.logger
 
 class WebSearch:
@@ -47,9 +47,10 @@ class WebSearch:
 
         try:
             self.logger.debug(f"Web Search : params {self.params} ")
-            response = requests.get(f"{self.host}/search", params=self.params, timeout=10)
-            response.raise_for_status()
-            data = response.json()
+            async with httpx.AsyncClient() as client:
+                response = await client.get(f"{self.host}/search", params=self.params, timeout=10)
+                response.raise_for_status()
+                data = response.json()
             results = data.get("results", [])
             normalized_context = []
 
