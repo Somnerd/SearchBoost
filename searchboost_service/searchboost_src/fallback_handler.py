@@ -5,7 +5,7 @@
 import asyncio
 import time
 from arq import create_pool
-from arq.jobs import Job, JobStatus
+from arq.jobs import JobStatus
 
 async def perform_direct_search(logger, bundle, args, timeout=120):
     """
