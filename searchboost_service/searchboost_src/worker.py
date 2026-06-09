@@ -21,7 +21,8 @@
 # ---------------------------------------------------------------------
 
 
-import asyncio, logging
+import logging
+from arq.connections import RedisSettings
 from searchboost_src.configurator import get_configurator
 from searchboost_src.service import SearchBoostService
 from searchboost_src.logger import setup_logger
