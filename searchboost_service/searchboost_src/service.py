@@ -115,9 +115,8 @@ class SearchBoostService:
 
             final_response = await self.ai_handler.query_LLM(self.chatdetails)
             await self.cache.cache_response(self.args.query, final_response)
-            return final_response
-
             self.logger.info(f"SearchBoostService : Final Response :\n---\n{final_response}")
+            return final_response
         except Exception as e:
             self.logger.error(f"SearchBoostService : CRITICAL Runtime Error: {e}")
 
