@@ -22,7 +22,6 @@
 
 
 import redis.asyncio as redis
-import json
 
 class RedisManager:
     def __init__(self, config, logger):
