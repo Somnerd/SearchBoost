@@ -20,7 +20,6 @@
 # For licensing outside the scope of AGPLv3, contact: nikolasalexandrakis.work@gmail.com
 # ---------------------------------------------------------------------
 
-import asyncio
 import openai
 from openai import AsyncOpenAI
 from searchboost_src.chat_class import ChatDetails
@@ -32,7 +31,19 @@ class ApiClient:
         self.logger = logger
         pass
 
-    async def api_call(self, ChatDetails):
+    async def api_call(self, chat_details):
+        api_key = getattr(chat_details.config, "api", None)
+        base_url = getattr(chat_details.config, "provider", None)
+        model = getattr(chat_details.config, "model", None)
+        role = getattr(chat_details.config, "role", "user")
+
+        messages = []
+        if chat_details.system_prompt:
+            messages.append({"role": "system", "content": chat_details.system_prompt})
+        messages.append({"role": role, "content": chat_details.prompt})
+
+        extra_params = getattr(chat_details, "extra_body", {})
+
         try:
             client = AsyncOpenAI(
                 api_key=api_key,
@@ -40,8 +51,8 @@ class ApiClient:
             )
 
             chat = await client.chat.completions.create(
-                model=self.model,
-                messages=[{"role": self.role, "content": self.prompt}],
+                model=model,
+                messages=messages,
                 **extra_params
             )
 
