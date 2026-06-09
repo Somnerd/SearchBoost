@@ -24,7 +24,7 @@ import asyncio
 import httpx
 import time
 
-from searchboost_src.configurator import Configurator,get_configurator
+from searchboost_src.configurator import get_configurator
 from searchboost_src.argparser import Argsparser_Instance
 from searchboost_src.logger import setup_logger
 from searchboost_src.fallback_handler import perform_direct_search
