@@ -12,7 +12,6 @@
     "redis" : {
         "host": "sb_redis",
         "port": 6379,
-        "password": "searchboost_pass",
         "db": 0,
         "decode_responses": true,
         "conn_timeout": 5,
@@ -29,7 +28,6 @@
         "host": "sb_db",
         "port": 5432,
         "user": "searchboost",
-        "password": "searchboost_pass",
         "database": "searchboost_db"
     },
     "cloud_ai" : {

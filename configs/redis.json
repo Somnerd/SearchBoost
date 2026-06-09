@@ -1,7 +1,6 @@
 {
     "host": "sb_redis",
     "port": 6379,
-    "password": "searchboost_pass",
     "db": 0,
     "decode_responses": true,
     "conn_timeout": 5,

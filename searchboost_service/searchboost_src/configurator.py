@@ -60,7 +60,7 @@ class SearchSettings(BaseModel):
 class RedisSettings(BaseModel):
     host: str = Field(default="sb_redis", description="Redis server host")
     port: int = Field(default=6379, description="Redis server port")
-    password: str = Field(default="searchboost_pass", description="Redis password")
+    password: Optional[str] = Field(default=None, description="Redis password")
     # db: int = Field(default=0, description="Redis database index")
     # decode_responses: bool = Field(default=True)
 
@@ -73,7 +73,7 @@ class PostgreSQLSettings(BaseModel):
     host: str = Field(default="sb_db", description="PostgreSQL server host")
     port: int = Field(default=5432, description="PostgreSQL server port")
     user: str = Field(default="searchboost", description="PostgreSQL username")
-    password: str = Field(default="searchboost_pass", description="PostgreSQL password")
+    password: Optional[str] = Field(default=None, description="PostgreSQL password")
     database: str = Field(default="searchboost_db", description="PostgreSQL database name")
 
     @property

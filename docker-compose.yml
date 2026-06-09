@@ -12,6 +12,7 @@ services:
       - ./logs:/logs
     environment:
       - WARDEN_CONFIG_PATH=/configs/warden.ini
+      - WARDEN__REDIS__PASSWORD=${REDIS_PASSWORD}
       - RUST_LOG=info
     depends_on:
       - redis
@@ -28,7 +29,8 @@ services:
       - SEARCHBOOST_AI_HOST=sb_ollama
       - SEARCHBOOST_SEARCH_HOST=sb_searxng
       - PYTHONBUFFERED=1
-      - SEARCHBOOST_REDIS_PASSWORD=${REDIS_PASSWORD:-searchboost_pass}
+      - SEARCHBOOST_REDIS_PASSWORD=${REDIS_PASSWORD}
+      - SEARCHBOOST_DB_PASSWORD=${DB_PASSWORD}
       - PYTHONPATH=/app
     command : arq searchboost_src.worker.WorkerSettings
     volumes:
@@ -43,9 +45,11 @@ services:
   redis:
     image: redis:7.4-alpine
     container_name: sb_redis
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
     ports:
       - "${REDIS_PORT:-6379}:6379"
-    command: redis-server --requirepass ${REDIS_PASSWORD:-searchboost_pass} --appendonly yes
+    command: sh -c 'if [ -n "$$REDIS_PASSWORD" ]; then redis-server --requirepass "$$REDIS_PASSWORD" --appendonly yes; else redis-server --appendonly yes; fi'
     volumes:
       - redis_data:/data
     restart: always
@@ -79,7 +83,7 @@ services:
       restart: always
       environment:
         - POSTGRES_USER=${DB_USER:-searchboost}
-        - POSTGRES_PASSWORD=${DB_PASSWORD:-searchboost_pass}
+        - POSTGRES_PASSWORD=${DB_PASSWORD}
         - POSTGRES_DB=${DB_NAME:-searchboost_db}
       ports:
         - "${POSTGRES_PORT:-5432}:5432"
