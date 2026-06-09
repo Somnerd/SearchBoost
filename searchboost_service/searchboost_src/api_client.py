@@ -20,7 +20,6 @@
 # For licensing outside the scope of AGPLv3, contact: nikolasalexandrakis.work@gmail.com
 # ---------------------------------------------------------------------
 
-import asyncio
 import openai
 from openai import AsyncOpenAI
 from searchboost_src.chat_class import ChatDetails
