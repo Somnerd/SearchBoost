@@ -60,7 +60,7 @@ class AIHandler:
             self.logger.debug("AI Handler : Calling {}")
             if ChatDetails.config.model.lower() == "cloud" or "gpt" in ChatDetails.config.model.lower() or "poe" in ChatDetails.config.model.lower():
                 self.logger.debug(f"AIHandler : Using cloud AI for query {self.reason}.")
-                optimized_query = await api_client().api_call(ChatDetails)
+                optimized_query = await ApiClient(logger=self.logger).api_call(ChatDetails)
                 self.logger.debug(f"AIHandler : Optimized Query: {optimized_query}")
                 return optimized_query
             elif ChatDetails.config.model.lower() == "local" or "llama" in ChatDetails.config.model.lower():
