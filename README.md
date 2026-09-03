@@ -131,7 +131,7 @@ python3 searchboost_service/main.py --query "Latest advancements in autonomous A
 
 ## 🧪 Comprehensive Automated Test Verification
 
-SearchBoost maintains 100% test pass rates across all language tiers:
+SearchBoost maintains 100% test pass rates across all language and component tiers (**95 total automated tests**):
 
 ### Rust Warden Test Suite (17 Tests)
 ```bash
@@ -148,6 +148,13 @@ cd searchboost_api
 npm test
 ```
 *Coverage: Health check failover, JWT auth validation, role-based access control (RBAC), self-deletion guards, search enqueuing, and cross-user IDOR rejection.*
+
+### React 19 UI Vitest Suite (45 Tests)
+```bash
+cd searchboost_ui
+npm test
+```
+*Coverage: SearchBar input elasticity and keyboard shortcuts (Ctrl+Enter, Cmd+Enter), ResultDisplay streaming and error states, NavBar role-based rendering, ProtectedRoute and AdminRoute guards, SystemHealth service status monitoring, AdminUserTable two-step deletion confirmation and role promotions, Login and Register form validation and routing, and Search page model selection, thread history, polling, and semantic search.*
 
 ### Python Worker & Handshake Test Suite (11 Tests)
 ```bash
