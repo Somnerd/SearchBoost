@@ -13,7 +13,7 @@ env:
 jobs:
   warden-check:
     name: Rust Warden (Clippy, Format & Tests)
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux]
     defaults:
       run:
         working-directory: ./searchboost_warden
@@ -37,7 +37,7 @@ jobs:
 
   api-check:
     name: Node / TypeScript API (Lint & Tests)
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux]
     defaults:
       run:
         working-directory: ./searchboost_api
@@ -66,7 +66,7 @@ jobs:
 
   worker-check:
     name: Python Worker & Tests
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux]
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -91,7 +91,7 @@ jobs:
 
   ui-check:
     name: React UI (Build & Vitest Suite)
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux]
     defaults:
       run:
         working-directory: ./searchboost_ui
