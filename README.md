@@ -33,7 +33,7 @@ flowchart TD
     end
 
     subgraph Worker ["Cognitive Execution Tier"]
-        PyWorker["Python 3.10+ Async Worker (ARQ)<br/>• PII Detector & Masking<br/>• Semantic Cache Hit Check<br/>• Query Keyword Optimization<br/>• SearXNG Federated Search<br/>• Vector Context Retrieval<br/>• Grounded Synthesis"]
+        PyWorker["Python 3.10+ Async Worker (ARQ)<br/>• Semantic Cache Hit Check<br/>• Query Keyword Optimization<br/>• SearXNG Federated Search<br/>• Vector Context Retrieval<br/>• Grounded Synthesis"]
     end
 
     subgraph External ["Upstream Intelligence"]
@@ -63,7 +63,7 @@ flowchart TD
 | **Frontend** | `searchboost_ui` | React 19, Vite, React Router 7 | Session persistence, real-time circuit health indicator, responsive research dashboard. |
 | **API Gateway**| `searchboost_api` | TypeScript 5.4, Express 5, Prisma | Strict JWT authentication, bcrypt (12 rounds), IDOR thread ownership checks, non-root execution. |
 | **Reliability**| `searchboost_warden` | Rust 2021, Axum, Tokio, Failsafe, Governor | Zero-allocation HTTP proxy, dynamic Docker log aggregation (`bollard`), failsafe circuit breaking. |
-| **Worker** | `searchboost_service` | Python 3.10+, ARQ, AsyncIO, HTTPX | PII scanning gate, multi-engine meta-search normalization, vector memory retrieval, grounded LLM synthesis. |
+| **Worker** | `searchboost_service` | Python 3.10+, ARQ, AsyncIO, HTTPX | Multi-engine meta-search normalization, vector memory retrieval, grounded LLM synthesis. |
 | **Database** | `sb_db` | PostgreSQL 16 + `pgvector` | HNSW cosine similarity search over 768-dimensional conversational turn embeddings. |
 | **Cache & Q** | `sb_redis` | Redis 7.4 (Authenticated) | Async task queues (`arq:queue`), intermediate job results, and semantic prompt caching. |
 
@@ -96,7 +96,7 @@ LIMIT 5;
 ```
 
 ### 4. Direct Sister Compatibility with IronWarden
-SearchBoost shares an identical session convention and payload contract with **[IronWarden](https://github.com/Somnerd/IronWarden)** (the Sovereign AI Privacy Shield). IronWarden can be dropped directly in front of SearchBoost as an enterprise-grade cryptographic privacy and audit gateway.
+SearchBoost shares an identical session convention and payload contract with **[IronWarden](https://github.com/Somnerd/IronWarden)** (the Sovereign AI Privacy Shield). All privacy filtering, PII scrubbing, synthetic tokenization, and cryptographic audits are delegated exclusively to IronWarden at ingress, eliminating redundant PII regex checks inside SearchBoost and keeping the cognitive engine lightweight and focused.
 
 ---
 
@@ -149,11 +149,11 @@ npm test
 ```
 *Coverage: Health check failover, JWT auth validation, role-based access control (RBAC), self-deletion guards, search enqueuing, and cross-user IDOR rejection.*
 
-### Python Worker & PII Test Suite (19 Tests)
+### Python Worker & Handshake Test Suite (11 Tests)
 ```bash
 PYTHONPATH=searchboost_service pytest searchboost_tests -v
 ```
-*Coverage: PII detector (payment cards, SSNs, emails, IPv4 addresses), CLI argparser, timeout defense, and distributed handshake payload schemas.*
+*Coverage: CLI argparser options and interactive fallback, timeout defense, and distributed handshake payload schemas (delegating PII shielding to IronWarden).*
 
 ---
 

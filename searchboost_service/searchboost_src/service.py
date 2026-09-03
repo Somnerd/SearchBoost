@@ -9,7 +9,6 @@ from searchboost_src.redis_manager import RedisManager
 from searchboost_src.logger import setup_logger
 from searchboost_src.models import SearchResult
 from searchboost_src.database import HistoryService
-from searchboost_src.pii_detector import PIIDetector
 
 class CacheService:
     def __init__(self, redis_manager: RedisManager, logger):
@@ -117,9 +116,6 @@ class SearchBoostService:
         if history_svc and self.session_id:
             await history_svc.save_turn(self.session_id, "user", self.args.query)
 
-        pii_detector = PIIDetector(logger=self.logger)
-        original_query_pii = pii_detector.scan(self.args.query)
-
         self.ai_handler = AIHandler(self.logger, reason="optimization")
         optimized_query = await self.ai_handler.query_LLM(self.chatdetails)
 
@@ -133,9 +129,6 @@ class SearchBoostService:
                     self.logger.error(f"Failed to persist optimized cache hit to history: {e}")
             return post_opt_cache
 
-        optimized_query_pii = pii_detector.scan(optimized_query)
-        cache_eligible = not original_query_pii and not optimized_query_pii
-
         self.web_search_instance.query = optimized_query
         web_search_results = await self.web_search_instance.searxng_search()
         
@@ -147,11 +140,10 @@ class SearchBoostService:
         if history_svc and self.session_id:
             await history_svc.save_turn(self.session_id, "assistant", final_response)
 
-        final_response_pii = pii_detector.scan(final_response)
-        
-        await self.cache_svc.set(self.args.query, final_response, cache_eligible and not final_response_pii)
+        # Caching: PII protection and scrub invariant are delegated to IronWarden at ingress
+        await self.cache_svc.set(self.args.query, final_response, cache_eligible=True)
         if self.args.query != optimized_query:
-            await self.cache_svc.set(optimized_query, final_response, cache_eligible and not final_response_pii)
+            await self.cache_svc.set(optimized_query, final_response, cache_eligible=True)
 
         return final_response
 

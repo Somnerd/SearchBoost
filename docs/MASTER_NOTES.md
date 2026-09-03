@@ -82,11 +82,11 @@ It bridges the gap between private LLM reasoning and real-time world knowledge:
 - **Execution Pipeline:**
   1. `cache.get_cached_response(query)`: Instant cache hit check.
   2. `ai_handler.query_LLM(reason="optimization")`: Optimizes search query keywords.
-  3. `pii_detector.scan(query)`: Regex safety gate for payment cards, SSNs, IBANs, and emails.
-  4. `web_search.searxng_search()`: Retrieves top 5 normalized search snippets.
-  5. `context_service.search_relevant_history()`: Injects semantically similar past turns.
-  6. `ai_handler.query_LLM(reason="research")`: Produces cited, grounded synthesis.
-  7. `cache.cache_response()` & `persistence_service.save_turn()`: Commits to Redis and `pgvector`.
+  3. `web_search.searxng_search()`: Retrieves top 5 normalized search snippets.
+  4. `context_service.search_relevant_history()`: Injects semantically similar past turns.
+  5. `ai_handler.query_LLM(reason="research")`: Produces cited, grounded synthesis.
+  6. `cache.cache_response()` & `persistence_service.save_turn()`: Commits to Redis and `pgvector`.
+  *(Note: All PII scrubbing, tokenization, and privacy gates are strictly delegated to IronWarden at ingress, eliminating redundant regex scanners in the research worker).*
 
 ---
 
@@ -95,6 +95,7 @@ It bridges the gap between private LLM reasoning and real-time world knowledge:
 | Feature | SearchBoost | IronWarden |
 | :--- | :--- | :--- |
 | **Primary Role** | Cognitive Search & Vector Grounding | Privacy Shield & Security Gateway |
+| **PII & Privacy** | Delegated to IronWarden at ingress | Native Rust regex, Luhn, synthetic tokens, HMAC pepper |
 | **Relay Port** | `14141` | `14141` |
 | **Session Shard Format**| `SB-SESSION:{user}:{thread}:{uuid}` | `SB-SESSION:{user}:{thread}:{uuid}` |
 | **Payload Schema** | `{ query, thread_id, username, options }` | `{ query, thread_id, username, options }` |

@@ -1,114 +1,11 @@
 # -*- coding: utf-8 -*-
-# SearchBoost Functional Tests: PII Detector & Configuration Tests
+# SearchBoost Functional Tests: Argparser & Handshake Tests
 import pytest
 import sys
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from searchboost_src.pii_detector import PIIDetector
 from searchboost_src.argparser import Argsparser_Instance
 from main import submit_to_warden
-
-
-# =====================================================================
-# PIIDetector Functional Test Suite
-# =====================================================================
-
-def test_pii_detector_clean_text():
-    """Verify that clean informational queries without PII pass cleanly."""
-    detector = PIIDetector()
-    result = detector.scan("What is the difference between Rust and Go in concurrency?")
-    assert not result.contains_pii
-    assert bool(result) is False
-    assert len(result.matches) == 0
-
-    result2 = detector.scan("Search for latest research on quantum computing and AI models.")
-    assert not result2.contains_pii
-    assert len(result2.matches) == 0
-
-
-def test_pii_detector_payment_cards():
-    """Verify detection of payment cards in various formats (dashes, spaces, continuous)."""
-    detector = PIIDetector()
-
-    # Hyphenated 16-digit card
-    res1 = detector.scan("Please charge my card 4111-2222-3333-4444 for the subscription.")
-    assert res1.contains_pii
-    assert bool(res1) is True
-    assert any(m.pattern_name == "payment_card" and "4111-2222-3333-4444" in m.matched_value for m in res1.matches)
-
-    # Space-separated card
-    res2 = detector.scan("Credit card: 5555 4444 3333 2222 expiration 12/28")
-    assert res2.contains_pii
-    assert any(m.pattern_name == "payment_card" for m in res2.matches)
-
-    # Continuous 16-digit card
-    res3 = detector.scan("Card number 4111222233334444")
-    assert res3.contains_pii
-    assert any(m.pattern_name == "payment_card" for m in res3.matches)
-
-
-def test_pii_detector_ssn():
-    """Verify US Social Security Number detection."""
-    detector = PIIDetector()
-    result = detector.scan("Confidential user identity: SSN 123-45-6789.")
-    assert result.contains_pii
-    assert any(m.pattern_name == "ssn" and m.matched_value == "123-45-6789" for m in result.matches)
-
-
-def test_pii_detector_email():
-    """Verify email address detection."""
-    detector = PIIDetector()
-    result = detector.scan("Contact the administrator at admin@enterprise-domain.com for help.")
-    assert result.contains_pii
-    assert any(m.pattern_name == "email" and m.matched_value == "admin@enterprise-domain.com" for m in result.matches)
-
-
-def test_pii_detector_ipv4():
-    """Verify IPv4 address detection."""
-    detector = PIIDetector()
-    result = detector.scan("Database internal host address is 192.168.1.105 on port 5432.")
-    assert result.contains_pii
-    assert any(m.pattern_name == "ipv4_address" and m.matched_value == "192.168.1.105" for m in result.matches)
-
-
-def test_pii_detector_multiple_matches():
-    """Verify detection of multiple distinct PII types in a single prompt."""
-    detector = PIIDetector()
-    text = "User test@company.com with card 5555 4444 3333 2222 and SSN 987-65-4321 at 10.0.0.1"
-    result = detector.scan(text)
-    assert result.contains_pii
-    matched_patterns = {m.pattern_name for m in result.matches}
-    assert "email" in matched_patterns
-    assert "payment_card" in matched_patterns
-    assert "ssn" in matched_patterns
-    assert "ipv4_address" in matched_patterns
-    assert len(result.matches) >= 4
-
-
-def test_pii_detector_edge_cases():
-    """Verify edge cases such as empty strings, None, and non-string types."""
-    detector = PIIDetector()
-    assert not detector.scan("")
-    assert not detector.scan(None)
-    assert not detector.scan(123456789)
-    assert not detector.scan(["192.168.1.1"])
-
-
-def test_pii_detector_logging():
-    """Verify logger messages on PII detection and clean scans."""
-    logger_mock = MagicMock()
-    detector = PIIDetector(logger=logger_mock)
-
-    # Clean text logs debug
-    detector.scan("Clean text without PII")
-    logger_mock.debug.assert_called_with("PIIDetector: No PII detected. Text is safe to cache.")
-
-    # PII text logs warning
-    detector.scan("My email is alice@example.com")
-    assert logger_mock.warning.called
-    warning_arg = logger_mock.warning.call_args[0][0]
-    assert "PII detected in text" in warning_arg
-    assert "BLOCKED" in warning_arg
 
 
 # =====================================================================
