@@ -109,7 +109,10 @@ It bridges the gap between private LLM reasoning and real-time world knowledge:
 - [x] Closed 4 stale/duplicate PRs (#14, #18, #20, #24) and deleted branches.
 - [x] Closed 5 completed milestone issues (#25, #26, #27, #28, #29).
 - [x] Created GitHub Actions CI pipeline (`.github/workflows/ci.yml`).
-- [ ] Rust Warden Clippy, Format & Test hardening (Subagent 1 in progress).
-- [ ] Python CLI Handshake & Test expansion (Subagent 2 in progress).
-- [ ] Transition License to MIT across workspace.
-- [ ] Revamp `README.md` with visual architecture diagram and hiring hooks.
+- [x] Rust Warden Clippy, Format & Test hardening (0 warnings, 17/17 tests passing).
+- [x] Python CLI Handshake & Test expansion (Schema aligned, 19/19 tests passing).
+- [x] TypeScript Express API test suite (22/22 tests passing).
+- [x] Transitioned License to MIT across entire workspace (root LICENSE, Cargo.toml, package.json).
+- [x] Revamped `README.md` with interactive Mermaid architecture diagram, multi-tier topology, and test commands.
+- [x] Committed and pushed changes to remote `origin/main` (CI triggered and actively verifying).
+

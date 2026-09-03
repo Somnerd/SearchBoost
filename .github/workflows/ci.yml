@@ -84,5 +84,7 @@ jobs:
           pip install pytest pytest-asyncio pytest-mock
 
       - name: Run Python Unit & Functional Tests
+        env:
+          PYTHONPATH: searchboost_service
         run: |
           python -m pytest searchboost_tests/unit_tests searchboost_tests/functional_tests -v
