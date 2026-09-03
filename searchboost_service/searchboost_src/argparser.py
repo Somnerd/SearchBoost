@@ -27,13 +27,9 @@ class Argsparser_Instance:
     def __init__(self):
         self.parser = argparse.ArgumentParser(description="SearchBoost: Optimize, search, and summarize queries.")
         self.logger = setup_logger()
+        self._setup_arguments()
 
-    async def parse_arguments(self):
-        """
-        Parses command-line arguments.
-        Returns:
-            argparse.Namespace: Parsed arguments.
-        """
+    def _setup_arguments(self):
         self.parser.add_argument(
             "-s","--stream",
             type = bool,
@@ -86,7 +82,21 @@ class Argsparser_Instance:
             default="guest",
             help="Username for identity and persistence (default: guest)"
         )
-        self.args = self.parser.parse_args()
+
+        self.parser.add_argument(
+            "--thread_id",
+            type=str,
+            default="default",
+            help="Conversation thread ID (default: default)"
+        )
+
+    async def parse_arguments(self, args=None):
+        """
+        Parses command-line arguments.
+        Returns:
+            argparse.Namespace: Parsed arguments.
+        """
+        self.args = self.parser.parse_args(args)
         return self.args
 
 

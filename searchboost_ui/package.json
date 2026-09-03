@@ -2,7 +2,7 @@
   "name": "searchboost_ui",
   "version": "1.0.0",
   "description": "",
-  "license": "AGPL-3.0",
+  "license": "MIT",
   "main": "vite.config.js",
   "type": "module",
   "scripts": {

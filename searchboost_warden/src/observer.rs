@@ -17,37 +17,38 @@
  *
  * ---------------------------------------------------------------------
  * PROPRIETARY / COMMERCIAL LICENSING:
- * Use of this software in closed-source commercial applications or 
- * proprietary stacks is NOT permitted under AGPLv3. For a commercial 
+ * Use of this software in closed-source commercial applications or
+ * proprietary stacks is NOT permitted under AGPLv3. For a commercial
  * license, please contact: nikolasalexandrakis.work@gmail.com
  * ---------------------------------------------------------------------
  */
 
-
-use bollard::Docker;
-use bollard::container::{LogOutput, LogsOptions, ListContainersOptions};
-use futures_util::stream::StreamExt;
-use std::io::Write;
-use tracing::{info, error, warn};
-use std::collections::HashMap;
 use crate::configurator::ObserverSettings;
+use bollard::container::{ListContainersOptions, LogsOptions};
+use bollard::Docker;
+use futures_util::stream::StreamExt;
+use std::collections::HashMap;
+use std::io::Write;
+use tracing::{error, info, warn};
 
 pub async fn start_log_observer(settings: ObserverSettings) -> anyhow::Result<()> {
     info!("Starting Warden Observer Service");
     let docker = Docker::connect_with_local_defaults()?;
 
-    std::fs::create_dir_all(&settings.log_path).unwrap_or_else(|e| warn!("Could not create log dir: {}", e));
-    
+    std::fs::create_dir_all(&settings.log_path)
+        .unwrap_or_else(|e| warn!("Could not create log dir: {}", e));
+
     let log_path = settings.log_path.clone();
 
     if let Some(label) = settings.container_label {
         info!("Warden: Label-based discovery active for: {}", label);
-        let mut monitored_containers: std::collections::HashSet<String> = std::collections::HashSet::new();
-        
+        let mut monitored_containers: std::collections::HashSet<String> =
+            std::collections::HashSet::new();
+
         loop {
             let mut filters = HashMap::new();
             filters.insert("label".to_string(), vec![label.clone()]);
-            
+
             let options = ListContainersOptions {
                 all: true,
                 filters,
@@ -61,10 +62,18 @@ pub async fn start_log_observer(settings: ObserverSettings) -> anyhow::Result<()
                             monitored_containers.insert(id.clone());
                             let docker_clone = docker.clone();
                             let path_clone = log_path.clone();
-                            let name = container.names.unwrap_or_default().get(0).cloned().unwrap_or_else(|| id.clone());
-                            
+                            let name = container
+                                .names
+                                .unwrap_or_default()
+                                .first()
+                                .cloned()
+                                .unwrap_or_else(|| id.clone());
+
                             tokio::spawn(async move {
-                                if let Err(e) = monitor_single_container(&docker_clone, &id, &name, &path_clone).await {
+                                if let Err(e) =
+                                    monitor_single_container(&docker_clone, &id, &name, &path_clone)
+                                        .await
+                                {
                                     error!("Warden: Failed to monitor container {}: {}", id, e);
                                 }
                             });
@@ -75,26 +84,45 @@ pub async fn start_log_observer(settings: ObserverSettings) -> anyhow::Result<()
             tokio::time::sleep(tokio::time::Duration::from_secs(30)).await;
         }
     } else if let Some(container_name) = settings.container_name {
-        info!("Warden: Fixed-name observation active for: {}", container_name);
+        info!(
+            "Warden: Fixed-name observation active for: {}",
+            container_name
+        );
         monitor_single_container(&docker, &container_name, &container_name, &log_path).await?;
     }
 
     Ok(())
 }
 
-async fn monitor_single_container(docker: &Docker, container_id: &str, display_name: &str, log_dir: &str) -> anyhow::Result<()> {
+async fn monitor_single_container(
+    docker: &Docker,
+    container_id: &str,
+    display_name: &str,
+    log_dir: &str,
+) -> anyhow::Result<()> {
     let mut file = std::fs::OpenOptions::new()
-        .create(true).append(true).open(format!("{}/service_observation.log", log_dir))?;
+        .create(true)
+        .append(true)
+        .open(format!("{}/service_observation.log", log_dir))?;
 
     let mut errors_file = std::fs::OpenOptions::new()
-        .create(true).append(true).open(format!("{}/service_errors.log", log_dir))?;
+        .create(true)
+        .append(true)
+        .open(format!("{}/service_errors.log", log_dir))?;
 
     let options = LogsOptions::<String> {
-        follow: true, stdout: true, stderr: true, timestamps: true, ..Default::default()
+        follow: true,
+        stdout: true,
+        stderr: true,
+        timestamps: true,
+        ..Default::default()
     };
 
     let mut stream = docker.logs(container_id, Some(options));
-    info!("Observer Active for container: {} [{}]", display_name, container_id);
+    info!(
+        "Observer Active for container: {} [{}]",
+        display_name, container_id
+    );
 
     while let Some(log_result) = stream.next().await {
         if let Ok(log) = log_result {
@@ -105,7 +133,7 @@ async fn monitor_single_container(docker: &Docker, container_id: &str, display_n
             writeln!(file, "{}", log_text.trim())?;
         }
     }
-    
+
     warn!("Observer session ended for container: {}", display_name);
     Ok(())
 }

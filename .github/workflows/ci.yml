@@ -1,0 +1,88 @@
+name: SearchBoost Continuous Integration
+
+on:
+  push:
+    branches: [ "main", "dev" ]
+  pull_request:
+    branches: [ "main", "dev" ]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  warden-check:
+    name: Rust Warden (Clippy, Format & Tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./searchboost_warden
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Rust Toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          components: clippy, rustfmt
+
+      - name: Verify Code Formatting
+        run: cargo fmt --check
+
+      - name: Run Clippy Linter
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: Run Warden Unit & Integration Tests
+        run: cargo test --all-targets
+
+  api-check:
+    name: Node / TypeScript API (Lint & Tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./searchboost_api
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: searchboost_api/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Typecheck TypeScript
+        run: npx tsc --noEmit
+
+      - name: Run Jest Unit Tests
+        run: npm test
+
+  worker-check:
+    name: Python Worker & Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "pip"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r searchboost_service/requirements.txt
+          pip install pytest pytest-asyncio pytest-mock
+
+      - name: Run Python Unit & Functional Tests
+        run: |
+          python -m pytest searchboost_tests/unit_tests searchboost_tests/functional_tests -v

@@ -32,15 +32,20 @@ from searchboost_src.fallback_handler import perform_direct_search
 
 
 async def submit_to_warden(logger, query, args, warden_url):
+    thread_id = getattr(args, 'thread_id', 'default') or 'default'
+    username = getattr(args, 'username', 'default_user') or 'default_user'
+    options = vars(args) if hasattr(args, '__dict__') else (dict(args) if isinstance(args, dict) else {})
+
     payload = {
-        "query" : query,
-        "session_id" : "SB-SESSION-"+args.username, # The Warden uses this as the 'shard/identity' key
-        "options": vars(args)
+        "query": query,
+        "thread_id": thread_id,
+        "username": username,
+        "options": options
     }
 
     async with httpx.AsyncClient() as client:
         logger.info(f"MAIN : Routing request through Relay ({warden_url})...")
-        response = await client.post(warden_url, json=payload,timeout=3.0)
+        response = await client.post(warden_url, json=payload, timeout=3.0)
 
         if response.status_code == 200:
             data = response.json()
@@ -54,7 +59,7 @@ async def submit_to_warden(logger, query, args, warden_url):
 
 # Fallback and Response tracking is now managed by separate specialized logic
 
-async def handle_response(logger, job_id, warden_url_base, timeout=120):
+async def handle_response(logger, job_id, warden_url_base, timeout=120, username="default_user"):
     """
     Phase 2: Polling the Warden's HTTP endpoint for results instead of Redis.
     Uses exponential backoff for polling.
@@ -73,7 +78,7 @@ async def handle_response(logger, job_id, warden_url_base, timeout=120):
                 break
 
             try:
-                response = await client.get(results_url, timeout=5.0)
+                response = await client.get(results_url, params={"username": username}, timeout=5.0)
 
                 if response.status_code == 200:
                     data = response.json()
@@ -122,7 +127,8 @@ async def main():
             logger.info(f"MAIN : Successfully enqueued via Warden : ID : {job_id}")
 
             if job_id:
-                await handle_response(logger, job_id, warden_url_base)
+                username = getattr(args, 'username', 'default_user') or 'default_user'
+                await handle_response(logger, job_id, warden_url_base, username=username)
 
         except Exception as error:
             logger.error(f"MAIN : Warden Access Failed with Error : {error}")

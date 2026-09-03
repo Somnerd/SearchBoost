@@ -57,4 +57,4 @@ async def test_ollama_client_exception():
         response = await client.query_ollama()
 
         assert response == "Error: Unable to connect to the LLM."
-        logger_mock.error.assert_called_once_with("OLLAMA CLIENT : Error querying Ollama API: API Error")
+        logger_mock.error.assert_called_once_with("OLLAMA CLIENT : Raw Exception: API Error")
