@@ -1,6 +1,8 @@
 # 🚀 SearchBoost: Autonomous Cognitive Search & Vector Grounding Engine
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![SearchBoost CI](https://github.com/Somnerd/SearchBoost/actions/workflows/ci.yml/badge.svg)](https://github.com/Somnerd/SearchBoost/actions/workflows/ci.yml)
+[![Tests Passing](https://img.shields.io/badge/Tests-95%20Passing-success.svg)](scripts/ci_local.sh)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/Rust-2021_Axum_Tokio-orange.svg)](https://www.rust-lang.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4_Express-blue.svg)](https://www.typescriptlang.org/)
 [![Python](https://img.shields.io/badge/Python-3.10+_ARQ-green.svg)](https://www.python.org/)
@@ -161,6 +163,15 @@ npm test
 PYTHONPATH=searchboost_service pytest searchboost_tests -v
 ```
 *Coverage: CLI argparser options and interactive fallback, timeout defense, and distributed handshake payload schemas (delegating PII shielding to IronWarden).*
+
+---
+
+## 🤝 Community & Contributing
+
+We welcome contributions! Please review our community guidelines:
+* **[Contributing Guide](CONTRIBUTING.md)**: Developer quickstart, coding guidelines, and PR workflow.
+* **[Security Policy](SECURITY.md)**: Vulnerability disclosure and security architecture.
+* **[Code of Conduct](CODE_OF_CONDUCT.md)**: Community standards and pledge.
 
 ---
 
