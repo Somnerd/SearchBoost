@@ -10,6 +10,7 @@ export default function Search() {
   const [conversationHistory, setConversationHistory] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [currentThreadId, setCurrentThreadId] = useState(() => Date.now().toString());
+  const [researchMode, setResearchMode] = useState(true);
   const [selectedModel, setSelectedModel] = useState('llama3.2:latest');
   const [availableModels, setAvailableModels] = useState(['llama3.2:latest', 'nomic-embed-text:latest', 'mistral:latest']);
   const [historySearchQuery, setHistorySearchQuery] = useState('');
@@ -124,7 +125,8 @@ export default function Search() {
       result: null, 
       pending: true, 
       jobId: tempJobId,
-      thread_id: searchThreadId 
+      thread_id: searchThreadId,
+      researchMode: researchMode
     }]);
 
     setSessions(prev => {
@@ -138,7 +140,10 @@ export default function Search() {
       const res = await client.post('/search/enqueue', { 
         query, 
         thread_id: searchThreadId,
-        model: selectedModel 
+        model: selectedModel,
+        options: {
+          research_mode: researchMode
+        }
       });
       const jobId = res.data.id || res.data.job_id || res.data.job_id_used;
       
@@ -279,14 +284,37 @@ export default function Search() {
               {(item.result || item.pending) ? (
                 <div className="chat-bubble-ai">
                    {item.pending ? (
-                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                       <div className="dot-pulse"></div>
-                       <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                         {item.timeElapsed ? `Still researching... (${item.timeElapsed} minutes elapsed)` : 'Researching...'}
+                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                         <div 
+                           className="dot-pulse"
+                           style={{ backgroundColor: item.researchMode === false ? '#eab308' : 'var(--accent)' }}
+                         ></div>
+                         <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                           {item.timeElapsed 
+                             ? (item.researchMode === false 
+                                 ? `Still generating... (${item.timeElapsed} minutes elapsed)`
+                                 : `Still researching... (${item.timeElapsed} minutes elapsed)`)
+                             : (item.researchMode === false 
+                                 ? 'Generating fast answer...' 
+                                 : 'Synthesizing multi-source research...')}
+                         </span>
+                       </div>
+                       <span className={`status-badge ${item.researchMode === false ? 'fast' : 'deep'}`}>
+                         {item.researchMode === false ? '⚡ Fast Answer' : '🔬 Deep Research'}
                        </span>
                      </div>
                    ) : (
-                     item.result || 'No response received'
+                     <div>
+                       {item.researchMode !== undefined && (
+                         <div style={{ marginBottom: '6px' }}>
+                           <span className={`status-badge ${item.researchMode === false ? 'fast' : 'deep'}`}>
+                             {item.researchMode === false ? '⚡ Fast Answer' : '🔬 Deep Research'}
+                           </span>
+                         </div>
+                       )}
+                       {item.result || 'No response received'}
+                     </div>
                    )}
                 </div>
               ) : null}
@@ -298,11 +326,36 @@ export default function Search() {
         {/* Input & Options */}
         <div style={{ padding: '1.5rem', background: 'rgba(0,0,0,0.2)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
           <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-              <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Model:</label>
-              <select value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)} style={{ background: 'transparent', color: 'var(--text-primary)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', fontSize: '0.75rem', outline: 'none' }}>
-                {availableModels.map(m => <option key={m} style={{background: '#1a1a1a'}} value={m}>{m}</option>)}
-              </select>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+              {/* Research Mode Toggle */}
+              <div className="mode-toggle-container" role="radiogroup" aria-label="Research Mode">
+                <button
+                  type="button"
+                  className={`mode-toggle-btn ${researchMode ? 'active deep-mode' : ''}`}
+                  onClick={() => setResearchMode(true)}
+                  aria-checked={researchMode}
+                  role="radio"
+                >
+                  <span>🔬</span> Deep Research
+                </button>
+                <button
+                  type="button"
+                  className={`mode-toggle-btn ${!researchMode ? 'active fast-mode' : ''}`}
+                  onClick={() => setResearchMode(false)}
+                  aria-checked={!researchMode}
+                  role="radio"
+                >
+                  <span>⚡</span> Fast Answer
+                </button>
+              </div>
+
+              {/* Model Selector */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Model:</label>
+                <select value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)} style={{ background: 'transparent', color: 'var(--text-primary)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', fontSize: '0.75rem', outline: 'none', padding: '2px 6px' }}>
+                  {availableModels.map(m => <option key={m} style={{background: '#1a1a1a'}} value={m}>{m}</option>)}
+                </select>
+              </div>
             </div>
             <SearchBar onSubmit={handleSearch} loading={loading} />
             {error && <div style={{ color: '#ff6b6b', fontSize: '0.8rem', marginTop: '0.5rem', textAlign: 'center' }}>{error}</div>}
