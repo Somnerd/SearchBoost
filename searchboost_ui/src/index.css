@@ -171,3 +171,76 @@ input:focus, textarea:focus {
   background: rgba(255,255,255,0.1);
   border-radius: 3px;
 }
+
+/* Research Mode Toggle */
+.mode-toggle-container {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 3px;
+  gap: 2px;
+  position: relative;
+  user-select: none;
+}
+
+.mode-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 16px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-muted);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mode-toggle-btn:hover:not(.active) {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.mode-toggle-btn.active.deep-mode {
+  background: rgba(123, 97, 255, 0.25);
+  color: #c4b5fd;
+  box-shadow: 0 0 12px rgba(123, 97, 255, 0.35);
+  border: 1px solid rgba(123, 97, 255, 0.4);
+}
+
+.mode-toggle-btn.active.fast-mode {
+  background: rgba(234, 179, 8, 0.2);
+  color: #fde047;
+  box-shadow: 0 0 12px rgba(234, 179, 8, 0.3);
+  border: 1px solid rgba(234, 179, 8, 0.4);
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  width: fit-content;
+}
+
+.status-badge.deep {
+  background: rgba(123, 97, 255, 0.15);
+  color: #c4b5fd;
+  border: 1px solid rgba(123, 97, 255, 0.3);
+}
+
+.status-badge.fast {
+  background: rgba(234, 179, 8, 0.15);
+  color: #fde047;
+  border: 1px solid rgba(234, 179, 8, 0.3);
+}
+

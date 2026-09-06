@@ -28,7 +28,7 @@ pass_tier() { echo -e "\n  ${PASS}  $1"; }
 fail_tier() { echo -e "\n  ${FAIL}  $1"; FAILED_TIERS+=("$1"); }
 
 # Locate IDE / system node/npm if available
-export PATH="/home/somnerd/.antigravity-ide-server/bin/2.5.5-ecfbad74d93962fc8ca485d93ab9b4f3d4cb6cf8:/home/somnerd/.local/bin:$PATH"
+export PATH="/home/somnerd/actions-runner-searchboost-1/_work/_tool/node/20.20.2/x64/bin:/home/somnerd/.antigravity-ide-server/bin/2.5.5-ecfbad74d93962fc8ca485d93ab9b4f3d4cb6cf8:/home/somnerd/.local/bin:$PATH"
 
 # ── 1. Rust Warden Relay ─────────────────────────────────────────────────────
 header "1. Rust Warden Sidecar (Clippy, Format & Unit Tests)"
@@ -48,8 +48,8 @@ fi
 
 # ── 3. React 19 Web UI ───────────────────────────────────────────────────────
 header "3. React 19 UI (Vitest Suite & Production Build)"
-if (cd searchboost_ui && node /home/somnerd/.local/lib/node_modules/npm/bin/npm-cli.js test && node /home/somnerd/.local/lib/node_modules/npm/bin/npm-cli.js run build); then
-  pass_tier "React 19 UI (45/45 Tests + Build)"
+if (cd searchboost_ui && npm test && npm run build); then
+  pass_tier "React 19 UI (48/48 Tests + Build)"
 else
   fail_tier "React 19 UI"
 fi

@@ -22,6 +22,7 @@
 
 
 import redis.asyncio as redis
+from typing import Optional
 
 class RedisManager:
     def __init__(self, config, logger):
@@ -50,15 +51,18 @@ class RedisManager:
         query_lower = query.lower()
         return any(word in query_lower.split() for word in sensitive_words)
 
-    async def get_cached_response(self, query: str):
-        """Check if we have a result for this query."""
+    async def get_cached_response(self, query: str, mode: str = None) -> Optional[str]:
+        """Fetch result from Redis if it exists."""
         if not self._redis: return None
+        if mode:
+            return await self._redis.get(f"query:{mode}:{query}")
         return await self._redis.get(f"query:{query}")
 
-    async def cache_response(self, query: str, response: str, ttl: int = 604800):
+    async def cache_response(self, query: str, response: str, mode: str = None, ttl: int = 604800):
         """Store result in Redis with an expiration (1 week default, 1 day for time-sensitive)."""
         if not self._redis: return
         
         actual_ttl = 86400 if self.is_time_sensitive(query) else ttl
-        self._logger.debug(f"RedisManager: Caching query '{query}' with TTL {actual_ttl}s")
-        await self._redis.set(f"query:{query}", response, ex=actual_ttl)
+        key = f"query:{mode}:{query}" if mode else f"query:{query}"
+        self._logger.debug(f"RedisManager: Caching query key '{key}' with TTL {actual_ttl}s")
+        await self._redis.set(key, response, ex=actual_ttl)
