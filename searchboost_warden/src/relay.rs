@@ -208,11 +208,26 @@ async fn handle_get_result(
             let result: Option<String> = conn.get(&result_key).await.unwrap_or(None);
 
             match result {
-                Some(data) => (
-                    StatusCode::OK,
-                    Json(serde_json::json!({"status": "complete", "result": data})),
-                )
-                    .into_response(),
+                Some(data) => {
+                    if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&data) {
+                        if parsed.get("status").and_then(|s| s.as_str()) == Some("failed") {
+                            let err_msg = parsed
+                                .get("error")
+                                .and_then(|e| e.as_str())
+                                .unwrap_or("Worker task reported failure");
+                            return (
+                                StatusCode::OK,
+                                Json(serde_json::json!({"status": "failed", "error": err_msg})),
+                            )
+                                .into_response();
+                        }
+                    }
+                    (
+                        StatusCode::OK,
+                        Json(serde_json::json!({"status": "complete", "result": data})),
+                    )
+                        .into_response()
+                }
                 None => (
                     StatusCode::ACCEPTED,
                     Json(serde_json::json!({"status": "pending"})),
@@ -404,5 +419,19 @@ mod tests {
         assert!(valid_job_id.starts_with(&expected_prefix));
         assert!(!attacker_job_id.starts_with(&expected_prefix));
         assert!(!malformed_job_id.starts_with(&expected_prefix));
+    }
+
+    #[test]
+    fn test_worker_failure_payload_parsing() {
+        let failure_json = r#"{"status": "failed", "error": "SearXNG upstream timed out"}"#;
+        let parsed: serde_json::Value = serde_json::from_str(failure_json).expect("valid json");
+        assert_eq!(
+            parsed.get("status").and_then(|s| s.as_str()),
+            Some("failed")
+        );
+        assert_eq!(
+            parsed.get("error").and_then(|e| e.as_str()),
+            Some("SearXNG upstream timed out")
+        );
     }
 }

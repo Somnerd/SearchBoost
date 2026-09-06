@@ -55,13 +55,56 @@ export default function Search() {
     }
   };
 
+  const normalizeHistory = (rawItems, threadId) => {
+    if (!Array.isArray(rawItems)) return [];
+
+    // If already in { query, result } format (e.g. from tests or local state)
+    if (rawItems.length > 0 && ('query' in rawItems[0] || 'result' in rawItems[0])) {
+      return rawItems.map(item => ({ ...item, thread_id: item.thread_id || threadId }));
+    }
+
+    // Transform database turn sequence [{ role: 'user', content }, { role: 'assistant', content }]
+    const paired = [];
+    let currentPair = null;
+
+    for (const turn of rawItems) {
+      if (turn.role === 'user') {
+        if (currentPair) paired.push(currentPair);
+        currentPair = {
+          query: turn.content,
+          result: null,
+          pending: false,
+          thread_id: threadId,
+          createdAt: turn.createdAt
+        };
+      } else if (turn.role === 'assistant') {
+        if (currentPair) {
+          currentPair.result = turn.content;
+          paired.push(currentPair);
+          currentPair = null;
+        } else {
+          paired.push({
+            query: '',
+            result: turn.content,
+            pending: false,
+            thread_id: threadId,
+            createdAt: turn.createdAt
+          });
+        }
+      }
+    }
+    if (currentPair) paired.push(currentPair);
+    return paired;
+  };
+
   const fetchHistory = async (threadId) => {
     try {
       const res = await client.get(`/search/history/${threadId}`);
+      const normalized = normalizeHistory(res.data, threadId);
       // Preserve any pending messages that are currently in flight for this thread
       setConversationHistory(prev => {
         const pendingForThisThread = prev.filter(m => m.pending && m.thread_id === threadId);
-        return [...res.data, ...pendingForThisThread];
+        return [...normalized, ...pendingForThisThread];
       });
     } catch (err) {
       console.error('Failed to fetch history:', err);
@@ -226,23 +269,27 @@ export default function Search() {
           {conversationHistory.map((item, idx) => (
             <React.Fragment key={idx}>
               {/* User Message */}
-              <div className="chat-bubble-user">
-                {item.query}
-              </div>
+              {item.query ? (
+                <div className="chat-bubble-user">
+                  {item.query}
+                </div>
+              ) : null}
               
               {/* Assistant Message */}
-              <div className="chat-bubble-ai">
-                 {item.pending ? (
-                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                     <div className="dot-pulse"></div>
-                     <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                       {item.timeElapsed ? `Still researching... (${item.timeElapsed} minutes elapsed)` : 'Researching...'}
-                     </span>
-                   </div>
-                 ) : (
-                   item.result || 'No response received'
-                 )}
-              </div>
+              {(item.result || item.pending) ? (
+                <div className="chat-bubble-ai">
+                   {item.pending ? (
+                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                       <div className="dot-pulse"></div>
+                       <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                         {item.timeElapsed ? `Still researching... (${item.timeElapsed} minutes elapsed)` : 'Researching...'}
+                       </span>
+                     </div>
+                   ) : (
+                     item.result || 'No response received'
+                   )}
+                </div>
+              ) : null}
             </React.Fragment>
           ))}
           <div ref={chatEndRef} />

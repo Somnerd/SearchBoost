@@ -57,21 +57,18 @@ class AIHandler:
                 self.logger.warning(f"AI Handler : Unknown reason for LLM query: {self.reason}")
                 return ChatDetails.prompt
 
-            self.logger.debug("AI Handler : Calling {}")
-            if ChatDetails.config.model.lower() == "cloud" or "gpt" in ChatDetails.config.model.lower() or "poe" in ChatDetails.config.model.lower():
+            self.logger.debug("AI Handler : Calling model")
+            model_str = str(getattr(ChatDetails.config, 'model', 'llama3.2')).lower()
+            if model_str == "cloud" or "gpt" in model_str or "poe" in model_str:
                 self.logger.debug(f"AIHandler : Using cloud AI for query {self.reason}.")
                 optimized_query = await ApiClient(logger=self.logger).api_call(ChatDetails)
                 self.logger.debug(f"AIHandler : Optimized Query: {optimized_query}")
                 return optimized_query
-            elif ChatDetails.config.model.lower() == "local" or "llama" in ChatDetails.config.model.lower():
-                pass
             else:
-                self.logger.warning(f"AIHandler : Unknown model specified: {ChatDetails.model}. Defaulting to cloud AI.")
-
-            self.logger.debug(f"AIHandler : Using local AI for query {self.reason}.")
-            optimized_query = await OllamaClient(logger = self.logger,ChatDetails = ChatDetails).query_ollama()
-            self.logger.debug(f"AIHandler : Optimized Query: {optimized_query}")
-            return optimized_query
+                self.logger.debug(f"AIHandler : Using local AI ({model_str}) for query {self.reason}.")
+                optimized_query = await OllamaClient(logger=self.logger, ChatDetails=ChatDetails).query_ollama()
+                self.logger.debug(f"AIHandler : Optimized Query: {optimized_query}")
+                return optimized_query
         except Exception as e:
             self.logger.error(f"AI Handler : Error in AI Handler: {e}")
             return ChatDetails.prompt

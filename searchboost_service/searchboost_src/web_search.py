@@ -46,6 +46,7 @@ class WebSearch:
     async def searxng_search(self):
 
         try:
+            self.params["q"] = self.query
             self.logger.debug(f"Web Search : params {self.params} ")
             async with httpx.AsyncClient() as client:
                 response = await client.get(f"{self.host}/search", params=self.params, timeout=10.0)

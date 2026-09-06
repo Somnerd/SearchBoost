@@ -138,6 +138,8 @@ class HistoryService:
                 stmt = stmt.where(ConversationTurn.session_id != exclude_session_id)
             
             stmt = stmt.where(ConversationTurn.embedding.isnot(None))
+            # Require minimum cosine similarity (distance < 0.4, where 0 is exact match)
+            stmt = stmt.where(ConversationTurn.embedding.cosine_distance(query_embedding) < 0.4)
             stmt = stmt.order_by(ConversationTurn.embedding.cosine_distance(query_embedding)).limit(limit)
 
             result = await self.session.execute(stmt)

@@ -86,6 +86,7 @@ class SearchBoostService:
         self.logger.info("SearchBoostService: Running service...")
 
         history_svc = None
+        semantic_injection = ""
         if db_session and self.session_id:
             from searchboost_src.ollama_client import OllamaClient
             ollama_client = OllamaClient(logger=self.logger, ChatDetails=self.chatdetails)
@@ -95,8 +96,6 @@ class SearchBoostService:
             
             context_svc = ContextService(history_svc, self.logger)
             semantic_injection = await context_svc.assemble_context(self.session_id, self.args.query)
-            if semantic_injection:
-                self.chatdetails.prompt = semantic_injection + self.chatdetails.prompt
 
         # Attempt Cache Hit
         cached_result = await self.cache_svc.get(self.args.query)
@@ -116,6 +115,8 @@ class SearchBoostService:
         if history_svc and self.session_id:
             await history_svc.save_turn(self.session_id, "user", self.args.query)
 
+        # Optimize solely the user's input query for clean web search keywords
+        self.chatdetails.prompt = self.args.query
         self.ai_handler = AIHandler(self.logger, reason="optimization")
         optimized_query = await self.ai_handler.query_LLM(self.chatdetails)
 
@@ -132,7 +133,10 @@ class SearchBoostService:
         self.web_search_instance.query = optimized_query
         web_search_results = await self.web_search_instance.searxng_search()
         
-        self.chatdetails.prompt = f"Using the following web search results, answer the question: {self.chatdetails.prompt}\n\nWeb Search Results:\n{web_search_results}"
+        question_text = f"Question: {self.args.query}"
+        if semantic_injection:
+            question_text = f"{semantic_injection}\n{question_text}"
+        self.chatdetails.prompt = f"Using the following web search results, answer the question:\n\n{question_text}\n\nWeb Search Results:\n{web_search_results}"
 
         self.ai_handler = AIHandler(self.logger, reason="research")
         final_response = await self.ai_handler.query_LLM(self.chatdetails)

@@ -21,7 +21,7 @@
 # ---------------------------------------------------------------------
 
 
-import asyncio, logging
+import asyncio, json, logging
 from arq.connections import RedisSettings
 from searchboost_src.configurator import get_configurator
 from searchboost_src.service import SearchBoostService
@@ -142,6 +142,13 @@ class Worker:
                 return result
             except Exception as e:
                 log.error(f"Task Failed | Error: {e}")
+                redis_pool = ctx.get('redis')
+                if redis_pool and ctx.get('job_id'):
+                    try:
+                        err_payload = json.dumps({"status": "failed", "error": str(e)})
+                        await redis_pool.setex(name=f"sb:result:{ctx.get('job_id')}", time=3600, value=err_payload)
+                    except Exception as redis_err:
+                        log.error(f"Failed to record failure state in Redis: {redis_err}")
                 raise e
             finally:
                 log.setLevel(logging.INFO)
