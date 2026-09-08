@@ -1,7 +1,7 @@
 # 🚀 SearchBoost: Autonomous Cognitive Search & Vector Grounding Engine
 
 [![SearchBoost CI](https://github.com/Somnerd/SearchBoost/actions/workflows/ci.yml/badge.svg)](https://github.com/Somnerd/SearchBoost/actions/workflows/ci.yml)
-[![Tests Passing](https://img.shields.io/badge/Tests-95%20Passing-success.svg)](scripts/ci_local.sh)
+[![Tests Passing](https://img.shields.io/badge/Tests-135%20Passing-success.svg)](scripts/ci_local.sh)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/Rust-2021_Axum_Tokio-orange.svg)](https://www.rust-lang.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4_Express-blue.svg)](https://www.typescriptlang.org/)
@@ -17,7 +17,7 @@
 
 ```mermaid
 flowchart TD
-    subgraph UI ["User Experience Tier (Port 8080)"]
+    subgraph UI ["User Experience Tier (Port 3000)"]
         React["React 19 + Vite SPA<br/>(Search, History, System Health, Admin)"]
     end
 
@@ -25,7 +25,7 @@ flowchart TD
         Node["TypeScript Express 5 API<br/>• JWT & Cookie Auth<br/>• IDOR Thread Validation<br/>• Prisma ORM"]
     end
 
-    subgraph Sidecar ["Resilience & Proxy Tier (Port 14141)"]
+    subgraph Sidecar ["Resilience & Proxy Tier (Port 14142)"]
         Warden["Rust Warden Sidecar (Axum 0.7)<br/>• Failsafe Circuit Breaker<br/>• Tower Governor Rate Limiter (25 rps / 100 burst)<br/>• Bollard Docker Log Observer<br/>• ARQ Pickle Serialization"]
     end
 
@@ -119,10 +119,10 @@ docker-compose up -d --build
 ```
 
 ### 2. Verify Services
-- **React Web Dashboard:** [http://localhost:8080](http://localhost:8080)
+- **React Web Dashboard:** [http://localhost:3000](http://localhost:3000)
 - **Node.js Express API:** [http://localhost:3001/health](http://localhost:3001/health)
-- **Rust Warden Relay:** [http://localhost:14141/health](http://localhost:14141/health)
-- **SearXNG Meta-Search:** [http://localhost:8888](http://localhost:8888)
+- **Rust Warden Relay:** [http://localhost:14142/health](http://localhost:14142/health)
+- **SearXNG Meta-Search:** [http://localhost:8080](http://localhost:8080)
 
 ### 3. Query via the Autonomous CLI
 ```bash
@@ -133,9 +133,9 @@ python3 searchboost_service/main.py --query "Latest advancements in autonomous A
 
 ## 🧪 Comprehensive Automated Test Verification
 
-SearchBoost maintains 100% test pass rates across all language and component tiers (**95 total automated tests**):
+SearchBoost maintains 100% test pass rates across all language and component tiers (**135 total automated tests**):
 
-### Rust Warden Test Suite (17 Tests)
+### Rust Warden Test Suite (18 Tests)
 ```bash
 cd searchboost_warden
 cargo fmt --check
@@ -144,25 +144,25 @@ cargo test --all-targets
 ```
 *Coverage: Circuit breaker failure threshold, half-open cooldown, thread-safe environment configuration overrides, SearchRequest serialization, and IDOR prefix validation.*
 
-### TypeScript Express API Test Suite (22 Tests)
+### TypeScript Express API Test Suite (25 Tests)
 ```bash
 cd searchboost_api
 npm test
 ```
 *Coverage: Health check failover, JWT auth validation, role-based access control (RBAC), self-deletion guards, search enqueuing, and cross-user IDOR rejection.*
 
-### React 19 UI Vitest Suite (45 Tests)
+### React 19 UI Vitest Suite (52 Tests)
 ```bash
 cd searchboost_ui
 npm test
 ```
 *Coverage: SearchBar input elasticity and keyboard shortcuts (Ctrl+Enter, Cmd+Enter), ResultDisplay streaming and error states, NavBar role-based rendering, ProtectedRoute and AdminRoute guards, SystemHealth service status monitoring, AdminUserTable two-step deletion confirmation and role promotions, Login and Register form validation and routing, and Search page model selection, thread history, polling, and semantic search.*
 
-### Python Worker & Handshake Test Suite (11 Tests)
+### Python Worker & Handshake Test Suite (40 Tests)
 ```bash
 PYTHONPATH=searchboost_service pytest searchboost_tests -v
 ```
-*Coverage: CLI argparser options and interactive fallback, timeout defense, and distributed handshake payload schemas (delegating PII shielding to IronWarden).*
+*Coverage: CLI argparser options, multi-mode RAG pipeline (Deep/Fast, Web/Local), Ollama client fallback, document chunking & ingester, and distributed handshake payload schemas.*
 
 ---
 

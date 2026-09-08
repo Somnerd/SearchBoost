@@ -79,4 +79,5 @@ Before any new features are added to the system, a robust baseline of automated 
 - **User Ownership**: The user owns the "Flow." Avoid taking over the project or making decisions that hide system behavior (like hardcoded IDs or silent defaults).
 
 ---
-*Created on 2026-03-15 by Antigravity (Assistant) as a binding agreement for all future sessions.*
+*Engineering Operations Protocol — SearchBoost System Architecture.*
+

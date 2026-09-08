@@ -59,4 +59,5 @@ Logs are the primary source of truth. Every request must be traceable from the R
 - **Regression Testing**: Fixes must be accompanied by a manual or automated test case in `MANUAL_TESTPLAN.md`.
 
 ---
-*Updated on 2026-03-28 by Antigravity (Assistant) following the Phase 6 Security Audit.*
+*Updated following the Phase 6 Security Audit.*
+
