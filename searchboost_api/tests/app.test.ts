@@ -24,6 +24,10 @@ jest.mock('../src/db/prisma', () => ({
     thread: {
       upsert: jest.fn(),
       findMany: jest.fn()
+    },
+    internalDocument: {
+      findMany: jest.fn(),
+      count: jest.fn()
     }
   }
 }));
@@ -335,6 +339,26 @@ describe('API Integration & Route Tests', () => {
       expect(Array.isArray(res.body)).toBe(true);
       expect(res.body[0].thread_id).toBe('sess-001');
       expect(res.body[1].thread_id).toBe('sess-002');
+    });
+
+    it('GET /api/search/docs should reject unauthenticated requests with 401', async () => {
+      const res = await request(app).get('/api/search/docs');
+      expect(res.status).toBe(401);
+    });
+
+    it('GET /api/search/docs should return indexed documents summary when authenticated', async () => {
+      ((prisma as any).internalDocument.count as jest.Mock).mockResolvedValueOnce(2);
+      ((prisma as any).internalDocument.findMany as jest.Mock).mockResolvedValueOnce([
+        { sourceFile: 'docs/guide.md' }
+      ]);
+
+      const res = await request(app)
+        .get('/api/search/docs')
+        .set('Authorization', `Bearer ${normalUserToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.totalChunks).toBe(2);
+      expect(res.body.sources).toEqual(['docs/guide.md']);
     });
   });
 });

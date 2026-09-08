@@ -11,6 +11,7 @@ export default function Search() {
   const [sessions, setSessions] = useState([]);
   const [currentThreadId, setCurrentThreadId] = useState(() => Date.now().toString());
   const [researchMode, setResearchMode] = useState(true);
+  const [webSearch, setWebSearch] = useState(true);
   const [selectedModel, setSelectedModel] = useState('llama3.2:latest');
   const [availableModels, setAvailableModels] = useState(['llama3.2:latest', 'nomic-embed-text:latest', 'mistral:latest']);
   const [historySearchQuery, setHistorySearchQuery] = useState('');
@@ -126,7 +127,8 @@ export default function Search() {
       pending: true, 
       jobId: tempJobId,
       thread_id: searchThreadId,
-      researchMode: researchMode
+      researchMode: researchMode,
+      webSearch: webSearch
     }]);
 
     setSessions(prev => {
@@ -142,7 +144,8 @@ export default function Search() {
         thread_id: searchThreadId,
         model: selectedModel,
         options: {
-          research_mode: researchMode
+          research_mode: researchMode,
+          web_search: webSearch
         }
       });
       const jobId = res.data.id || res.data.job_id || res.data.job_id_used;
@@ -300,22 +303,34 @@ export default function Search() {
                                  : 'Synthesizing multi-source research...')}
                          </span>
                        </div>
-                       <span className={`status-badge ${item.researchMode === false ? 'fast' : 'deep'}`}>
-                         {item.researchMode === false ? '⚡ Fast Answer' : '🔬 Deep Research'}
-                       </span>
-                     </div>
-                   ) : (
-                     <div>
-                       {item.researchMode !== undefined && (
-                         <div style={{ marginBottom: '6px' }}>
-                           <span className={`status-badge ${item.researchMode === false ? 'fast' : 'deep'}`}>
-                             {item.researchMode === false ? '⚡ Fast Answer' : '🔬 Deep Research'}
-                           </span>
-                         </div>
-                       )}
-                       {item.result || 'No response received'}
-                     </div>
-                   )}
+                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                          <span className={`status-badge ${item.researchMode === false ? 'fast' : 'deep'}`}>
+                            {item.researchMode === false ? '⚡ Fast Answer' : '🔬 Deep Research'}
+                          </span>
+                          <span className={`status-badge ${item.webSearch === false ? 'offline' : 'web'}`}>
+                            {item.webSearch === false ? '🔌 Local Knowledge' : '🌐 Web Search'}
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        {(item.researchMode !== undefined || item.webSearch !== undefined) && (
+                          <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                            {item.researchMode !== undefined && (
+                              <span className={`status-badge ${item.researchMode === false ? 'fast' : 'deep'}`}>
+                                {item.researchMode === false ? '⚡ Fast Answer' : '🔬 Deep Research'}
+                              </span>
+                            )}
+                            {item.webSearch !== undefined && (
+                              <span className={`status-badge ${item.webSearch === false ? 'offline' : 'web'}`}>
+                                {item.webSearch === false ? '🔌 Local Knowledge' : '🌐 Web Search'}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        {item.result || 'No response received'}
+                      </div>
+                    )}
                 </div>
               ) : null}
             </React.Fragment>
@@ -327,26 +342,45 @@ export default function Search() {
         <div style={{ padding: '1.5rem', background: 'rgba(0,0,0,0.2)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
           <div style={{ maxWidth: '800px', margin: '0 auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-              {/* Research Mode Toggle */}
-              <div className="mode-toggle-container" role="radiogroup" aria-label="Research Mode">
-                <button
-                  type="button"
-                  className={`mode-toggle-btn ${researchMode ? 'active deep-mode' : ''}`}
-                  onClick={() => setResearchMode(true)}
-                  aria-checked={researchMode}
-                  role="radio"
-                >
-                  <span>🔬</span> Deep Research
-                </button>
-                <button
-                  type="button"
-                  className={`mode-toggle-btn ${!researchMode ? 'active fast-mode' : ''}`}
-                  onClick={() => setResearchMode(false)}
-                  aria-checked={!researchMode}
-                  role="radio"
-                >
-                  <span>⚡</span> Fast Answer
-                </button>
+              {/* Mode & Web Search Controls */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                {/* Research Mode Toggle */}
+                <div className="mode-toggle-container" role="radiogroup" aria-label="Research Mode">
+                  <button
+                    type="button"
+                    className={`mode-toggle-btn ${researchMode ? 'active deep-mode' : ''}`}
+                    onClick={() => setResearchMode(true)}
+                    aria-checked={researchMode}
+                    role="radio"
+                  >
+                    <span>🔬</span> Deep Research
+                  </button>
+                  <button
+                    type="button"
+                    className={`mode-toggle-btn ${!researchMode ? 'active fast-mode' : ''}`}
+                    onClick={() => setResearchMode(false)}
+                    aria-checked={!researchMode}
+                    role="radio"
+                  >
+                    <span>⚡</span> Fast Answer
+                  </button>
+                </div>
+
+                {/* Web Search Toggle (Issue #47) */}
+                <div className="mode-toggle-container" role="group" aria-label="Web Search Control">
+                  <button
+                    type="button"
+                    className={`mode-toggle-btn web-search-toggle ${webSearch ? 'active web-mode' : 'offline-mode'}`}
+                    onClick={() => setWebSearch(prev => !prev)}
+                    aria-checked={webSearch}
+                    aria-label="Web Search Mode"
+                    role="switch"
+                    title={webSearch ? "Live Web Search: Enabled" : "Offline / Local Knowledge Only"}
+                  >
+                    <span>{webSearch ? "🌐" : "🔌"}</span>
+                    {webSearch ? "Web Search: ON" : "Web Search: OFF"}
+                  </button>
+                </div>
               </div>
 
               {/* Model Selector */}

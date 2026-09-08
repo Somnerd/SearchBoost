@@ -105,21 +105,52 @@ class SearchBoostService:
         else:
             research_mode = bool(research_mode_raw) if research_mode_raw is not None else True
 
-        mode_str = "deep" if research_mode else "fast"
+        # Determine web search flag (Issue #47)
+        web_search_raw = getattr(self.args, 'web_search', True)
+        if isinstance(web_search_raw, str):
+            web_search = web_search_raw.strip().lower() not in ('false', '0', 'no', 'off')
+        else:
+            web_search = bool(web_search_raw) if web_search_raw is not None else True
+
+        mode_str = f"{'deep' if research_mode else 'fast'}:{'web' if web_search else 'local'}"
 
         history_svc = None
         semantic_injection = ""
-        if db_session and self.session_id:
+        internal_doc_context = ""
+        internal_docs_found = []
+
+        if db_session:
             from searchboost_src.ollama_client import OllamaClient
+            from searchboost_src.database import DocumentService
             ollama_client = OllamaClient(logger=self.logger, ChatDetails=self.chatdetails)
-            history_svc = HistoryService(db_session, self.logger, ollama_client=ollama_client)
-            
-            self.chatdetails.history = await history_svc.load_history(self.session_id)
-            
-            # Cross-thread semantic context is exclusively assembled for Deep Research
-            if research_mode:
-                context_svc = ContextService(history_svc, self.logger)
-                semantic_injection = await context_svc.assemble_context(self.session_id, self.args.query)
+
+            # 1. Multi-turn session history & cross-thread context
+            if self.session_id:
+                history_svc = HistoryService(db_session, self.logger, ollama_client=ollama_client)
+                self.chatdetails.history = await history_svc.load_history(self.session_id)
+                if research_mode:
+                    context_svc = ContextService(history_svc, self.logger)
+                    semantic_injection = await context_svc.assemble_context(self.session_id, self.args.query)
+
+            # 2. Vector search over indexed internal documents / local files
+            doc_svc = DocumentService(db_session, self.logger, ollama_client=ollama_client)
+            try:
+                internal_docs_found = await doc_svc.search_documents(self.args.query, limit=4, distance_threshold=0.55)
+                if internal_docs_found:
+                    doc_snippets = []
+                    for d in internal_docs_found:
+                        source = d.get('source_file', 'unknown')
+                        chunk_idx = d.get('chunk_index', 0)
+                        content = d.get('content', '')
+                        doc_snippets.append(f"[Document: {source} (Chunk {chunk_idx})]\n{content}")
+                    internal_doc_context = (
+                        "--- INTERNAL DOCUMENT KNOWLEDGE ---\n"
+                        + "\n\n".join(doc_snippets)
+                        + "\n-----------------------------------"
+                    )
+                    self.logger.info(f"SearchBoostService: Retrieved {len(internal_docs_found)} relevant internal document chunks.")
+            except Exception as doc_err:
+                self.logger.warning(f"SearchBoostService: Vector document search error: {doc_err}")
 
         # Attempt Cache Hit (mode-scoped)
         cached_result = await self.cache_svc.get(self.args.query, mode=mode_str)
@@ -138,6 +169,47 @@ class SearchBoostService:
         if history_svc and self.session_id:
             await history_svc.save_turn(self.session_id, "user", self.args.query)
 
+        # ── OFFLINE / LOCAL VECTOR KNOWLEDGE MODE (web_search = False) ───────
+        if not web_search:
+            self.logger.info("SearchBoostService: Web Search disabled (Issue #47). Operating in Offline/Local Vector Knowledge mode.")
+            is_greeting = self.args.query.lower().strip().rstrip('.!?') in {
+                "hi", "hello", "hey", "greetings", "good morning", "good evening", "how are you", "who are you"
+            }
+            if is_greeting:
+                self.chatdetails.prompt = self.args.query
+                self.ai_handler = AIHandler(self.logger, reason="conversation")
+                final_response = await self.ai_handler.query_LLM(self.chatdetails)
+            else:
+                context_blocks = []
+                if semantic_injection:
+                    context_blocks.append(semantic_injection)
+                if internal_doc_context:
+                    context_blocks.append(internal_doc_context)
+
+                if context_blocks:
+                    joined_context = "\n\n".join(context_blocks)
+                    self.chatdetails.prompt = (
+                        f"Answer the user's question using the internal knowledge and context provided below.\n\n"
+                        f"Question: {self.args.query}\n\n"
+                        f"{joined_context}\n\n"
+                        "Provide a direct and accurate response based on the above internal sources. Cite document filenames when relevant."
+                    )
+                else:
+                    self.chatdetails.prompt = (
+                        f"Question: {self.args.query}\n\n"
+                        "Note: Live web search is disabled. Answer concisely using your parametric knowledge."
+                    )
+
+                self.ai_handler = AIHandler(self.logger, reason="offline_vector" if internal_doc_context else ("research" if research_mode else "fast_answer"))
+                final_response = await self.ai_handler.query_LLM(self.chatdetails)
+
+            if history_svc and self.session_id:
+                await history_svc.save_turn(self.session_id, "assistant", final_response)
+
+            await self.cache_svc.set(self.args.query, final_response, cache_eligible=True, mode=mode_str)
+            return final_response
+
+        # ── ONLINE SEARCH PIPELINE (web_search = True) ─────────────────────────
         if not research_mode:
             self.logger.info("SearchBoostService: Fast Answer mode active (bypassing query optimization)")
             is_greeting = self.args.query.lower().strip().rstrip('.!?') in {
@@ -152,10 +224,15 @@ class SearchBoostService:
                 self.web_search_instance.query = self.args.query
                 web_search_results = await self.web_search_instance.searxng_search()
 
+                context_blocks = []
+                if internal_doc_context:
+                    context_blocks.append(internal_doc_context)
+                context_blocks.append(f"Context:\n{web_search_results}")
+
                 self.chatdetails.prompt = (
                     f"Question: {self.args.query}\n\n"
-                    f"Context:\n{web_search_results}\n\n"
-                    "Provide a concise, direct answer based on the context."
+                    + "\n\n".join(context_blocks)
+                    + "\n\nProvide a concise, direct answer based on the context."
                 )
                 self.ai_handler = AIHandler(self.logger, reason="fast_answer")
                 final_response = await self.ai_handler.query_LLM(self.chatdetails)
@@ -166,13 +243,13 @@ class SearchBoostService:
             await self.cache_svc.set(self.args.query, final_response, cache_eligible=True, mode=mode_str)
             return final_response
 
-        # Deep Research Mode: Full multi-step cognitive pipeline
+        # Deep Research Mode: Full multi-step cognitive pipeline + optional internal document synthesis
         # Optimize solely the user's input query for clean web search keywords
         self.chatdetails.prompt = self.args.query
         self.ai_handler = AIHandler(self.logger, reason="optimization")
         optimized_query = await self.ai_handler.query_LLM(self.chatdetails)
 
-        post_opt_cache = await self.cache_svc.get(optimized_query, mode="deep")
+        post_opt_cache = await self.cache_svc.get(optimized_query, mode=mode_str)
         if post_opt_cache:
             self.logger.info("--- CACHE HIT (POST-OPTIMIZATION) ---")
             if history_svc and self.session_id:
@@ -188,7 +265,17 @@ class SearchBoostService:
         question_text = f"Question: {self.args.query}"
         if semantic_injection:
             question_text = f"{semantic_injection}\n{question_text}"
-        self.chatdetails.prompt = f"Using the following web search results, answer the question:\n\n{question_text}\n\nWeb Search Results:\n{web_search_results}"
+
+        context_blocks = []
+        if internal_doc_context:
+            context_blocks.append(internal_doc_context)
+        context_blocks.append(f"Web Search Results:\n{web_search_results}")
+
+        self.chatdetails.prompt = (
+            f"Using the following sources, answer the question:\n\n"
+            f"{question_text}\n\n"
+            + "\n\n".join(context_blocks)
+        )
 
         self.ai_handler = AIHandler(self.logger, reason="research")
         final_response = await self.ai_handler.query_LLM(self.chatdetails)
@@ -196,10 +283,10 @@ class SearchBoostService:
         if history_svc and self.session_id:
             await history_svc.save_turn(self.session_id, "assistant", final_response)
 
-        # Caching: PII protection and scrub invariant are delegated to IronWarden at ingress
-        await self.cache_svc.set(self.args.query, final_response, cache_eligible=True, mode="deep")
+        # Caching
+        await self.cache_svc.set(self.args.query, final_response, cache_eligible=True, mode=mode_str)
         if self.args.query != optimized_query:
-            await self.cache_svc.set(optimized_query, final_response, cache_eligible=True, mode="deep")
+            await self.cache_svc.set(optimized_query, final_response, cache_eligible=True, mode=mode_str)
 
         return final_response
 

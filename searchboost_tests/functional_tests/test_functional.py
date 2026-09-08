@@ -333,3 +333,172 @@ async def test_searchboost_service_fast_answer_greeting():
     assert mock_web_search.call_count == 0
     assert reasons_called == ["conversation"]
 
+
+# =====================================================================
+# Web Search Toggle & Offline Mode Functional Tests (Issue #47)
+# =====================================================================
+
+@pytest.mark.asyncio
+async def test_argparser_web_search_options(monkeypatch):
+    """Verify --web-search CLI option toggles boolean accurately."""
+    monkeypatch.setattr(sys, "argv", ["main.py", "-q", "offline test", "--web-search", "false"])
+    parser_instance = Argsparser_Instance()
+    args = await parser_instance.parse_arguments()
+    assert args.web_search is False
+
+    monkeypatch.setattr(sys, "argv", ["main.py", "-q", "online test", "--web_search", "true"])
+    parser_instance2 = Argsparser_Instance()
+    args2 = await parser_instance2.parse_arguments()
+    assert args2.web_search is True
+
+
+@pytest.mark.asyncio
+async def test_submit_to_warden_forwards_web_search():
+    """Verify submit_to_warden forwards web_search toggle in options payload."""
+    logger_mock = MagicMock()
+    args_mock = MagicMock()
+    args_mock.query = "offline query"
+    args_mock.username = "offline_user"
+    args_mock.thread_id = "thread-offline"
+    args_mock.model = "llama3.2"
+    args_mock.research_mode = True
+    args_mock.web_search = False
+
+    with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"id": "job-offline-123"}
+        mock_post.return_value = mock_response
+
+        job_id = await submit_to_warden(
+            logger=logger_mock,
+            query="offline query",
+            args=args_mock,
+            warden_url="http://warden:14141/enqueue"
+        )
+
+        assert job_id == "job-offline-123"
+        sent_payload = mock_post.call_args[1]["json"]
+        assert sent_payload["options"]["web_search"] is False
+
+
+@pytest.mark.asyncio
+async def test_searchboost_service_offline_mode_bypasses_searxng():
+    """Verify offline mode (web_search=False) completely bypasses SearXNG and uses local docs."""
+    from searchboost_src.service import SearchBoostService
+    from searchboost_src.logger import setup_logger
+
+    mock_cfg = MagicMock()
+    mock_cfg.model = "llama3.2"
+    mock_cfg.base_url = "http://localhost:11434"
+    mock_cfg.role = "user"
+    mock_cfg.format = "json"
+    mock_cfg.language = "en"
+    mock_cfg.safe_search = 1
+    mock_cfg.engine = "searxng"
+    mock_cfg.num_results = 5
+    mock_cfg.region = "all"
+
+    args = MagicMock()
+    args.query = "Tell me about internal architecture"
+    args.research_mode = False
+    args.web_search = False
+
+    service = SearchBoostService(
+        ai=mock_cfg,
+        search=mock_cfg,
+        redis=MagicMock(),
+        db=MagicMock(),
+        logger=setup_logger("DEBUG"),
+        args=args
+    )
+
+    reasons_called = []
+    prompts_called = []
+    async def mock_query_llm(self_handler, chatdetails):
+        reasons_called.append(self_handler.reason)
+        prompts_called.append(chatdetails.prompt)
+        return "Internal documentation answer"
+
+    with patch("searchboost_src.service.CacheService.get", new_callable=AsyncMock) as mock_cache_get, \
+         patch("searchboost_src.service.CacheService.set", new_callable=AsyncMock) as mock_cache_set, \
+         patch("searchboost_src.web_search.WebSearch.searxng_search", new_callable=AsyncMock) as mock_web_search, \
+         patch("searchboost_src.database.DocumentService.search_documents", new_callable=AsyncMock) as mock_doc_search, \
+         patch("searchboost_src.ai_handler.AIHandler.query_LLM", new=mock_query_llm):
+
+        mock_cache_get.return_value = None
+        mock_doc_search.return_value = [
+            {"source_file": "docs/arch.md", "content": "Antigravity core engine operates locally."}
+        ]
+
+        mock_db_session = AsyncMock()
+        result = await service.run(db_session=mock_db_session)
+
+    assert result == "Internal documentation answer"
+    # CRITICAL: SearXNG must NOT be invoked in offline mode
+    assert mock_web_search.call_count == 0
+    # DocumentService should be consulted
+    assert mock_doc_search.call_count == 1
+    # Cache mode must reflect local mode
+    assert mock_cache_set.called
+    assert ":local" in mock_cache_set.call_args.kwargs.get("mode", "")
+    # Internal docs should be in the LLM prompt
+    assert any("INTERNAL DOCUMENT KNOWLEDGE" in p for p in prompts_called)
+
+
+@pytest.mark.asyncio
+async def test_searchboost_service_hybrid_mode_with_web_search():
+    """Verify hybrid mode (web_search=True) queries both SearXNG and local docs."""
+    from searchboost_src.service import SearchBoostService
+    from searchboost_src.logger import setup_logger
+
+    mock_cfg = MagicMock()
+    mock_cfg.model = "llama3.2"
+    mock_cfg.base_url = "http://localhost:11434"
+    mock_cfg.role = "user"
+    mock_cfg.format = "json"
+    mock_cfg.language = "en"
+    mock_cfg.safe_search = 1
+    mock_cfg.engine = "searxng"
+    mock_cfg.num_results = 5
+    mock_cfg.region = "all"
+
+    args = MagicMock()
+    args.query = "Compare local and web search"
+    args.research_mode = False
+    args.web_search = True
+
+    service = SearchBoostService(
+        ai=mock_cfg,
+        search=mock_cfg,
+        redis=MagicMock(),
+        db=MagicMock(),
+        logger=setup_logger("DEBUG"),
+        args=args
+    )
+
+    async def mock_query_llm(self_handler, chatdetails):
+        return "Hybrid synthesized answer"
+
+    with patch("searchboost_src.service.CacheService.get", new_callable=AsyncMock) as mock_cache_get, \
+         patch("searchboost_src.service.CacheService.set", new_callable=AsyncMock) as mock_cache_set, \
+         patch("searchboost_src.web_search.WebSearch.searxng_search", new_callable=AsyncMock) as mock_web_search, \
+         patch("searchboost_src.database.DocumentService.search_documents", new_callable=AsyncMock) as mock_doc_search, \
+         patch("searchboost_src.ai_handler.AIHandler.query_LLM", new=mock_query_llm):
+
+        mock_cache_get.return_value = None
+        mock_web_search.return_value = "Web search snippets"
+        mock_doc_search.return_value = [
+            {"source_file": "docs/hybrid.md", "content": "Local knowledge chunk."}
+        ]
+
+        mock_db_session = AsyncMock()
+        result = await service.run(db_session=mock_db_session)
+
+    assert result == "Hybrid synthesized answer"
+    assert mock_web_search.call_count == 1
+    assert mock_doc_search.call_count == 1
+    assert mock_cache_set.called
+    assert ":web" in mock_cache_set.call_args.kwargs.get("mode", "")
+
+

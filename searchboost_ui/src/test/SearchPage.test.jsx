@@ -235,9 +235,9 @@ describe('Search Page Component', () => {
     await waitFor(() => {
       expect(client.post).toHaveBeenCalledWith('/search/enqueue', expect.objectContaining({
         query: 'Fast search question',
-        options: {
+        options: expect.objectContaining({
           research_mode: false,
-        },
+        }),
       }));
     });
 
@@ -245,5 +245,69 @@ describe('Search Page Component', () => {
     expect(screen.getByText('⚡ Fast Answer')).toBeInTheDocument();
     expect(screen.getByText('Generating fast answer...')).toBeInTheDocument();
   });
+
+  it('renders web search toggle with default Web Search: ON active', async () => {
+    render(<Search />);
+
+    const webBtn = screen.getByRole('switch', { name: /Web Search Mode/i });
+    expect(webBtn).toBeInTheDocument();
+    expect(webBtn).toHaveAttribute('aria-checked', 'true');
+    expect(webBtn).toHaveTextContent(/Web Search: ON/i);
+    expect(webBtn).toHaveClass('active');
+  });
+
+  it('toggles web search between ON and OFF', async () => {
+    render(<Search />);
+
+    const webBtn = screen.getByRole('switch', { name: /Web Search Mode/i });
+    expect(webBtn).toHaveAttribute('aria-checked', 'true');
+
+    // Click to toggle OFF
+    fireEvent.click(webBtn);
+    expect(webBtn).toHaveAttribute('aria-checked', 'false');
+    expect(webBtn).toHaveTextContent(/Web Search: OFF/i);
+    expect(webBtn).toHaveClass('offline-mode');
+
+    // Click to toggle ON
+    fireEvent.click(webBtn);
+    expect(webBtn).toHaveAttribute('aria-checked', 'true');
+    expect(webBtn).toHaveTextContent(/Web Search: ON/i);
+    expect(webBtn).toHaveClass('web-mode');
+  });
+
+  it('enqueues with options.web_search = false when Web Search is turned OFF', async () => {
+    vi.spyOn(client, 'post').mockImplementation((url) => {
+      if (url === '/search/enqueue') {
+        return Promise.resolve({
+          data: { id: 'SB-SESSION:operator:thread_offline:uuid-offline-1', status: 'queued' },
+        });
+      }
+      return Promise.reject(new Error('not found'));
+    });
+
+    render(<Search />);
+
+    const webBtn = screen.getByRole('switch', { name: /Web Search Mode/i });
+    fireEvent.click(webBtn); // Turn OFF
+
+    const textarea = screen.getByPlaceholderText(/Ask anything.../i);
+    const submitBtn = screen.getByTitle('Submit');
+
+    fireEvent.change(textarea, { target: { value: 'Offline local search question' } });
+    fireEvent.click(submitBtn);
+
+    await waitFor(() => {
+      expect(client.post).toHaveBeenCalledWith('/search/enqueue', expect.objectContaining({
+        query: 'Offline local search question',
+        options: {
+          research_mode: true,
+          web_search: false,
+        },
+      }));
+    });
+
+    expect(screen.getByText('🔌 Local Knowledge')).toBeInTheDocument();
+  });
 });
+
 

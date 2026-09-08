@@ -42,3 +42,15 @@ class ConversationTurn(Base):
     content    = Column(Text,   nullable=False)
     embedding  = Column(Vector(768))                          # nomic-embed-text size
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class InternalDocument(Base):
+    __tablename__ = "internal_documents"
+
+    id           = Column(Integer, primary_key=True, autoincrement=True)
+    source_file  = Column(String, nullable=False, index=True)
+    content      = Column(Text, nullable=False)
+    chunk_index  = Column(Integer, default=0)
+    total_chunks = Column(Integer, default=1)
+    metadata_json= Column(Text, nullable=True)
+    embedding    = Column(Vector(768))                          # nomic-embed-text size
+    created_at   = Column(DateTime, default=datetime.utcnow)
