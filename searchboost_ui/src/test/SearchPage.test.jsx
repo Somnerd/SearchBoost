@@ -175,4 +175,75 @@ describe('Search Page Component', () => {
       expect(screen.queryByText('initial historical query')).not.toBeInTheDocument();
     });
   });
+
+  it('renders research mode toggle with default Deep Research active', async () => {
+    render(<Search />);
+
+    const deepBtn = screen.getByRole('radio', { name: /Deep Research/i });
+    const fastBtn = screen.getByRole('radio', { name: /Fast Answer/i });
+
+    expect(deepBtn).toBeInTheDocument();
+    expect(fastBtn).toBeInTheDocument();
+    expect(deepBtn).toHaveAttribute('aria-checked', 'true');
+    expect(fastBtn).toHaveAttribute('aria-checked', 'false');
+    expect(deepBtn).toHaveClass('active');
+  });
+
+  it('toggles between Deep Research and Fast Answer mode', async () => {
+    render(<Search />);
+
+    const deepBtn = screen.getByRole('radio', { name: /Deep Research/i });
+    const fastBtn = screen.getByRole('radio', { name: /Fast Answer/i });
+
+    expect(deepBtn).toHaveAttribute('aria-checked', 'true');
+
+    // Toggle to Fast Answer
+    fireEvent.click(fastBtn);
+    expect(fastBtn).toHaveAttribute('aria-checked', 'true');
+    expect(fastBtn).toHaveClass('active');
+    expect(deepBtn).toHaveAttribute('aria-checked', 'false');
+
+    // Toggle back to Deep Research
+    fireEvent.click(deepBtn);
+    expect(deepBtn).toHaveAttribute('aria-checked', 'true');
+    expect(deepBtn).toHaveClass('active');
+    expect(fastBtn).toHaveAttribute('aria-checked', 'false');
+  });
+
+  it('enqueues with options.research_mode = false when Fast Answer is selected', async () => {
+    vi.spyOn(client, 'post').mockImplementation((url) => {
+      if (url === '/search/enqueue') {
+        return Promise.resolve({
+          data: { id: 'SB-SESSION:operator:thread_fast:uuid-fast-1', status: 'queued' },
+        });
+      }
+      return Promise.reject(new Error('not found'));
+    });
+
+    render(<Search />);
+
+    // Switch to Fast Answer
+    const fastBtn = screen.getByRole('radio', { name: /Fast Answer/i });
+    fireEvent.click(fastBtn);
+
+    const textarea = screen.getByPlaceholderText(/Ask anything.../i);
+    const submitBtn = screen.getByTitle('Submit');
+
+    fireEvent.change(textarea, { target: { value: 'Fast search question' } });
+    fireEvent.click(submitBtn);
+
+    await waitFor(() => {
+      expect(client.post).toHaveBeenCalledWith('/search/enqueue', expect.objectContaining({
+        query: 'Fast search question',
+        options: {
+          research_mode: false,
+        },
+      }));
+    });
+
+    // Check status badge for Fast Answer
+    expect(screen.getByText('⚡ Fast Answer')).toBeInTheDocument();
+    expect(screen.getByText('Generating fast answer...')).toBeInTheDocument();
+  });
 });
+

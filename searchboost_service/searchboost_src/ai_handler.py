@@ -44,7 +44,10 @@ class AIHandler:
             "answer the user's question accurately. If the answer isn't in the context, "
             "say so. Cite your sources using [Source Title](URL)."
         )
-        pass
+
+        self.fast_answer_system_instruction = (
+            "You are a helpful and concise AI assistant. Provide a direct, clear, and concise answer to the user."
+        )
 
     async def query_LLM(self, ChatDetails):
         try:
@@ -53,9 +56,11 @@ class AIHandler:
                 ChatDetails.system_prompt = self.query_optimization_prompt
             elif self.reason == "research":
                 ChatDetails.system_prompt = self.query_system_instruction
+            elif self.reason in ("fast_answer", "conversation"):
+                ChatDetails.system_prompt = self.fast_answer_system_instruction
             else:
                 self.logger.warning(f"AI Handler : Unknown reason for LLM query: {self.reason}")
-                return ChatDetails.prompt
+                ChatDetails.system_prompt = self.fast_answer_system_instruction
 
             self.logger.debug("AI Handler : Calling model")
             model_str = str(getattr(ChatDetails.config, 'model', 'llama3.2')).lower()
@@ -71,4 +76,4 @@ class AIHandler:
                 return optimized_query
         except Exception as e:
             self.logger.error(f"AI Handler : Error in AI Handler: {e}")
-            return ChatDetails.prompt
+            return f"Error: Unable to generate response with the model: {e}"

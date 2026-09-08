@@ -148,3 +148,188 @@ async def test_submit_to_warden_fallback_defaults():
     assert job_id == "SB-SESSION:default_user:default:uuid-5678"
     assert captured_payload["thread_id"] == "default"
     assert captured_payload["username"] == "default_user"
+
+
+@pytest.mark.asyncio
+async def test_submit_to_warden_forwards_research_mode():
+    """Verify submit_to_warden forwards research_mode flag in options."""
+    logger_mock = MagicMock()
+    args_mock = MagicMock()
+    args_mock.query = "quantum computing"
+    args_mock.username = "researcher"
+    args_mock.thread_id = "thread-q"
+    args_mock.research_mode = False
+
+    captured_payload = None
+
+    class MockResponse:
+        status_code = 200
+        def json(self):
+            return {"status": "queued", "id": "SB-SESSION:researcher:thread-q:uuid-999"}
+
+    async def mock_post(self, url, json=None, **kwargs):
+        nonlocal captured_payload
+        captured_payload = json
+        return MockResponse()
+
+    with patch("httpx.AsyncClient.post", new=mock_post):
+        job_id = await submit_to_warden(logger_mock, "quantum computing", args_mock, "http://sb_warden:14141/enqueue")
+
+    assert job_id == "SB-SESSION:researcher:thread-q:uuid-999"
+    assert "options" in captured_payload
+    assert captured_payload["options"].get("research_mode") is False
+
+
+# =====================================================================
+# SearchBoostService Research Mode Pipeline Tests
+# =====================================================================
+
+@pytest.mark.asyncio
+async def test_searchboost_service_research_mode_enabled():
+    """Verify research_mode=True executes full multi-step pipeline (optimization + research)."""
+    from searchboost_src.service import SearchBoostService
+    from searchboost_src.logger import setup_logger
+
+    mock_cfg = MagicMock()
+    mock_cfg.model = "llama3.2"
+    mock_cfg.base_url = "http://localhost:11434"
+    mock_cfg.role = "user"
+    mock_cfg.format = "json"
+    mock_cfg.language = "en"
+    mock_cfg.safe_search = 1
+    mock_cfg.engine = "searxng"
+    mock_cfg.num_results = 5
+    mock_cfg.region = "all"
+
+    args = MagicMock()
+    args.query = "What is Rust ownership?"
+    args.research_mode = True
+
+    service = SearchBoostService(
+        ai=mock_cfg,
+        search=mock_cfg,
+        redis=MagicMock(),
+        db=MagicMock(),
+        logger=setup_logger("DEBUG"),
+        args=args
+    )
+
+    reasons_called = []
+    async def mock_query_llm(self_handler, chatdetails):
+        reasons_called.append(self_handler.reason)
+        return f"result for {self_handler.reason}"
+
+    with patch("searchboost_src.service.CacheService.get", new_callable=AsyncMock) as mock_cache_get, \
+         patch("searchboost_src.service.CacheService.set", new_callable=AsyncMock), \
+         patch("searchboost_src.web_search.WebSearch.searxng_search", new_callable=AsyncMock) as mock_web_search, \
+         patch("searchboost_src.ai_handler.AIHandler.query_LLM", new=mock_query_llm):
+        
+        mock_cache_get.return_value = None
+        mock_web_search.return_value = "Rust ownership documentation snippets"
+
+        result = await service.run(db_session=None)
+
+    assert result == "result for research"
+    assert "optimization" in reasons_called
+    assert "research" in reasons_called
+    assert reasons_called == ["optimization", "research"]
+
+
+@pytest.mark.asyncio
+async def test_searchboost_service_research_mode_disabled_fast_answer():
+    """Verify research_mode=False bypasses query optimization and runs fast direct answer."""
+    from searchboost_src.service import SearchBoostService
+    from searchboost_src.logger import setup_logger
+
+    mock_cfg = MagicMock()
+    mock_cfg.model = "llama3.2"
+    mock_cfg.base_url = "http://localhost:11434"
+    mock_cfg.role = "user"
+    mock_cfg.format = "json"
+    mock_cfg.language = "en"
+    mock_cfg.safe_search = 1
+    mock_cfg.engine = "searxng"
+    mock_cfg.num_results = 5
+    mock_cfg.region = "all"
+
+    args = MagicMock()
+    args.query = "Fast answer query"
+    args.research_mode = False
+
+    service = SearchBoostService(
+        ai=mock_cfg,
+        search=mock_cfg,
+        redis=MagicMock(),
+        db=MagicMock(),
+        logger=setup_logger("DEBUG"),
+        args=args
+    )
+
+    reasons_called = []
+    async def mock_query_llm(self_handler, chatdetails):
+        reasons_called.append(self_handler.reason)
+        return f"fast answer result"
+
+    with patch("searchboost_src.service.CacheService.get", new_callable=AsyncMock) as mock_cache_get, \
+         patch("searchboost_src.service.CacheService.set", new_callable=AsyncMock), \
+         patch("searchboost_src.web_search.WebSearch.searxng_search", new_callable=AsyncMock) as mock_web_search, \
+         patch("searchboost_src.ai_handler.AIHandler.query_LLM", new=mock_query_llm):
+        
+        mock_cache_get.return_value = None
+        mock_web_search.return_value = "SearXNG direct snippets"
+
+        result = await service.run(db_session=None)
+
+    assert result == "fast answer result"
+    assert "optimization" not in reasons_called
+    assert reasons_called == ["fast_answer"]
+
+
+@pytest.mark.asyncio
+async def test_searchboost_service_fast_answer_greeting():
+    """Verify greeting in fast answer mode directly answers conversationally without web search."""
+    from searchboost_src.service import SearchBoostService
+    from searchboost_src.logger import setup_logger
+
+    mock_cfg = MagicMock()
+    mock_cfg.model = "llama3.2"
+    mock_cfg.base_url = "http://localhost:11434"
+    mock_cfg.role = "user"
+    mock_cfg.format = "json"
+    mock_cfg.language = "en"
+    mock_cfg.safe_search = 1
+    mock_cfg.engine = "searxng"
+    mock_cfg.num_results = 5
+    mock_cfg.region = "all"
+
+    args = MagicMock()
+    args.query = "hi"
+    args.research_mode = False
+
+    service = SearchBoostService(
+        ai=mock_cfg,
+        search=mock_cfg,
+        redis=MagicMock(),
+        db=MagicMock(),
+        logger=setup_logger("DEBUG"),
+        args=args
+    )
+
+    reasons_called = []
+    async def mock_query_llm(self_handler, chatdetails):
+        reasons_called.append(self_handler.reason)
+        return "Hello! How can I help you today?"
+
+    with patch("searchboost_src.service.CacheService.get", new_callable=AsyncMock) as mock_cache_get, \
+         patch("searchboost_src.service.CacheService.set", new_callable=AsyncMock), \
+         patch("searchboost_src.web_search.WebSearch.searxng_search", new_callable=AsyncMock) as mock_web_search, \
+         patch("searchboost_src.ai_handler.AIHandler.query_LLM", new=mock_query_llm):
+        
+        mock_cache_get.return_value = None
+
+        result = await service.run(db_session=None)
+
+    assert result == "Hello! How can I help you today?"
+    assert mock_web_search.call_count == 0
+    assert reasons_called == ["conversation"]
+

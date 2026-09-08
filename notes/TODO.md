@@ -19,6 +19,8 @@
 7.  **AI Orchestration Enhancements**: (Refining prompts and completion logic).
 8.  **Redis Sharding Visualizer**: (Internal tool to verify session-based sharding).
 9.  **Reddit Showcase Prep**: (Final cleanup for public announcement).
+10. **Research Mode Toggle UI Button** ([Issue #46](https://github.com/Somnerd/SearchBoost/issues/46)): Add interactive toggle for Deep Multi-Step Research vs Fast Direct Answers.
+11. **Web Search Toggle UI Button** ([Issue #47](https://github.com/Somnerd/SearchBoost/issues/47)): Add UI toggle to switch between Live SearXNG Web Retrieval and Pure Offline/Local LLM memory.
 
 ---
 *Created on 2026-03-15. Dedicated to the "None-of-the-above" promise of speed and stability.*

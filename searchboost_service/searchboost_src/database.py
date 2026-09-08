@@ -92,6 +92,19 @@ class HistoryService:
     async def save_turn(self, session_id: str, role: str, content: str):
         """Persist a single conversation turn (user or assistant) with optional vector embedding."""
         from searchboost_src.models import ConversationTurn
+        if not content:
+            return
+
+        # Prevent saving raw error outputs or leaked prompt templates into conversation history
+        if role == "assistant" and (
+            str(content).startswith("Error:")
+            or str(content).startswith("Using the following")
+            or str(content).startswith("REFERENCE ONLY")
+        ):
+            if self.logger:
+                self.logger.warning(f"HistoryService: Skipped saving invalid/corrupt '{role}' turn for session '{session_id}'")
+            return
+
         embedding = None
         if self.ollama_client:
             try:
@@ -148,6 +161,9 @@ class HistoryService:
             relevant_context = [
                 {"role": t.role, "content": t.content, "session_id": t.session_id} 
                 for t in turns
+                if not str(t.content).startswith("Using the following")
+                and not str(t.content).startswith("REFERENCE ONLY")
+                and not str(t.content).startswith("Error:")
             ]
             
             if self.logger:
