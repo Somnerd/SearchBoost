@@ -90,6 +90,29 @@ class Argsparser_Instance:
             help="Conversation thread ID (default: default)"
         )
 
+        def str2bool(v):
+            if isinstance(v, bool):
+                return v
+            if v.lower() in ('yes', 'true', 't', 'y', '1'):
+                return True
+            elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+                return False
+            raise argparse.ArgumentTypeError('Boolean value expected.')
+
+        self.parser.add_argument(
+            "--research_mode", "--research-mode",
+            type=str2bool,
+            default=True,
+            help="Toggle deep research mode (default: True)"
+        )
+
+        self.parser.add_argument(
+            "--web_search", "--web-search",
+            type=str2bool,
+            default=True,
+            help="Toggle live web search (default: True). False activates offline local knowledge mode."
+        )
+
     async def parse_arguments(self, args=None):
         """
         Parses command-line arguments.

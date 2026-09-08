@@ -244,3 +244,34 @@ input:focus, textarea:focus {
   border: 1px solid rgba(234, 179, 8, 0.3);
 }
 
+.mode-toggle-btn.web-search-toggle {
+  border: 1px solid transparent;
+}
+
+.mode-toggle-btn.active.web-mode {
+  background: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.mode-toggle-btn.offline-mode {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.25);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.status-badge.web {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.status-badge.offline {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+

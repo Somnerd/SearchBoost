@@ -173,4 +173,22 @@ router.post('/history/search', verifyToken, async (req: Request, res: Response, 
   }
 });
 
+router.get('/docs', verifyToken, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const count = await prisma.internalDocument.count();
+    const distinctSources = await prisma.internalDocument.findMany({
+      distinct: ['sourceFile'],
+      select: { sourceFile: true }
+    });
+    res.json({
+      totalChunks: count,
+      sources: distinctSources.map(s => s.sourceFile)
+    });
+  } catch (err: any) {
+    console.error(`[API] Failed to fetch internal docs status: ${err.message}`);
+    res.status(500).json({ error: 'Failed to fetch document status' });
+  }
+});
+
 export default router;
+

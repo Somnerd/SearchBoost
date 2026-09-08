@@ -46,6 +46,8 @@ class DatabaseManager:
     async def init_db(self):
         """Creates tables if they don't exist."""
         async with self.engine.begin() as conn:
+            from sqlalchemy import text
+            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
             await conn.run_sync(Base.metadata.create_all)
 
     def get_session(self) -> AsyncSession:
@@ -172,4 +174,125 @@ class HistoryService:
         except Exception as e:
             if self.logger:
                 self.logger.error(f"HistoryService: Semantic search failed: {e}")
+            return []
+
+
+class DocumentService:
+    """Manages indexing, ingestion, and vector similarity search over internal documents in PostgreSQL."""
+
+    def __init__(self, session: AsyncSession, logger=None, ollama_client=None):
+        self.session = session
+        self.logger = logger
+        self.ollama_client = ollama_client
+
+    async def insert_chunk(
+        self,
+        source_file: str,
+        content: str,
+        embedding: list[float] = None,
+        chunk_index: int = 0,
+        total_chunks: int = 1,
+        metadata_json: str = None
+    ):
+        """Insert a document chunk with vector embedding."""
+        from searchboost_src.models import InternalDocument
+        if not content:
+            return None
+
+        if embedding is None and self.ollama_client:
+            try:
+                embedding = await self.ollama_client.get_embedding(content)
+            except Exception as e:
+                if self.logger:
+                    self.logger.warning(f"DocumentService: Failed to generate embedding for chunk: {e}")
+
+        try:
+            doc = InternalDocument(
+                source_file=source_file,
+                content=content,
+                chunk_index=chunk_index,
+                total_chunks=total_chunks,
+                metadata_json=metadata_json,
+                embedding=embedding
+            )
+            self.session.add(doc)
+            await self.session.commit()
+            return doc
+        except Exception:
+            await self.session.rollback()
+            raise
+
+    async def search_documents(self, query: str, limit: int = 5, distance_threshold: float = 0.45) -> list[dict]:
+        """Vector similarity search using cosine distance against indexed internal documents."""
+        from searchboost_src.models import InternalDocument
+        try:
+            if not self.ollama_client:
+                return []
+
+            query_embedding = await self.ollama_client.get_embedding(query)
+            if not query_embedding:
+                return []
+
+            stmt = select(InternalDocument).where(InternalDocument.embedding.isnot(None))
+            stmt = stmt.where(InternalDocument.embedding.cosine_distance(query_embedding) < distance_threshold)
+            stmt = stmt.order_by(InternalDocument.embedding.cosine_distance(query_embedding)).limit(limit)
+
+            result = await self.session.execute(stmt)
+            docs = result.scalars().all()
+
+            results = [
+                {
+                    "id": d.id,
+                    "source_file": d.source_file,
+                    "content": d.content,
+                    "chunk_index": d.chunk_index,
+                    "total_chunks": d.total_chunks,
+                    "metadata": d.metadata_json
+                }
+                for d in docs
+            ]
+            if self.logger:
+                self.logger.info(f"DocumentService: Found {len(results)} relevant document chunks for '{query}'")
+            return results
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"DocumentService: Vector search failed: {e}")
+            return []
+
+    async def delete_by_source(self, source_file: str) -> int:
+        """Deletes all chunks for a source file before re-indexing."""
+        from searchboost_src.models import InternalDocument
+        from sqlalchemy import delete
+        try:
+            stmt = delete(InternalDocument).where(InternalDocument.source_file == source_file)
+            result = await self.session.execute(stmt)
+            await self.session.commit()
+            return result.rowcount
+        except Exception:
+            await self.session.rollback()
+            raise
+
+    async def get_document_count(self) -> int:
+        """Return total count of indexed document chunks."""
+        from searchboost_src.models import InternalDocument
+        from sqlalchemy import func
+        try:
+            stmt = select(func.count(InternalDocument.id))
+            result = await self.session.execute(stmt)
+            return result.scalar() or 0
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"DocumentService: Failed to count documents: {e}")
+            return 0
+
+    async def list_sources(self) -> list[str]:
+        """Return distinct source files that have been indexed."""
+        from searchboost_src.models import InternalDocument
+        try:
+            stmt = select(InternalDocument.source_file).distinct()
+            result = await self.session.execute(stmt)
+            return [row[0] for row in result.all()]
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"DocumentService: Failed to list sources: {e}")
             return []

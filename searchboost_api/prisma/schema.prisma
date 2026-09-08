@@ -43,3 +43,18 @@ model ConversationTurn {
   @@index([sessionId], map: "idx_turns_session_id")
   @@map("conversation_turns")
 }
+
+model InternalDocument {
+  id           Int                         @id @default(autoincrement())
+  sourceFile   String                      @map("source_file") @db.VarChar(512)
+  content      String
+  chunkIndex   Int                         @default(0) @map("chunk_index")
+  totalChunks  Int                         @default(1) @map("total_chunks")
+  metadataJson String?                     @map("metadata_json")
+  embedding    Unsupported("vector(768)")?
+  createdAt    DateTime                    @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([sourceFile], map: "idx_internal_docs_source")
+  @@map("internal_documents")
+}
+
