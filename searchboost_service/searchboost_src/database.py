@@ -44,11 +44,37 @@ class DatabaseManager:
         )
 
     async def init_db(self):
-        """Creates tables if they don't exist."""
+        """Creates tables, pgvector HNSW indexes, and full-text search indexes."""
         async with self.engine.begin() as conn:
             from sqlalchemy import text
             await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
             await conn.run_sync(Base.metadata.create_all)
+
+            # HNSW Indexes for sub-millisecond approximate nearest neighbor search (Issue #51)
+            try:
+                await conn.execute(text("""
+                    CREATE INDEX IF NOT EXISTS idx_internal_docs_hnsw 
+                    ON internal_documents USING hnsw (embedding vector_cosine_ops);
+                """))
+            except Exception:
+                pass
+
+            try:
+                await conn.execute(text("""
+                    CREATE INDEX IF NOT EXISTS idx_turns_hnsw 
+                    ON conversation_turns USING hnsw (embedding vector_cosine_ops);
+                """))
+            except Exception:
+                pass
+
+            # GIN Index for hybrid full-text BM25 search (Issue #52)
+            try:
+                await conn.execute(text("""
+                    CREATE INDEX IF NOT EXISTS idx_internal_docs_fts 
+                    ON internal_documents USING gin (to_tsvector('english', content));
+                """))
+            except Exception:
+                pass
 
     def get_session(self) -> AsyncSession:
         return self.session_factory()
@@ -222,10 +248,26 @@ class DocumentService:
             await self.session.rollback()
             raise
 
-    async def search_documents(self, query: str, limit: int = 5, distance_threshold: float = 0.45) -> list[dict]:
-        """Vector similarity search using cosine distance against indexed internal documents."""
+    async def search_documents(
+        self,
+        query: str,
+        limit: int = 5,
+        distance_threshold: float = 0.45,
+        hybrid: bool = True,
+        rrf_k: int = 60
+    ) -> list[dict]:
+        """
+        Hybrid vector and full-text search using Reciprocal Rank Fusion (RRF).
+        - Dense Vector: Cosine distance (<=>) with HNSW index.
+        - Sparse Full-Text: PostgreSQL tsvector and plainto_tsquery.
+        - Fusion: RRF score = sum(1 / (k + rank_i)) across active modalities.
+        """
         from searchboost_src.models import InternalDocument
+        from sqlalchemy import func
         try:
+            if not query or not query.strip():
+                return []
+
             if not self.ollama_client:
                 return []
 
@@ -233,30 +275,96 @@ class DocumentService:
             if not query_embedding:
                 return []
 
+            # 1. Dense Vector Similarity Search
             stmt = select(InternalDocument).where(InternalDocument.embedding.isnot(None))
             stmt = stmt.where(InternalDocument.embedding.cosine_distance(query_embedding) < distance_threshold)
-            stmt = stmt.order_by(InternalDocument.embedding.cosine_distance(query_embedding)).limit(limit)
+            stmt = stmt.order_by(InternalDocument.embedding.cosine_distance(query_embedding)).limit(limit * 2)
 
             result = await self.session.execute(stmt)
-            docs = result.scalars().all()
+            vector_docs = result.scalars().all()
+
+            if not hybrid:
+                results = [
+                    {
+                        "id": d.id,
+                        "source_file": d.source_file,
+                        "content": d.content,
+                        "chunk_index": d.chunk_index,
+                        "total_chunks": d.total_chunks,
+                        "metadata": d.metadata_json,
+                        "score": 1.0,
+                        "match_type": "vector"
+                    }
+                    for d in vector_docs[:limit]
+                ]
+                return results
+
+            # 2. Sparse Full-Text Search (PostgreSQL tsvector / plainto_tsquery)
+            fts_docs = []
+            try:
+                clean_query = query.strip()
+                fts_stmt = (
+                    select(InternalDocument)
+                    .where(
+                        func.to_tsvector("english", InternalDocument.content).op("@@")(
+                            func.plainto_tsquery("english", clean_query)
+                        )
+                    )
+                    .order_by(
+                        func.ts_rank_cd(
+                            func.to_tsvector("english", InternalDocument.content),
+                            func.plainto_tsquery("english", clean_query)
+                        ).desc()
+                    )
+                    .limit(limit * 2)
+                )
+                fts_result = await self.session.execute(fts_stmt)
+                fts_docs = fts_result.scalars().all()
+            except Exception as e:
+                if self.logger:
+                    self.logger.warning(f"DocumentService: FTS search bypassed: {e}")
+                fts_docs = []
+
+            # 3. Reciprocal Rank Fusion (RRF)
+            # RRF(d) = sum(1 / (k + rank_i))
+            rrf_scores = {}
+            doc_map = {}
+            match_sources = {}
+
+            for rank, d in enumerate(vector_docs, start=1):
+                doc_map[d.id] = d
+                rrf_scores[d.id] = rrf_scores.get(d.id, 0.0) + (1.0 / (rrf_k + rank))
+                match_sources.setdefault(d.id, set()).add("vector")
+
+            for rank, d in enumerate(fts_docs, start=1):
+                doc_map[d.id] = d
+                rrf_scores[d.id] = rrf_scores.get(d.id, 0.0) + (1.0 / (rrf_k + rank))
+                match_sources.setdefault(d.id, set()).add("fts")
+
+            sorted_ids = sorted(rrf_scores.keys(), key=lambda did: rrf_scores[did], reverse=True)[:limit]
 
             results = [
                 {
-                    "id": d.id,
-                    "source_file": d.source_file,
-                    "content": d.content,
-                    "chunk_index": d.chunk_index,
-                    "total_chunks": d.total_chunks,
-                    "metadata": d.metadata_json
+                    "id": doc_map[did].id,
+                    "source_file": doc_map[did].source_file,
+                    "content": doc_map[did].content,
+                    "chunk_index": doc_map[did].chunk_index,
+                    "total_chunks": doc_map[did].total_chunks,
+                    "metadata": doc_map[did].metadata_json,
+                    "score": round(rrf_scores[did], 6),
+                    "match_type": "hybrid" if len(match_sources[did]) > 1 else list(match_sources[did])[0]
                 }
-                for d in docs
+                for did in sorted_ids
             ]
+
             if self.logger:
-                self.logger.info(f"DocumentService: Found {len(results)} relevant document chunks for '{query}'")
+                self.logger.info(
+                    f"DocumentService: Found {len(results)} chunks for '{query}' (Hybrid RRF: {len(vector_docs)} vector, {len(fts_docs)} fts)"
+                )
             return results
         except Exception as e:
             if self.logger:
-                self.logger.error(f"DocumentService: Vector search failed: {e}")
+                self.logger.error(f"DocumentService: Search failed: {e}")
             return []
 
     async def delete_by_source(self, source_file: str) -> int:
@@ -295,4 +403,32 @@ class DocumentService:
         except Exception as e:
             if self.logger:
                 self.logger.error(f"DocumentService: Failed to list sources: {e}")
+            return []
+
+    async def list_sources_detailed(self) -> list[dict]:
+        """Return distinct source files with chunk counts and latest indexing timestamp."""
+        from searchboost_src.models import InternalDocument
+        from sqlalchemy import func
+        try:
+            stmt = (
+                select(
+                    InternalDocument.source_file,
+                    func.count(InternalDocument.id).label("chunk_count"),
+                    func.max(InternalDocument.created_at).label("last_indexed")
+                )
+                .group_by(InternalDocument.source_file)
+                .order_by(func.max(InternalDocument.created_at).desc())
+            )
+            result = await self.session.execute(stmt)
+            return [
+                {
+                    "source_file": row[0],
+                    "chunk_count": int(row[1]),
+                    "last_indexed": row[2].isoformat() if row[2] else None
+                }
+                for row in result.all()
+            ]
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"DocumentService: Failed to list sources detailed: {e}")
             return []

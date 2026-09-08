@@ -276,3 +276,144 @@ async def test_document_ingester_nonexistent_file():
     count = await ingester.ingest_file("/path/to/nonexistent/document.md")
     assert count == 0
 
+
+# =====================================================================
+# Issue #51 & #52: HNSW Indexing & Hybrid BM25 / Vector RRF Tests
+# =====================================================================
+
+@pytest.mark.asyncio
+async def test_document_service_hybrid_rrf_scoring():
+    """Verify hybrid search fuses dense vector and FTS candidates using Reciprocal Rank Fusion."""
+    mock_session = AsyncMock()
+    mock_ollama = MagicMock()
+    mock_ollama.get_embedding = AsyncMock(return_value=[0.3] * 768)
+
+    # Document 1: appears in both vector and FTS (should receive highest RRF boost)
+    doc1 = MagicMock(spec=InternalDocument)
+    doc1.id = 101
+    doc1.source_file = "docs/hybrid_guide.md"
+    doc1.content = "Hybrid search combines vector and BM25"
+    doc1.chunk_index = 0
+    doc1.total_chunks = 1
+    doc1.metadata_json = "{}"
+
+    # Document 2: vector-only candidate
+    doc2 = MagicMock(spec=InternalDocument)
+    doc2.id = 102
+    doc2.source_file = "docs/vector_only.md"
+    doc2.content = "Semantic vector retrieval"
+    doc2.chunk_index = 0
+    doc2.total_chunks = 1
+    doc2.metadata_json = "{}"
+
+    # Document 3: FTS-only candidate
+    doc3 = MagicMock(spec=InternalDocument)
+    doc3.id = 103
+    doc3.source_file = "docs/fts_only.md"
+    doc3.content = "Exact keyword matching for hybrid"
+    doc3.chunk_index = 0
+    doc3.total_chunks = 1
+    doc3.metadata_json = "{}"
+
+    # Vector query returns [doc1, doc2]
+    vec_result = MagicMock()
+    vec_result.scalars.return_value.all.return_value = [doc1, doc2]
+
+    # FTS query returns [doc1, doc3]
+    fts_result = MagicMock()
+    fts_result.scalars.return_value.all.return_value = [doc1, doc3]
+
+    mock_session.execute = AsyncMock(side_effect=[vec_result, fts_result])
+
+    service = DocumentService(session=mock_session, ollama_client=mock_ollama)
+    results = await service.search_documents("hybrid vector search", limit=5, hybrid=True, rrf_k=60)
+
+    assert len(results) == 3
+    # doc1 is first because it appeared in both rank lists
+    assert results[0]["id"] == 101
+    assert results[0]["match_type"] == "hybrid"
+    # RRF score for rank 1 in both: 1/(60+1) + 1/(60+1) = 2/61 ≈ 0.032787
+    assert results[0]["score"] > results[1]["score"]
+
+    # doc2 and doc3 are ranked after doc1
+    result_ids = [r["id"] for r in results]
+    assert 102 in result_ids
+    assert 103 in result_ids
+
+
+@pytest.mark.asyncio
+async def test_document_service_search_pure_vector_mode():
+    """Verify hybrid=False executes only vector search without FTS pass."""
+    mock_session = AsyncMock()
+    mock_ollama = MagicMock()
+    mock_ollama.get_embedding = AsyncMock(return_value=[0.1] * 768)
+
+    doc = MagicMock(spec=InternalDocument)
+    doc.id = 55
+    doc.source_file = "docs/vec.md"
+    doc.content = "Pure vector content"
+    doc.chunk_index = 0
+    doc.total_chunks = 1
+    doc.metadata_json = None
+
+    mock_result = MagicMock()
+    mock_result.scalars.return_value.all.return_value = [doc]
+    mock_session.execute = AsyncMock(return_value=mock_result)
+
+    service = DocumentService(session=mock_session, ollama_client=mock_ollama)
+    results = await service.search_documents("test", limit=3, hybrid=False)
+
+    assert len(results) == 1
+    assert results[0]["id"] == 55
+    assert results[0]["match_type"] == "vector"
+    assert mock_session.execute.call_count == 1
+
+
+@pytest.mark.asyncio
+async def test_document_service_list_sources_detailed():
+    """Verify list_sources_detailed groups documents by source with counts and timestamps."""
+    from datetime import datetime, timezone
+    mock_session = AsyncMock()
+    mock_result = MagicMock()
+    now = datetime(2026, 9, 8, 12, 0, 0, tzinfo=timezone.utc)
+    mock_result.all.return_value = [
+        ("docs/arch.md", 5, now),
+        ("docs/api.md", 3, now)
+    ]
+    mock_session.execute = AsyncMock(return_value=mock_result)
+
+    service = DocumentService(session=mock_session)
+    detailed = await service.list_sources_detailed()
+
+    assert len(detailed) == 2
+    assert detailed[0]["source_file"] == "docs/arch.md"
+    assert detailed[0]["chunk_count"] == 5
+    assert "2026-09-08" in detailed[0]["last_indexed"]
+    assert detailed[1]["source_file"] == "docs/api.md"
+    assert detailed[1]["chunk_count"] == 3
+
+
+@pytest.mark.asyncio
+async def test_database_init_hnsw_and_fts_indexes():
+    """Verify DatabaseManager.init_db executes HNSW and GIN index creation SQL."""
+    from searchboost_src.database import DatabaseManager
+    mock_settings = MagicMock()
+    mock_settings.database_url = "postgresql+asyncpg://mock:mock@localhost:5432/mockdb"
+
+    with patch("searchboost_src.database.create_async_engine") as mock_engine_factory:
+        mock_engine = MagicMock()
+        mock_conn = AsyncMock()
+        mock_engine.begin.return_value.__aenter__.return_value = mock_conn
+        mock_engine_factory.return_value = mock_engine
+
+        db_manager = DatabaseManager(settings=mock_settings)
+        await db_manager.init_db()
+
+        # Check executed SQL commands
+        executed_sqls = [call.args[0].text for call in mock_conn.execute.call_args_list]
+        assert any("CREATE EXTENSION IF NOT EXISTS vector" in sql for sql in executed_sqls)
+        assert any("CREATE INDEX IF NOT EXISTS idx_internal_docs_hnsw" in sql for sql in executed_sqls)
+        assert any("CREATE INDEX IF NOT EXISTS idx_turns_hnsw" in sql for sql in executed_sqls)
+        assert any("CREATE INDEX IF NOT EXISTS idx_internal_docs_fts" in sql for sql in executed_sqls)
+
+

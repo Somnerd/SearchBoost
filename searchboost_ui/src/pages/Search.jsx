@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import SearchBar from '../components/SearchBar';
+import KnowledgeBaseModal from '../components/KnowledgeBaseModal';
 import { useAuth } from '../context/AuthContext';
 import client from '../api/client';
 
@@ -12,6 +13,7 @@ export default function Search() {
   const [currentThreadId, setCurrentThreadId] = useState(() => Date.now().toString());
   const [researchMode, setResearchMode] = useState(true);
   const [webSearch, setWebSearch] = useState(true);
+  const [isKbModalOpen, setIsKbModalOpen] = useState(false);
   const [selectedModel, setSelectedModel] = useState('llama3.2:latest');
   const [availableModels, setAvailableModels] = useState(['llama3.2:latest', 'nomic-embed-text:latest', 'mistral:latest']);
   const [historySearchQuery, setHistorySearchQuery] = useState('');
@@ -221,9 +223,32 @@ export default function Search() {
       <div style={{ width: '280px', background: 'rgba(255,255,255,0.02)', backdropFilter: 'blur(10px)', borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', border: '1px solid rgba(255,255,255,0.05)' }}>
         <button 
           onClick={clearHistory}
-          style={{ width: '100%', padding: '0.8rem', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer', marginBottom: '1.5rem', fontWeight: 'bold', fontSize: '0.95rem', transition: 'all 0.2s', boxShadow: '0 4px 15px rgba(123, 97, 255, 0.3)' }}
+          style={{ width: '100%', padding: '0.8rem', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer', marginBottom: '0.75rem', fontWeight: 'bold', fontSize: '0.95rem', transition: 'all 0.2s', boxShadow: '0 4px 15px rgba(123, 97, 255, 0.3)' }}
         >
           + New Thread
+        </button>
+
+        <button
+          onClick={() => setIsKbModalOpen(true)}
+          aria-label="Open Knowledge Base"
+          style={{
+            width: '100%',
+            padding: '0.65rem 0.8rem',
+            background: 'rgba(255, 255, 255, 0.04)',
+            color: 'var(--text-primary)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '10px',
+            cursor: 'pointer',
+            marginBottom: '1.25rem',
+            fontSize: '0.85rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            transition: 'all 0.2s'
+          }}
+        >
+          <span>📚</span> Knowledge Base
         </button>
         
         <form onSubmit={handleHistorySearch} style={{ marginBottom: '1.5rem' }}>
@@ -396,6 +421,11 @@ export default function Search() {
           </div>
         </div>
       </div>
+
+      <KnowledgeBaseModal
+        isOpen={isKbModalOpen}
+        onClose={() => setIsKbModalOpen(false)}
+      />
     </div>
   );
 }

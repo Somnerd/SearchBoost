@@ -25,6 +25,15 @@ describe('Search Page Component', () => {
           ],
         });
       }
+      if (url === '/search/docs') {
+        return Promise.resolve({
+          data: {
+            totalChunks: 4,
+            totalSources: 2,
+            sources: ['docs/arch.md', 'docs/api.md']
+          }
+        });
+      }
       if (url.startsWith('/search/history/')) {
         if (!loadedInitialHistory) {
           loadedInitialHistory = true;
@@ -348,6 +357,28 @@ describe('Search Page Component', () => {
     // Check both status badges appear in pending container
     expect(screen.getByText('⚡ Fast Answer')).toBeInTheDocument();
     expect(screen.getByText('🔌 Local Knowledge')).toBeInTheDocument();
+  });
+
+  it('opens Knowledge Base modal when clicking sidebar button and displays documents', async () => {
+    render(<Search />);
+
+    const kbBtn = screen.getByRole('button', { name: /Open Knowledge Base/i });
+    expect(kbBtn).toBeInTheDocument();
+
+    fireEvent.click(kbBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText('Knowledge Base Manager')).toBeInTheDocument();
+      expect(screen.getByText('docs/arch.md')).toBeInTheDocument();
+      expect(screen.getByText('docs/api.md')).toBeInTheDocument();
+    });
+
+    const closeBtn = screen.getByRole('button', { name: /Close Knowledge Base/i });
+    fireEvent.click(closeBtn);
+
+    await waitFor(() => {
+      expect(screen.queryByText('Knowledge Base Manager')).not.toBeInTheDocument();
+    });
   });
 });
 
