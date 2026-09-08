@@ -308,6 +308,47 @@ describe('Search Page Component', () => {
 
     expect(screen.getByText('🔌 Local Knowledge')).toBeInTheDocument();
   });
+
+  it('enqueues with research_mode = false and web_search = false when Fast Answer + Offline are both selected', async () => {
+    vi.spyOn(client, 'post').mockImplementation((url) => {
+      if (url === '/search/enqueue') {
+        return Promise.resolve({
+          data: { id: 'SB-SESSION:operator:thread_fast_offline:uuid-1', status: 'queued' },
+        });
+      }
+      return Promise.reject(new Error('not found'));
+    });
+
+    render(<Search />);
+
+    // Toggle to Fast Answer
+    const fastBtn = screen.getByRole('radio', { name: /Fast Answer/i });
+    fireEvent.click(fastBtn);
+
+    // Toggle Web Search OFF
+    const webBtn = screen.getByRole('switch', { name: /Web Search Mode/i });
+    fireEvent.click(webBtn);
+
+    const textarea = screen.getByPlaceholderText(/Ask anything.../i);
+    const submitBtn = screen.getByTitle('Submit');
+
+    fireEvent.change(textarea, { target: { value: 'Fast offline question' } });
+    fireEvent.click(submitBtn);
+
+    await waitFor(() => {
+      expect(client.post).toHaveBeenCalledWith('/search/enqueue', expect.objectContaining({
+        query: 'Fast offline question',
+        options: {
+          research_mode: false,
+          web_search: false,
+        },
+      }));
+    });
+
+    // Check both status badges appear in pending container
+    expect(screen.getByText('⚡ Fast Answer')).toBeInTheDocument();
+    expect(screen.getByText('🔌 Local Knowledge')).toBeInTheDocument();
+  });
 });
 
 

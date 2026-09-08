@@ -114,6 +114,22 @@ class SearchBoostService:
 
         mode_str = f"{'deep' if research_mode else 'fast'}:{'web' if web_search else 'local'}"
 
+        # Attempt Cache Hit (mode-scoped) for immediate sub-millisecond response
+        cached_result = await self.cache_svc.get(self.args.query, mode=mode_str)
+        if cached_result:
+            self.logger.info(f"--- CACHE HIT ({mode_str.upper()}) ---")
+            if db_session and self.session_id:
+                try:
+                    from searchboost_src.database import HistoryService
+                    hist_svc = HistoryService(db_session, self.logger)
+                    await hist_svc.save_turn(self.session_id, "user", self.args.query)
+                    await hist_svc.save_turn(self.session_id, "assistant", cached_result)
+                except Exception as e:
+                    self.logger.error(f"Failed to persist cache hit to history: {e}")
+            return cached_result
+
+        self.logger.info(f"--- CACHE MISS ({mode_str.upper()}): Executing Pipeline ---")
+
         history_svc = None
         semantic_injection = ""
         internal_doc_context = ""
@@ -128,6 +144,7 @@ class SearchBoostService:
             if self.session_id:
                 history_svc = HistoryService(db_session, self.logger, ollama_client=ollama_client)
                 self.chatdetails.history = await history_svc.load_history(self.session_id)
+                await history_svc.save_turn(self.session_id, "user", self.args.query)
                 if research_mode:
                     context_svc = ContextService(history_svc, self.logger)
                     semantic_injection = await context_svc.assemble_context(self.session_id, self.args.query)
@@ -151,23 +168,6 @@ class SearchBoostService:
                     self.logger.info(f"SearchBoostService: Retrieved {len(internal_docs_found)} relevant internal document chunks.")
             except Exception as doc_err:
                 self.logger.warning(f"SearchBoostService: Vector document search error: {doc_err}")
-
-        # Attempt Cache Hit (mode-scoped)
-        cached_result = await self.cache_svc.get(self.args.query, mode=mode_str)
-        if cached_result:
-            self.logger.info(f"--- CACHE HIT ({mode_str.upper()}) ---")
-            if history_svc and self.session_id:
-                try:
-                    await history_svc.save_turn(self.session_id, "user", self.args.query)
-                    await history_svc.save_turn(self.session_id, "assistant", cached_result)
-                except Exception as e:
-                    self.logger.error(f"Failed to persist cache hit to history: {e}")
-            return cached_result
-
-        self.logger.info(f"--- CACHE MISS ({mode_str.upper()}): Executing Pipeline ---")
-
-        if history_svc and self.session_id:
-            await history_svc.save_turn(self.session_id, "user", self.args.query)
 
         # ── OFFLINE / LOCAL VECTOR KNOWLEDGE MODE (web_search = False) ───────
         if not web_search:

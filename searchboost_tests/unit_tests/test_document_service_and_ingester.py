@@ -232,3 +232,47 @@ async def test_document_ingester_file_and_directory():
         assert "config.json" in summary["files"]
         assert "binary.bin" not in summary["files"]
         assert summary["indexed_chunks"] >= 2
+
+
+def test_chunk_text_unicode_and_emojis():
+    """Verify chunk_text cleanly handles multilingual unicode and emojis."""
+    greek_text = "Η αναζήτηση και η ευρετηρίαση διανυσμάτων στο SearchBoost είναι ταχύτατη. 🚀⚡"
+    chunks = chunk_text(greek_text, chunk_size=100)
+    assert len(chunks) == 1
+    assert "SearchBoost" in chunks[0]
+    assert "🚀⚡" in chunks[0]
+
+
+def test_chunk_text_unbroken_long_string():
+    """Verify chunk_text slices long strings that exceed chunk_size without newlines."""
+    long_unbroken = "A" * 500
+    chunks = chunk_text(long_unbroken, chunk_size=100, overlap=20)
+    assert len(chunks) >= 5
+    assert all(len(c) <= 100 for c in chunks)
+
+
+@pytest.mark.asyncio
+async def test_document_ingester_empty_file():
+    """Verify ingesting a zero-byte empty file returns 0 indexed chunks gracefully."""
+    mock_session = AsyncMock()
+    ingester = DocumentIngester(session=mock_session)
+
+    with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as tf:
+        tf.write("")
+        tf_path = tf.name
+
+    try:
+        count = await ingester.ingest_file(tf_path)
+        assert count == 0
+    finally:
+        Path(tf_path).unlink(missing_ok=True)
+
+
+@pytest.mark.asyncio
+async def test_document_ingester_nonexistent_file():
+    """Verify ingesting a non-existent file returns 0 without raising an exception."""
+    mock_session = AsyncMock()
+    ingester = DocumentIngester(session=mock_session)
+    count = await ingester.ingest_file("/path/to/nonexistent/document.md")
+    assert count == 0
+

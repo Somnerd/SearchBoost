@@ -360,5 +360,18 @@ describe('API Integration & Route Tests', () => {
       expect(res.body.totalChunks).toBe(2);
       expect(res.body.sources).toEqual(['docs/guide.md']);
     });
+
+    it('GET /api/search/docs should return 500 when database throws an error', async () => {
+      ((prisma as any).internalDocument.count as jest.Mock).mockRejectedValueOnce(
+        new Error('Database connection pool exhausted')
+      );
+
+      const res = await request(app)
+        .get('/api/search/docs')
+        .set('Authorization', `Bearer ${normalUserToken}`);
+
+      expect(res.status).toBe(500);
+      expect(res.body.error).toBe('Failed to fetch document status');
+    });
   });
 });
