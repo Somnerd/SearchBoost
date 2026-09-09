@@ -180,9 +180,12 @@ router.get('/docs', verifyToken, async (req: Request, res: Response, next: NextF
       distinct: ['sourceFile'],
       select: { sourceFile: true }
     });
+    const sourcesList = distinctSources.map(s => s.sourceFile);
+
     res.json({
       totalChunks: count,
-      sources: distinctSources.map(s => s.sourceFile)
+      totalSources: sourcesList.length,
+      sources: sourcesList
     });
   } catch (err: any) {
     console.error(`[API] Failed to fetch internal docs status: ${err.message}`);
@@ -190,5 +193,108 @@ router.get('/docs', verifyToken, async (req: Request, res: Response, next: NextF
   }
 });
 
+router.delete('/docs', verifyToken, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const source = (req.query.source as string) || req.body?.sourceFile;
+    if (!source || typeof source !== 'string') {
+      res.status(400).json({ error: 'source query parameter or sourceFile is required' });
+      return;
+    }
+
+    const result = await prisma.internalDocument.deleteMany({
+      where: { sourceFile: source }
+    });
+
+    res.json({
+      message: `Deleted document source: ${source}`,
+      sourceFile: source,
+      deletedChunks: result.count
+    });
+  } catch (err: any) {
+    console.error(`[API] Failed to delete document source: ${err.message}`);
+    res.status(500).json({ error: 'Failed to delete document source' });
+  }
+});
+
+router.post('/docs/raw', verifyToken, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { title, content, metadata } = req.body;
+    if (!content || typeof content !== 'string' || !content.trim()) {
+      res.status(400).json({ error: 'content is required' });
+      return;
+    }
+
+    const safeTitle = typeof title === 'string' && title.trim()
+      ? title.trim().replace(/[^a-zA-Z0-9._-]/g, '_')
+      : `note-${Date.now()}`;
+    const sourceFile = `notes/${safeTitle}.md`;
+
+    // Remove prior version if re-uploading
+    await prisma.internalDocument.deleteMany({
+      where: { sourceFile }
+    });
+
+    // Chunk content
+    const chunkSize = 800;
+    const text = content.trim();
+    const chunks: string[] = [];
+    for (let i = 0; i < text.length; i += chunkSize) {
+      chunks.push(text.slice(i, i + chunkSize));
+    }
+
+    let inserted = 0;
+    for (let idx = 0; idx < chunks.length; idx++) {
+      const chunk = chunks[idx];
+      const meta = JSON.stringify({
+        sourceFile,
+        chunkIndex: idx,
+        totalChunks: chunks.length,
+        custom: metadata || null
+      });
+
+      await prisma.internalDocument.create({
+        data: {
+          sourceFile,
+          content: chunk,
+          chunkIndex: idx,
+          totalChunks: chunks.length,
+          metadataJson: meta
+        }
+      });
+      inserted++;
+    }
+
+    res.status(201).json({
+      message: `Successfully indexed ${inserted} chunks for '${sourceFile}'`,
+      sourceFile,
+      chunksIngested: inserted
+    });
+  } catch (err: any) {
+    console.error(`[API] Failed to ingest raw document: ${err.message}`);
+    res.status(500).json({ error: 'Failed to ingest document' });
+  }
+});
+
+router.post('/docs/sync', verifyToken, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const count = await prisma.internalDocument.count();
+    const distinctSources = await prisma.internalDocument.findMany({
+      distinct: ['sourceFile'],
+      select: { sourceFile: true }
+    });
+    res.json({
+      status: 'synced',
+      message: 'Knowledge base synchronization completed',
+      totalChunks: count,
+      totalSources: distinctSources.length,
+      sources: distinctSources.map(s => s.sourceFile)
+    });
+  } catch (err: any) {
+    console.error(`[API] Knowledge base sync error: ${err.message}`);
+    res.status(500).json({ error: 'Failed to sync knowledge base' });
+  }
+});
+
 export default router;
+
 

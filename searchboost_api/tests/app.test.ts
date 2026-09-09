@@ -27,7 +27,9 @@ jest.mock('../src/db/prisma', () => ({
     },
     internalDocument: {
       findMany: jest.fn(),
-      count: jest.fn()
+      count: jest.fn(),
+      deleteMany: jest.fn(),
+      create: jest.fn()
     }
   }
 }));
@@ -372,6 +374,85 @@ describe('API Integration & Route Tests', () => {
 
       expect(res.status).toBe(500);
       expect(res.body.error).toBe('Failed to fetch document status');
+    });
+
+    it('DELETE /api/search/docs should reject unauthenticated requests with 401', async () => {
+      const res = await request(app).delete('/api/search/docs?source=docs/guide.md');
+      expect(res.status).toBe(401);
+    });
+
+    it('DELETE /api/search/docs should reject missing source parameter with 400', async () => {
+      const res = await request(app)
+        .delete('/api/search/docs')
+        .set('Authorization', `Bearer ${normalUserToken}`);
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain('source');
+    });
+
+    it('DELETE /api/search/docs should delete chunks for specified source', async () => {
+      ((prisma as any).internalDocument.deleteMany as jest.Mock).mockResolvedValueOnce({ count: 4 });
+
+      const res = await request(app)
+        .delete('/api/search/docs?source=docs/guide.md')
+        .set('Authorization', `Bearer ${normalUserToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.sourceFile).toBe('docs/guide.md');
+      expect(res.body.deletedChunks).toBe(4);
+    });
+
+    it('POST /api/search/docs/raw should reject unauthenticated requests with 401', async () => {
+      const res = await request(app)
+        .post('/api/search/docs/raw')
+        .send({ title: 'My Note', content: 'Some knowledge text' });
+
+      expect(res.status).toBe(401);
+    });
+
+    it('POST /api/search/docs/raw should reject missing content with 400', async () => {
+      const res = await request(app)
+        .post('/api/search/docs/raw')
+        .set('Authorization', `Bearer ${normalUserToken}`)
+        .send({ title: 'Empty Note' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('content is required');
+    });
+
+    it('POST /api/search/docs/raw should ingest raw text notes and return 201', async () => {
+      ((prisma as any).internalDocument.deleteMany as jest.Mock).mockResolvedValueOnce({ count: 0 });
+      ((prisma as any).internalDocument.create as jest.Mock).mockResolvedValue({ id: 10 });
+
+      const res = await request(app)
+        .post('/api/search/docs/raw')
+        .set('Authorization', `Bearer ${normalUserToken}`)
+        .send({
+          title: 'architecture-notes',
+          content: 'Detailed notes on SearchBoost distributed architecture and Warden proxy.'
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.sourceFile).toBe('notes/architecture-notes.md');
+      expect(res.body.chunksIngested).toBeGreaterThanOrEqual(1);
+    });
+
+    it('POST /api/search/docs/sync should return sync status and total sources', async () => {
+      ((prisma as any).internalDocument.count as jest.Mock).mockResolvedValueOnce(15);
+      ((prisma as any).internalDocument.findMany as jest.Mock).mockResolvedValueOnce([
+        { sourceFile: 'docs/a.md' },
+        { sourceFile: 'docs/b.md' }
+      ]);
+
+      const res = await request(app)
+        .post('/api/search/docs/sync')
+        .set('Authorization', `Bearer ${normalUserToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.status).toBe('synced');
+      expect(res.body.totalChunks).toBe(15);
+      expect(res.body.totalSources).toBe(2);
+      expect(res.body.sources).toEqual(['docs/a.md', 'docs/b.md']);
     });
   });
 });
