@@ -14,7 +14,12 @@ async def perform_direct_search(logger, bundle, args, timeout=120):
     """
 
     logger.warning("FALLBACK: Initializing direct connection to Redis...")
-    redis_pool = await create_pool(bundle['redis'].arq_settings)
+    from searchboost_src.worker import job_serializer, job_deserializer
+    redis_pool = await create_pool(
+        bundle['redis'].arq_settings,
+        job_serializer=job_serializer,
+        job_deserializer=job_deserializer
+    )
 
     try:
         logger.debug("FALLBACK: Enqueuing research job...")

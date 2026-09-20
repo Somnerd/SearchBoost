@@ -132,21 +132,20 @@ async fn handle_enqueue(
                 "et": enqueue_time_ms
             });
 
-            let pickled =
-                match serde_pickle::to_vec(&job_data, serde_pickle::ser::SerOptions::new()) {
-                    Ok(data) => data,
-                    Err(e) => {
-                        tracing::error!("RELAY: Serialization error: {}", e);
-                        return (
-                            StatusCode::INTERNAL_SERVER_ERROR,
-                            "Internal serialization failure",
-                        )
-                            .into_response();
-                    }
-                };
+            let json_payload = match serde_json::to_string(&job_data) {
+                Ok(data) => data,
+                Err(e) => {
+                    tracing::error!("RELAY: JSON serialization error: {}", e);
+                    return (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        "Internal serialization failure",
+                    )
+                        .into_response();
+                }
+            };
 
             let job_key = format!("arq:job:{}", job_id);
-            if let Err(e) = conn.set_ex::<_, _, ()>(&job_key, pickled, 86400).await {
+            if let Err(e) = conn.set_ex::<_, _, ()>(&job_key, json_payload, 86400).await {
                 tracing::error!("RELAY: Failed to set job data (aborting enqueue): {}", e);
                 warden.breaker.on_error();
                 return (

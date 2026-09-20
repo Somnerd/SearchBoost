@@ -20,8 +20,8 @@ check_and_set_env() {
         cat <<EOT >> .env
 OLLAMA_PORT=11434
 OLLAMA_MODEL=llama3.2
-SEARXNG_PORT=8080
-REDIS_PORT=6379
+SEARXNG_PORT=8888
+REDIS_PORT=6380
 DB_USER=searchboost
 DB_NAME=searchboost_db
 DB_PASSWORD=$(openssl rand -hex 16)
