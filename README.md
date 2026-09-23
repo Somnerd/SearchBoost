@@ -108,23 +108,46 @@ SearchBoost shares an identical session convention and payload contract with **[
 - Docker & Docker Compose
 - *Optional (for local development)*: Rust 1.80+, Node.js 20+, Python 3.10+
 
-### 1. Launch the Distributed Stack
-```bash
-# Clone the repository
-git clone git@github.com:Somnerd/SearchBoost.git
-cd SearchBoost
+### 1. Unified One-Click Launcher (Recommended)
+SearchBoost features an autonomous launcher with **dynamic port collision immunity** and **synergistic IronWarden deployment**:
 
-# Launch all 8 containers in detached mode
-docker-compose up -d --build
+```bash
+# Option A: Standalone Launch (with pre-flight port checks & dynamic allocation)
+./scripts/start_stack.sh
+
+# Option B: Synergistic Tandem Launch with IronWarden (Sovereign AI Gateway)
+./scripts/start_stack.sh --with-ironwarden
+
+# Graceful Teardown
+./scripts/stop_stack.sh
 ```
 
-### 2. Verify Services
+Alternatively, you can launch directly with Docker Compose:
+```bash
+docker compose up -d --build
+```
+
+### 2. Port Allocation & Sister Coexistence Matrix
+SearchBoost is engineered with strict port immunity against its sovereign sister system, **[IronWarden](https://github.com/Somnerd/IronWarden)**:
+
+| Service Tier | SearchBoost Host Port | IronWarden Host Port | Coexistence Status |
+| :--- | :---: | :---: | :--- |
+| **React Web UI** | `3000` | — | ✅ Dedicated |
+| **Node.js Express API** | `3001` | `8080` (AI Proxy) | ✅ Immune |
+| **Rust Warden Relay** | `14142` | `14141` (Warden Bridge) | ✅ Immune |
+| **Redis Cache / Queue** | `6380` | `6379` (Warden Redis) | ✅ Immune |
+| **SearXNG Metasearch** | `8888` | — | ✅ Immune |
+| **PostgreSQL (`pgvector`)** | `5432` | — | ✅ Dedicated |
+| **Ollama LLM Engine** | `11434` | — | ✅ Dedicated |
+| **Prometheus Metrics** | — | `9090` | ✅ Dedicated |
+
+### 3. Verify Services
 - **React Web Dashboard:** [http://localhost:3000](http://localhost:3000)
 - **Node.js Express API:** [http://localhost:3001/health](http://localhost:3001/health)
 - **Rust Warden Relay:** [http://localhost:14142/health](http://localhost:14142/health)
-- **SearXNG Meta-Search:** [http://localhost:8080](http://localhost:8080)
+- **SearXNG Meta-Search:** [http://localhost:8888](http://localhost:8888)
 
-### 3. Query via the Autonomous CLI
+### 4. Query via the Autonomous CLI
 ```bash
 python3 searchboost_service/main.py --query "Latest advancements in autonomous AI agents" --username nikolas
 ```

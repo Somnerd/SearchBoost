@@ -155,9 +155,27 @@ class Worker:
 
 worker_logic = Worker()
 
+def job_serializer(data):
+    def default(o):
+        if hasattr(o, '__dict__'):
+            return vars(o)
+        if hasattr(o, 'model_dump'):
+            return o.model_dump()
+        if hasattr(o, 'dict'):
+            return o.dict()
+        return str(o)
+    return json.dumps(data, default=default).encode('utf-8')
+
+def job_deserializer(b):
+    if isinstance(b, str):
+        return json.loads(b)
+    return json.loads(b.decode('utf-8'))
+
 class WorkerSettings:
     functions = [worker_logic.run_task]
     on_startup = worker_logic.startup
     on_shutdown = worker_logic.shutdown
 
     redis_settings = get_configurator().redis.arq_settings
+    job_serializer = job_serializer
+    job_deserializer = job_deserializer
