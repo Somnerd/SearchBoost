@@ -89,7 +89,13 @@ router.get('/health', async (req: Request, res: Response, next: NextFunction) =>
   let databaseStatus: any = { status: 'unreachable' };
 
   try {
-    const wardenHealth = await axios.get(`${process.env.WARDEN_URL}/health`, { timeout: 3000 });
+    const wardenToken = process.env.WARDEN_AUTH_TOKEN || process.env.WARDEN_SHARED_SECRET || process.env.JWT_SECRET || '';
+    const wardenHealth = await axios.get(`${process.env.WARDEN_URL}/health`, {
+      headers: {
+        'X-Warden-Token': wardenToken
+      },
+      timeout: 3000
+    });
     wardenStatus = wardenHealth.data;
   } catch (error) {
     // Keep it unreachable if it fails

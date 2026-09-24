@@ -1,6 +1,6 @@
 import express, { Request, Response, NextFunction } from 'express';
 import axios from 'axios';
-import { verifyToken } from '../middleware/auth';
+import { verifyToken, requireAdmin } from '../middleware/auth';
 import { prisma } from '../db/prisma';
 
 const router = express.Router();
@@ -48,7 +48,11 @@ router.post('/enqueue', verifyToken, async (req: Request, res: Response, next: N
   });
 
   try {
+    const wardenToken = process.env.WARDEN_AUTH_TOKEN || process.env.WARDEN_SHARED_SECRET || process.env.JWT_SECRET || '';
     const response = await axios.post(`${process.env.WARDEN_URL}/enqueue`, payload, { 
+      headers: {
+        'X-Warden-Token': wardenToken
+      },
       timeout: 5000,
       validateStatus: (status) => status < 300 // Force throw on non-2xx
     });
@@ -74,7 +78,11 @@ router.get('/result/:job_id', verifyToken, async (req: Request, res: Response, n
       return;
     }
 
+    const wardenToken = process.env.WARDEN_AUTH_TOKEN || process.env.WARDEN_SHARED_SECRET || process.env.JWT_SECRET || '';
     const response = await axios.get(`${process.env.WARDEN_URL}/results/${job_id}`, {
+      headers: {
+        'X-Warden-Token': wardenToken
+      },
       params: { username: req.user!.username },
       timeout: 5000
     });
@@ -193,7 +201,7 @@ router.get('/docs', verifyToken, async (req: Request, res: Response, next: NextF
   }
 });
 
-router.delete('/docs', verifyToken, async (req: Request, res: Response, next: NextFunction) => {
+router.delete('/docs', verifyToken, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const source = (req.query.source as string) || req.body?.sourceFile;
     if (!source || typeof source !== 'string') {
@@ -216,7 +224,7 @@ router.delete('/docs', verifyToken, async (req: Request, res: Response, next: Ne
   }
 });
 
-router.post('/docs/raw', verifyToken, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/docs/raw', verifyToken, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { title, content, metadata } = req.body;
     if (!content || typeof content !== 'string' || !content.trim()) {
@@ -242,6 +250,7 @@ router.post('/docs/raw', verifyToken, async (req: Request, res: Response, next: 
       chunks.push(text.slice(i, i + chunkSize));
     }
 
+    const ollamaUrl = process.env.OLLAMA_URL || 'http://sb_ollama:11434';
     let inserted = 0;
     for (let idx = 0; idx < chunks.length; idx++) {
       const chunk = chunks[idx];
@@ -252,15 +261,50 @@ router.post('/docs/raw', verifyToken, async (req: Request, res: Response, next: 
         custom: metadata || null
       });
 
-      await prisma.internalDocument.create({
-        data: {
-          sourceFile,
-          content: chunk,
-          chunkIndex: idx,
-          totalChunks: chunks.length,
-          metadataJson: meta
+      let vectorLiteral: string | null = null;
+      try {
+        const embedRes = await axios.post(
+          `${ollamaUrl}/api/embeddings`,
+          { model: 'nomic-embed-text', prompt: chunk },
+          { timeout: 5000 }
+        );
+        if (embedRes.data && Array.isArray(embedRes.data.embedding)) {
+          vectorLiteral = JSON.stringify(embedRes.data.embedding);
         }
-      });
+      } catch (embedErr: any) {
+        console.warn(`[API] Failed to generate embedding for chunk ${idx} of ${sourceFile}: ${embedErr.message}`);
+      }
+
+      let insertedWithVector = false;
+      if (vectorLiteral) {
+        try {
+          await prisma.$executeRawUnsafe(
+            `INSERT INTO internal_documents (source_file, content, chunk_index, total_chunks, metadata_json, embedding, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6::vector, NOW())`,
+            sourceFile,
+            chunk,
+            idx,
+            chunks.length,
+            meta,
+            vectorLiteral
+          );
+          insertedWithVector = true;
+        } catch (rawErr: any) {
+          console.warn(`[API] Raw vector insertion failed for chunk ${idx} of ${sourceFile}: ${rawErr.message}, falling back to Prisma create`);
+        }
+      }
+
+      if (!insertedWithVector) {
+        await prisma.internalDocument.create({
+          data: {
+            sourceFile,
+            content: chunk,
+            chunkIndex: idx,
+            totalChunks: chunks.length,
+            metadataJson: meta
+          }
+        });
+      }
       inserted++;
     }
 
@@ -275,7 +319,7 @@ router.post('/docs/raw', verifyToken, async (req: Request, res: Response, next: 
   }
 });
 
-router.post('/docs/sync', verifyToken, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/docs/sync', verifyToken, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const count = await prisma.internalDocument.count();
     const distinctSources = await prisma.internalDocument.findMany({

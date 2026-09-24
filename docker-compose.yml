@@ -10,10 +10,10 @@ services:
     container_name: sb_warden
     volumes:
       - ./configs:/configs
-      - /var/run/docker.sock:/var/run/docker.sock
       - ./logs:/logs
     environment:
       - MASTER_CONFIG_PATH=/configs/master_settings.yml
+      - WARDEN_AUTH_TOKEN=${WARDEN_AUTH_TOKEN:-${JWT_SECRET}}
       - WARDEN_CONFIG_PATH=/configs/warden.yml
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - DB_USER=${DB_USER:-searchboost}
@@ -24,8 +24,6 @@ services:
       - RUST_LOG=info
     depends_on:
       - redis
-    ports:
-      - "${WARDEN_HOST_PORT:-14142}:14141"
     restart: always
 
   worker:
@@ -117,6 +115,7 @@ services:
       - DB_NAME=${DB_NAME:-searchboost_db}
       - DATABASE_URL=postgresql://${DB_USER:-searchboost}:${DB_PASSWORD:-searchboost_pass}@db:5432/${DB_NAME:-searchboost_db}
       - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set}
+      - WARDEN_AUTH_TOKEN=${WARDEN_AUTH_TOKEN:-${JWT_SECRET}}
       - WARDEN_URL=http://warden:14141
       - OLLAMA_URL=http://ollama:11434
     depends_on:

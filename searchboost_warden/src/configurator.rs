@@ -68,6 +68,8 @@ pub struct Settings {
     pub breaker: BreakerSettings,
     pub redis: RedisSettings,
     pub db: DatabaseSettings,
+    #[serde(default)]
+    pub auth_token: Option<String>,
 }
 
 impl Settings {
@@ -123,6 +125,12 @@ impl Settings {
         }
         if let Some(label) = get_env("WARDEN_OBSERVER_CONTAINER_LABEL") {
             settings.observer.container_label = Some(label);
+        }
+        if let Some(token) = get_env("WARDEN_AUTH_TOKEN")
+            .or_else(|| get_env("WARDEN_SHARED_SECRET"))
+            .or_else(|| get_env("JWT_SECRET"))
+        {
+            settings.auth_token = Some(token);
         }
 
         settings
@@ -199,6 +207,7 @@ mod tests {
                 password: None,
                 database: "testdb".to_string(),
             },
+            auth_token: None,
         }
     }
 
@@ -310,6 +319,18 @@ mod tests {
 
         let settings = Settings::load();
         assert_eq!(settings.db.database, "fallback_database_name");
+    }
+
+    #[test]
+    fn test_settings_load_with_auth_token_env() {
+        let _lock = ENV_MUTEX.lock().unwrap();
+        let _env = ScopedEnv::set(&[("WARDEN_AUTH_TOKEN", "test_warden_token_xyz")]);
+
+        let settings = Settings::load();
+        assert_eq!(
+            settings.auth_token,
+            Some("test_warden_token_xyz".to_string())
+        );
     }
 
     #[test]
