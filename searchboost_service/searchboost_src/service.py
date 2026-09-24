@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from sqlalchemy.ext.asyncio import AsyncSession
 import asyncio
+import re
 
 from searchboost_src.chat_class import ChatDetails
 from searchboost_src.ai_handler import AIHandler
@@ -79,10 +80,11 @@ def sanitize_web_fence(text: str) -> str:
     """Sanitize untrusted external search text to prevent breakout from <web_context> fence."""
     if not text:
         return ""
-    return (
-        str(text)
-        .replace("</web_context>", "&lt;/web_context&gt;")
-        .replace("<web_context>", "&lt;web_context&gt;")
+    return re.sub(
+        r'<\s*(/)?\s*web_context(\s+[^>]*)?>',
+        lambda m: f'&lt;{m.group(1) or "" }web_context{m.group(2) or ""}&gt;',
+        str(text),
+        flags=re.IGNORECASE
     )
 
 

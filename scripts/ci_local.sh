@@ -48,7 +48,7 @@ fi
 
 # ── 3. React 19 Web UI ───────────────────────────────────────────────────────
 header "3. React 19 UI (Vitest Suite & Production Build)"
-if (cd searchboost_ui && npm test && npm run build); then
+if (docker run --rm -v "$(pwd)/searchboost_ui":/app -w /app node:20-alpine sh -c "npm test -- --run && npm run build"); then
   pass_tier "React 19 UI (59/59 Tests + Build)"
 else
   fail_tier "React 19 UI"
@@ -62,7 +62,7 @@ if [ ! -f "$PYTHON_EXEC" ]; then
 fi
 
 if PYTHONPATH=searchboost_service "$PYTHON_EXEC" -m pytest searchboost_tests/unit_tests searchboost_tests/functional_tests -v; then
-  pass_tier "Python Worker (48/48 Tests)"
+  pass_tier "Python Worker (51/51 Tests)"
 else
   fail_tier "Python Worker"
 fi
@@ -75,7 +75,7 @@ echo -e "${BOLD}  LOCAL CI RUN SUMMARY (${TOTAL_TIME}s total)${RESET}"
 echo -e "${BLUE}${BOLD}═══════════════════════════════════════════════════════${RESET}"
 
 if [ ${#FAILED_TIERS[@]} -eq 0 ]; then
-  echo -e "  ${PASS}  ${GREEN}${BOLD}ALL 4 TIERS PASSED (157/157 Tests Passing)${RESET}"
+  echo -e "  ${PASS}  ${GREEN}${BOLD}ALL 4 TIERS PASSED (160/160 Tests Passing)${RESET}"
   echo -e "  Ready for production deployment and release packaging."
   exit 0
 else

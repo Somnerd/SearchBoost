@@ -74,7 +74,7 @@ pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
 pub fn is_authenticated(headers: &axum::http::HeaderMap, expected_token: Option<&str>) -> bool {
     let expected = match expected_token {
         Some(t) if !t.is_empty() => t,
-        _ => return true,
+        _ => return false,
     };
 
     if let Some(token_header) = headers.get("X-Warden-Token").and_then(|v| v.to_str().ok()) {
@@ -508,7 +508,7 @@ mod tests {
     fn test_is_authenticated_missing_header() {
         let headers = axum::http::HeaderMap::new();
         assert!(!is_authenticated(&headers, Some("super_secret")));
-        assert!(is_authenticated(&headers, None));
+        assert!(!is_authenticated(&headers, None));
     }
 
     #[test]
