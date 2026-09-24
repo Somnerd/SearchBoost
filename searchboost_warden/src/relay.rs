@@ -60,10 +60,56 @@ pub async fn start_relay(port: u16, warden: Arc<Warden>) {
     .expect("FATAL: Relay server crashed");
 }
 
+pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
+    if a.len() != b.len() {
+        return false;
+    }
+    let mut res = 0u8;
+    for (x, y) in a.iter().zip(b.iter()) {
+        res |= x ^ y;
+    }
+    res == 0
+}
+
+pub fn is_authenticated(headers: &axum::http::HeaderMap, expected_token: Option<&str>) -> bool {
+    let expected = match expected_token {
+        Some(t) if !t.is_empty() => t,
+        _ => return true,
+    };
+
+    if let Some(token_header) = headers.get("X-Warden-Token").and_then(|v| v.to_str().ok()) {
+        if constant_time_eq(token_header.as_bytes(), expected.as_bytes()) {
+            return true;
+        }
+    }
+
+    if let Some(auth_header) = headers
+        .get(axum::http::header::AUTHORIZATION)
+        .and_then(|v| v.to_str().ok())
+    {
+        if let Some(token) = auth_header.strip_prefix("Bearer ") {
+            if constant_time_eq(token.trim().as_bytes(), expected.as_bytes()) {
+                return true;
+            }
+        }
+    }
+
+    false
+}
+
 async fn handle_enqueue(
     State(warden): State<Arc<Warden>>,
+    headers: axum::http::HeaderMap,
     Json(payload): Json<SearchRequest>,
 ) -> impl IntoResponse {
+    if !is_authenticated(&headers, warden.auth_token.as_deref()) {
+        return (
+            StatusCode::UNAUTHORIZED,
+            "Unauthorized: Missing or invalid Warden authentication token",
+        )
+            .into_response();
+    }
+
     if !warden.breaker.is_call_permitted() {
         return (StatusCode::SERVICE_UNAVAILABLE, "Circuit Breaker is OPEN").into_response();
     }
@@ -186,9 +232,18 @@ async fn handle_enqueue(
 
 async fn handle_get_result(
     State(warden): State<Arc<Warden>>,
+    headers: axum::http::HeaderMap,
     Path(job_id): Path<String>,
     axum::extract::Query(params): axum::extract::Query<ResultParams>,
 ) -> impl IntoResponse {
+    if !is_authenticated(&headers, warden.auth_token.as_deref()) {
+        return (
+            StatusCode::UNAUTHORIZED,
+            "Unauthorized: Missing or invalid Warden authentication token",
+        )
+            .into_response();
+    }
+
     // 🛡️ IDOR Check: Prefix validation
     let expected_prefix = format!("SB-SESSION:{}:", params.username);
     if !job_id.starts_with(&expected_prefix) {
@@ -418,6 +473,42 @@ mod tests {
         assert!(valid_job_id.starts_with(&expected_prefix));
         assert!(!attacker_job_id.starts_with(&expected_prefix));
         assert!(!malformed_job_id.starts_with(&expected_prefix));
+    }
+
+    #[test]
+    fn test_constant_time_eq() {
+        assert!(constant_time_eq(b"secret_token_123", b"secret_token_123"));
+        assert!(!constant_time_eq(b"secret_token_123", b"secret_token_456"));
+        assert!(!constant_time_eq(b"short", b"longer_string"));
+        assert!(constant_time_eq(b"", b""));
+    }
+
+    #[test]
+    fn test_is_authenticated_x_warden_token() {
+        let mut headers = axum::http::HeaderMap::new();
+        headers.insert("X-Warden-Token", "super_secret".parse().unwrap());
+
+        assert!(is_authenticated(&headers, Some("super_secret")));
+        assert!(!is_authenticated(&headers, Some("wrong_secret")));
+    }
+
+    #[test]
+    fn test_is_authenticated_bearer_token() {
+        let mut headers = axum::http::HeaderMap::new();
+        headers.insert(
+            axum::http::header::AUTHORIZATION,
+            "Bearer super_secret".parse().unwrap(),
+        );
+
+        assert!(is_authenticated(&headers, Some("super_secret")));
+        assert!(!is_authenticated(&headers, Some("wrong_secret")));
+    }
+
+    #[test]
+    fn test_is_authenticated_missing_header() {
+        let headers = axum::http::HeaderMap::new();
+        assert!(!is_authenticated(&headers, Some("super_secret")));
+        assert!(is_authenticated(&headers, None));
     }
 
     #[test]

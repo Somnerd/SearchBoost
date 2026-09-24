@@ -14,6 +14,7 @@ const mockedAxios = axios as jest.Mocked<typeof axios>;
 jest.mock('../src/db/prisma', () => ({
   prisma: {
     $queryRaw: jest.fn(),
+    $executeRawUnsafe: jest.fn(),
     user: {
       findUnique: jest.fn(),
       create: jest.fn(),
@@ -384,18 +385,27 @@ describe('API Integration & Route Tests', () => {
     it('DELETE /api/search/docs should reject missing source parameter with 400', async () => {
       const res = await request(app)
         .delete('/api/search/docs')
-        .set('Authorization', `Bearer ${normalUserToken}`);
+        .set('Authorization', `Bearer ${adminUserToken}`);
 
       expect(res.status).toBe(400);
       expect(res.body.error).toContain('source');
     });
 
-    it('DELETE /api/search/docs should delete chunks for specified source', async () => {
+    it('DELETE /api/search/docs should reject non-admin requests with 403 Forbidden', async () => {
+      const res = await request(app)
+        .delete('/api/search/docs?source=docs/guide.md')
+        .set('Authorization', `Bearer ${normalUserToken}`);
+
+      expect(res.status).toBe(403);
+      expect(res.body.error).toBe('Admin access required');
+    });
+
+    it('DELETE /api/search/docs should delete chunks for specified source when requested by admin', async () => {
       ((prisma as any).internalDocument.deleteMany as jest.Mock).mockResolvedValueOnce({ count: 4 });
 
       const res = await request(app)
         .delete('/api/search/docs?source=docs/guide.md')
-        .set('Authorization', `Bearer ${normalUserToken}`);
+        .set('Authorization', `Bearer ${adminUserToken}`);
 
       expect(res.status).toBe(200);
       expect(res.body.sourceFile).toBe('docs/guide.md');
@@ -413,20 +423,30 @@ describe('API Integration & Route Tests', () => {
     it('POST /api/search/docs/raw should reject missing content with 400', async () => {
       const res = await request(app)
         .post('/api/search/docs/raw')
-        .set('Authorization', `Bearer ${normalUserToken}`)
+        .set('Authorization', `Bearer ${adminUserToken}`)
         .send({ title: 'Empty Note' });
 
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('content is required');
     });
 
-    it('POST /api/search/docs/raw should ingest raw text notes and return 201', async () => {
+    it('POST /api/search/docs/raw should reject non-admin requests with 403 Forbidden', async () => {
+      const res = await request(app)
+        .post('/api/search/docs/raw')
+        .set('Authorization', `Bearer ${normalUserToken}`)
+        .send({ title: 'My Note', content: 'Some knowledge text' });
+
+      expect(res.status).toBe(403);
+      expect(res.body.error).toBe('Admin access required');
+    });
+
+    it('POST /api/search/docs/raw should ingest raw text notes and return 201 when requested by admin', async () => {
       ((prisma as any).internalDocument.deleteMany as jest.Mock).mockResolvedValueOnce({ count: 0 });
       ((prisma as any).internalDocument.create as jest.Mock).mockResolvedValue({ id: 10 });
 
       const res = await request(app)
         .post('/api/search/docs/raw')
-        .set('Authorization', `Bearer ${normalUserToken}`)
+        .set('Authorization', `Bearer ${adminUserToken}`)
         .send({
           title: 'architecture-notes',
           content: 'Detailed notes on SearchBoost distributed architecture and Warden proxy.'
@@ -437,7 +457,37 @@ describe('API Integration & Route Tests', () => {
       expect(res.body.chunksIngested).toBeGreaterThanOrEqual(1);
     });
 
-    it('POST /api/search/docs/sync should return sync status and total sources', async () => {
+    it('POST /api/search/docs/raw should generate embeddings and use executeRawUnsafe when Ollama responds', async () => {
+      ((prisma as any).internalDocument.deleteMany as jest.Mock).mockResolvedValueOnce({ count: 0 });
+      mockedAxios.post.mockResolvedValueOnce({
+        status: 200,
+        data: { embedding: new Array(768).fill(0.01) }
+      });
+      ((prisma as any).$executeRawUnsafe as jest.Mock).mockResolvedValueOnce(1);
+
+      const res = await request(app)
+        .post('/api/search/docs/raw')
+        .set('Authorization', `Bearer ${adminUserToken}`)
+        .send({
+          title: 'embedded-note',
+          content: 'This note should have vector embeddings generated.'
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.chunksIngested).toBe(1);
+      expect((prisma as any).$executeRawUnsafe).toHaveBeenCalled();
+    });
+
+    it('POST /api/search/docs/sync should reject non-admin requests with 403 Forbidden', async () => {
+      const res = await request(app)
+        .post('/api/search/docs/sync')
+        .set('Authorization', `Bearer ${normalUserToken}`);
+
+      expect(res.status).toBe(403);
+      expect(res.body.error).toBe('Admin access required');
+    });
+
+    it('POST /api/search/docs/sync should return sync status and total sources when requested by admin', async () => {
       ((prisma as any).internalDocument.count as jest.Mock).mockResolvedValueOnce(15);
       ((prisma as any).internalDocument.findMany as jest.Mock).mockResolvedValueOnce([
         { sourceFile: 'docs/a.md' },
@@ -446,7 +496,7 @@ describe('API Integration & Route Tests', () => {
 
       const res = await request(app)
         .post('/api/search/docs/sync')
-        .set('Authorization', `Bearer ${normalUserToken}`);
+        .set('Authorization', `Bearer ${adminUserToken}`);
 
       expect(res.status).toBe(200);
       expect(res.body.status).toBe('synced');
