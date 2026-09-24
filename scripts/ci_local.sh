@@ -33,7 +33,7 @@ export PATH="/home/somnerd/actions-runner-searchboost-1/_work/_tool/node/20.20.2
 # ── 1. Rust Warden Relay ─────────────────────────────────────────────────────
 header "1. Rust Warden Sidecar (Clippy, Format & Unit Tests)"
 if (cd searchboost_warden && cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test --all-targets); then
-  pass_tier "Rust Warden Relay (18/18 Tests)"
+  pass_tier "Rust Warden Relay (23/23 Tests)"
 else
   fail_tier "Rust Warden Relay"
 fi

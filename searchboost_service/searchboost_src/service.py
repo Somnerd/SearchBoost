@@ -81,7 +81,7 @@ def sanitize_web_fence(text: str) -> str:
     if not text:
         return ""
     return re.sub(
-        r'<\s*(/)?\s*web_context(\s+[^>]*)?>',
+        r'<\s*(/)?\s*web_context(\s*[^>]*)?>',
         lambda m: f'&lt;{m.group(1) or "" }web_context{m.group(2) or ""}&gt;',
         str(text),
         flags=re.IGNORECASE
