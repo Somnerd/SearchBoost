@@ -275,18 +275,26 @@ router.post('/docs/raw', verifyToken, requireAdmin, async (req: Request, res: Re
         console.warn(`[API] Failed to generate embedding for chunk ${idx} of ${sourceFile}: ${embedErr.message}`);
       }
 
+      let insertedWithVector = false;
       if (vectorLiteral) {
-        await prisma.$executeRawUnsafe(
-          `INSERT INTO internal_documents (source_file, content, chunk_index, total_chunks, metadata_json, embedding, created_at)
-           VALUES ($1, $2, $3, $4, $5, $6::vector, NOW())`,
-          sourceFile,
-          chunk,
-          idx,
-          chunks.length,
-          meta,
-          vectorLiteral
-        );
-      } else {
+        try {
+          await prisma.$executeRawUnsafe(
+            `INSERT INTO internal_documents (source_file, content, chunk_index, total_chunks, metadata_json, embedding, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6::vector, NOW())`,
+            sourceFile,
+            chunk,
+            idx,
+            chunks.length,
+            meta,
+            vectorLiteral
+          );
+          insertedWithVector = true;
+        } catch (rawErr: any) {
+          console.warn(`[API] Raw vector insertion failed for chunk ${idx} of ${sourceFile}: ${rawErr.message}, falling back to Prisma create`);
+        }
+      }
+
+      if (!insertedWithVector) {
         await prisma.internalDocument.create({
           data: {
             sourceFile,

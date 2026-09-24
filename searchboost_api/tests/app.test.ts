@@ -478,6 +478,28 @@ describe('API Integration & Route Tests', () => {
       expect((prisma as any).$executeRawUnsafe).toHaveBeenCalled();
     });
 
+    it('POST /api/search/docs/raw should fall back to Prisma create when executeRawUnsafe fails', async () => {
+      ((prisma as any).internalDocument.deleteMany as jest.Mock).mockResolvedValueOnce({ count: 0 });
+      mockedAxios.post.mockResolvedValueOnce({
+        status: 200,
+        data: { embedding: new Array(768).fill(0.01) }
+      });
+      ((prisma as any).$executeRawUnsafe as jest.Mock).mockRejectedValueOnce(new Error('Vector extension not found'));
+      ((prisma as any).internalDocument.create as jest.Mock).mockResolvedValueOnce({ id: 25 });
+
+      const res = await request(app)
+        .post('/api/search/docs/raw')
+        .set('Authorization', `Bearer ${adminUserToken}`)
+        .send({
+          title: 'fallback-note',
+          content: 'This note should fall back cleanly when vector insert fails.'
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.chunksIngested).toBe(1);
+      expect((prisma as any).internalDocument.create).toHaveBeenCalled();
+    });
+
     it('POST /api/search/docs/sync should reject non-admin requests with 403 Forbidden', async () => {
       const res = await request(app)
         .post('/api/search/docs/sync')
