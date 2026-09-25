@@ -13,6 +13,7 @@ pub struct Warden {
     pub breaker: breaker::WardenBreaker,
     pub redis_pool: deadpool_redis::Pool,
     pub db_pool: sqlx::PgPool,
+    pub auth_token: Option<String>,
 }
 
 #[tokio::main]
@@ -45,6 +46,7 @@ async fn main() -> anyhow::Result<()> {
         breaker,
         redis_pool,
         db_pool,
+        auth_token: settings.auth_token.clone(),
     });
 
     let obs_settings = settings.observer.clone();

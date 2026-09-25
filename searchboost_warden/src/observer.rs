@@ -14,7 +14,16 @@ use tracing::{error, info, warn};
 
 pub async fn start_log_observer(settings: ObserverSettings) -> anyhow::Result<()> {
     info!("Starting Warden Observer Service");
-    let docker = Docker::connect_with_local_defaults()?;
+    let docker = match Docker::connect_with_local_defaults() {
+        Ok(client) => client,
+        Err(e) => {
+            warn!(
+                "Warden Observer: Docker socket unavailable ({}). Container log observer disabled.",
+                e
+            );
+            return Ok(());
+        }
+    };
 
     std::fs::create_dir_all(&settings.log_path)
         .unwrap_or_else(|e| warn!("Could not create log dir: {}", e));
@@ -36,30 +45,42 @@ pub async fn start_log_observer(settings: ObserverSettings) -> anyhow::Result<()
                 ..Default::default()
             };
 
-            if let Ok(containers) = docker.list_containers(Some(options)).await {
-                for container in containers {
-                    if let Some(id) = container.id {
-                        if !monitored_containers.contains(&id) {
-                            monitored_containers.insert(id.clone());
-                            let docker_clone = docker.clone();
-                            let path_clone = log_path.clone();
-                            let name = container
-                                .names
-                                .unwrap_or_default()
-                                .first()
-                                .cloned()
-                                .unwrap_or_else(|| id.clone());
+            match docker.list_containers(Some(options)).await {
+                Ok(containers) => {
+                    for container in containers {
+                        if let Some(id) = container.id {
+                            if !monitored_containers.contains(&id) {
+                                monitored_containers.insert(id.clone());
+                                let docker_clone = docker.clone();
+                                let path_clone = log_path.clone();
+                                let name = container
+                                    .names
+                                    .unwrap_or_default()
+                                    .first()
+                                    .cloned()
+                                    .unwrap_or_else(|| id.clone());
 
-                            tokio::spawn(async move {
-                                if let Err(e) =
-                                    monitor_single_container(&docker_clone, &id, &name, &path_clone)
-                                        .await
-                                {
-                                    error!("Warden: Failed to monitor container {}: {}", id, e);
-                                }
-                            });
+                                tokio::spawn(async move {
+                                    if let Err(e) = monitor_single_container(
+                                        &docker_clone,
+                                        &id,
+                                        &name,
+                                        &path_clone,
+                                    )
+                                    .await
+                                    {
+                                        error!("Warden: Failed to monitor container {}: {}", id, e);
+                                    }
+                                });
+                            }
                         }
                     }
+                }
+                Err(e) => {
+                    warn!(
+                        "Warden Observer: Docker list_containers failed (Docker socket may not be mounted): {}. Retrying in 30s...",
+                        e
+                    );
                 }
             }
             tokio::time::sleep(tokio::time::Duration::from_secs(30)).await;
@@ -69,7 +90,14 @@ pub async fn start_log_observer(settings: ObserverSettings) -> anyhow::Result<()
             "Warden: Fixed-name observation active for: {}",
             container_name
         );
-        monitor_single_container(&docker, &container_name, &container_name, &log_path).await?;
+        if let Err(e) =
+            monitor_single_container(&docker, &container_name, &container_name, &log_path).await
+        {
+            warn!(
+                "Warden Observer: Failed to monitor {}: {}",
+                container_name, e
+            );
+        }
     }
 
     Ok(())
