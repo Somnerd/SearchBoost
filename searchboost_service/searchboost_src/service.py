@@ -88,6 +88,18 @@ def sanitize_web_fence(text: str) -> str:
     )
 
 
+def sanitize_doc_fence(text: str) -> str:
+    """Sanitize internal document text to prevent breakout from <document_context> fence."""
+    if not text:
+        return ""
+    return re.sub(
+        r'<\s*(/)?\s*document_context(\s*[^>]*)?>',
+        lambda m: f'&lt;{m.group(1) or "" }document_context{m.group(2) or ""}&gt;',
+        str(text),
+        flags=re.IGNORECASE
+    )
+
+
 class SearchBoostService:
     def __init__(self, ai, search, redis, db, logger=None, args=None, session_id=None):
         self.logger = logger or setup_logger(info=False)
@@ -133,7 +145,6 @@ class SearchBoostService:
             self.logger.info(f"--- CACHE HIT ({mode_str.upper()}) ---")
             if db_session and self.session_id:
                 try:
-                    from searchboost_src.database import HistoryService
                     hist_svc = HistoryService(db_session, self.logger)
                     await hist_svc.save_turn(self.session_id, "user", self.args.query)
                     await hist_svc.save_turn(self.session_id, "assistant", cached_result)
@@ -197,7 +208,10 @@ class SearchBoostService:
                 if semantic_injection:
                     context_blocks.append(semantic_injection)
                 if internal_doc_context:
-                    context_blocks.append(internal_doc_context)
+                    sanitized_doc_context = sanitize_doc_fence(internal_doc_context)
+                    context_blocks.append(
+                        f"<document_context>\n{sanitized_doc_context}\n</document_context>"
+                    )
 
                 if context_blocks:
                     joined_context = "\n\n".join(context_blocks)
@@ -239,7 +253,10 @@ class SearchBoostService:
 
                 context_blocks = []
                 if internal_doc_context:
-                    context_blocks.append(internal_doc_context)
+                    sanitized_doc_context = sanitize_doc_fence(internal_doc_context)
+                    context_blocks.append(
+                        f"<document_context>\n{sanitized_doc_context}\n</document_context>"
+                    )
                 sanitized_web_results = sanitize_web_fence(web_search_results)
                 context_blocks.append(
                     "<web_context>\n"
@@ -287,7 +304,10 @@ class SearchBoostService:
 
         context_blocks = []
         if internal_doc_context:
-            context_blocks.append(internal_doc_context)
+            sanitized_doc_context = sanitize_doc_fence(internal_doc_context)
+            context_blocks.append(
+                f"<document_context>\n{sanitized_doc_context}\n</document_context>"
+            )
         sanitized_web_results = sanitize_web_fence(web_search_results)
         context_blocks.append(
             "<web_context>\n"

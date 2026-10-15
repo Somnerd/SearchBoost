@@ -28,7 +28,7 @@ pass_tier() { echo -e "\n  ${PASS}  $1"; }
 fail_tier() { echo -e "\n  ${FAIL}  $1"; FAILED_TIERS+=("$1"); }
 
 # Locate IDE / system node/npm if available
-export PATH="/home/somnerd/actions-runner-searchboost-1/_work/_tool/node/20.20.2/x64/bin:/home/somnerd/.antigravity-ide-server/bin/2.5.5-ecfbad74d93962fc8ca485d93ab9b4f3d4cb6cf8:/home/somnerd/.local/bin:$PATH"
+export PATH="/home/somnerd/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin:$HOME/.cargo/bin:/home/somnerd/actions-runner-searchboost-1/_work/_tool/node/20.20.2/x64/bin:/home/somnerd/.antigravity-ide-server/bin/2.5.5-ecfbad74d93962fc8ca485d93ab9b4f3d4cb6cf8:/home/somnerd/.local/bin:$PATH"
 
 # ── 1. Rust Warden Relay ─────────────────────────────────────────────────────
 header "1. Rust Warden Sidecar (Clippy, Format & Unit Tests)"
@@ -62,7 +62,7 @@ if [ ! -f "$PYTHON_EXEC" ]; then
 fi
 
 if PYTHONPATH=searchboost_service "$PYTHON_EXEC" -m pytest searchboost_tests/unit_tests searchboost_tests/functional_tests -v; then
-  pass_tier "Python Worker (51/51 Tests)"
+  pass_tier "Python Worker (53/53 Tests)"
 else
   fail_tier "Python Worker"
 fi
@@ -75,7 +75,7 @@ echo -e "${BOLD}  LOCAL CI RUN SUMMARY (${TOTAL_TIME}s total)${RESET}"
 echo -e "${BLUE}${BOLD}═══════════════════════════════════════════════════════${RESET}"
 
 if [ ${#FAILED_TIERS[@]} -eq 0 ]; then
-  echo -e "  ${PASS}  ${GREEN}${BOLD}ALL 4 TIERS PASSED (160/160 Tests Passing)${RESET}"
+  echo -e "  ${PASS}  ${GREEN}${BOLD}ALL 4 TIERS PASSED (162/162 Tests Passing)${RESET}"
   echo -e "  Ready for production deployment and release packaging."
   exit 0
 else
